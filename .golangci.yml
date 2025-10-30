@@ -1,0 +1,146 @@
+version: "2"
+
+run:
+  issues-exit-code: 2
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+  allow-serial-runners: true
+
+linters:
+  default: all
+  enable:
+    # These are the default set of golangci (errcheck is disabled, see below)
+    - govet             # Vet examines Go source code and reports suspicious constructs. It is roughly the same as 'go vet' and uses its passes.
+    - ineffassign       # Detects when assignments to existing variables are not used.
+    - staticcheck       # It's the set of rules from staticcheck.
+    - unused            # Checks Go code for unused constants, variables, functions and types.
+
+    # These are the linters we knowingly want enabled in addition to the default set
+    - containedctx      # avoid embedding context into structs
+    - depguard          # Allows to explicitly allow or disallow third party modules
+    - err113            # encourage static errors
+    - gochecknoglobals  # globals should be avoided as much as possible
+    - godot             # forces dot at the end of comments
+    - gosec             # various security checks
+    - interfacebloat    # limit complexity in public APIs
+    - paralleltest      # enforces tests using parallel
+    - revive            # meta linter (see settings below)
+    - testpackage       # test packages should be separate from the package they test (eg: name them package_test)
+    - testableexamples  # makes sure that examples are testable (have an expected output)
+    - thelper           # enforces use of t.Helper()
+    - varnamelen        # encourage readable descriptive names for variables instead of x, y, z
+
+    - promlinter        # prometheus
+    - zerologlint       # zerolog
+
+    # Additional to be reviewed
+    - unconvert
+    - misspell
+    - gocritic
+    - forbidigo
+
+  disable:
+    # These are the linters that we know we do not want
+    - cyclop            # provided by revive
+    - exhaustruct       # does not serve much of a purpose
+    - errcheck          # provided by revive
+    - errchkjson        # forces handling of json err (eg: prevents _), which is too much
+    - forcetypeassert   # provided by revive
+    - funlen            # provided by revive
+    - gocognit          # provided by revive
+    - goconst           # provided by revive
+    - godox             # not helpful unless we could downgrade it to warning / info
+    - ginkgolinter      # no ginkgo
+    - gomoddirectives   # local replace directives needed for unpublished hadron dependency
+    - gomodguard        # we use depguard instead
+    - ireturn           # too annoying with not enough value
+    - lll               # provided by golines
+    - nestif            # already provided ten different ways with revive cognitive complexity, etc
+    - nonamedreturns    # named returns are occasionally useful
+    - prealloc          # premature optimization
+    - sloglint          # no slog
+    - testifylint       # no testify
+    - mnd               # already provided by revive add-constant
+
+  exclusions:
+    rules:
+      - path: _test.go
+        linters:
+          - varnamelen
+          - dupl
+      - path: _test.go
+        text: "add-constant|cognitive-complexity|confusing-results"
+        linters:
+          - revive
+
+  settings:
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: function-length
+          arguments: [100, 0]
+        - name: add-constant
+          arguments:
+            - allowInts: "0,1,2,3,4,-1"
+              allowStrs: '"op://","","%w: %q","%w: %w","%w: %s"," ","-"'
+        - name: cognitive-complexity
+          arguments: [30]
+        - name: cyclomatic
+          arguments: [30]
+        - name: max-public-structs
+          arguments: [10]
+
+        - name: line-length-limit
+          # Formatter `golines` takes care of this.
+          disabled: true
+        - name: unhandled-error
+          arguments:
+            - "fmt.Print"
+            - "fmt.Println"
+            - "fmt.Printf"
+            - "fmt.Fprint"
+            - "fmt.Fprintln"
+            - "fmt.Fprintf"
+
+    depguard:
+      rules:
+        main:
+          files:
+            - $all
+          allow:
+            - $gostd
+            - github.com/rs/zerolog
+            - github.com/urfave/cli
+            - github.com/farcloser/godolint
+
+    staticcheck:
+      checks:
+        - all
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/farcloser)
+        - localmodule
+      no-inline-comments: true
+      no-prefix-comments: true
+      custom-order: true
+    gofumpt:
+      extra-rules: true
+    golines:
+      max-len: 120
+      tab-len: 4
+      shorten-comments: true
+  enable:
+    - gci
+    - gofumpt
+    - golines
+  exclusions:
+    generated: disable
