@@ -6,21 +6,22 @@
 
 ## godolint? hadolint?
 
-This project is a (loving and) friendly port of hadolint, a venerable and wildly used dockerfile linter
-written in haskell.
+This project is a friendly port of [hadolint](https://github.com/hadolint/hadolint) (a venerable and wildly used dockerfile linter
+written in haskell).
 
-While there is nothing wrong with hadolint in itself, it does not fit quite well inside the
-go devtools ecosytem:
+While there is nothing wrong with hadolint in itself, it does not fit well inside the
+go devtools ecosystem (*):
 - it is a foreign dependency, that has to be handled outside the familiar go toolchain
 - it comes as a binary, that you have to shell out to, and parse its output
-- modifying it or extending it requires haskell knowledge (which might be a foreign proposition for some gophers),
-and maintaining a fork
+- modifying it or extending it requires haskell knowledge
 
 godolint is a pure go port of hadolint, filling an age-old gap in the container tooling landscape:
 the ability to lint dockerfiles in go.
 
-It comes with an example binary that mimicks hadolint behavior, and can also be used (of course,
-and primarily) as a library, integrated into other go projects and devtools.
+It comes with an example binary that does mimic a small subset of the hadolint binary behavior,
+and can also be used (of course, and primarily) as a library in golang projects.
+
+(*) see [Why?](#why) section below for more details
 
 ## Installation
 
@@ -55,97 +56,218 @@ godolint Dockerfile
 # ]
 ```
 
-### Library Usage
+### SDK Usage
 
 ```go
 package main
 
 import (
+    "context"
     "fmt"
     "os"
 
-    "github.com/farcloser/godolint/internal/parser"
-    "github.com/farcloser/godolint/internal/process"
-    "github.com/farcloser/godolint/internal/rule"
-    "github.com/farcloser/godolint/internal/rules"
+    "github.com/farcloser/godolint/sdk"
 )
 
 func main() {
     // Read Dockerfile
     content, _ := os.ReadFile("Dockerfile")
 
-    // Parse
-    p := parser.NewBuildkitParser()
-    instructions, _ := p.Parse(content)
+    // Create linter with default configuration (all rules)
+    linter := sdk.New()
 
-    // Configure rules
-    myRules := []rule.Rule{
-        rules.DL3007(), // No latest tag
-        rules.DL3000(), // Absolute WORKDIR
-        rules.DL3020(), // Use COPY not ADD
-        rules.DL4000(), // No MAINTAINER
-        // ... 26 more rules available
-
-        // Optional: Add shellcheck for RUN validation
-        // shell.NewShellcheckRule(shell.NewBinaryShellchecker())
+    // Lint the Dockerfile
+    result, err := linter.Lint(context.Background(), content)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+        os.Exit(1)
     }
 
-    // Lint
-    processor := process.NewProcessor(myRules)
-    failures := processor.Run(instructions)
+    // Report violations
+    for _, v := range result.Violations {
+        fmt.Printf("[%s] %s (line %d): %s\n",
+            v.Severity, v.Code, v.Line, v.Message)
+    }
 
-    // Report
-    for _, f := range failures {
-        fmt.Printf("%s (line %d): %s\n", f.Code, f.Line, f.Message)
+    // Exit with error code if violations found
+    if !result.Passed {
+        os.Exit(1)
     }
 }
 ```
 
-## Current Status
+### Advanced SDK Usage
 
-### Implementation Progress
+```go
+// Use a specific rule set
+linter := sdk.New(sdk.WithRuleSet(sdk.RuleSetRecommended))
 
-- **Total rules**: 65 (matching hadolint)
-- **Fully implemented**: 30 rules + ShellCheck integration
-- **Test coverage**: 27 test files with 200+ test cases
-- **Test pass rate**: 100% (all tests passing)
+// Disable specific rules
+linter := sdk.New(sdk.WithDisabledRules("DL3007", "DL3008"))
 
-### Implemented Rules (30)
+// Enable shellcheck integration
+linter := sdk.New(sdk.WithShellcheck())
 
-**Dockerfile best practices:**
-- DL3000 - Use absolute WORKDIR
-- DL3001 - Pipe into commands not supported
-- DL3002 - Last USER should not be root
-- DL3003 - Use WORKDIR instead of cd
-- DL3004 - Do not use sudo
-- DL3006 - Always tag image versions explicitly
-- DL3007 - Using latest is prone to errors
-- DL3011 - Valid UNIX ports range 0-65535
-- DL3012 - Multiple HEALTHCHECK instructions
-- DL3014 - Use -y switch for apt-get
-- DL3015 - Avoid additional packages with yum
-- DL3018 - Pin versions in apk add
-- DL3019 - Use --no-cache in apk add
-- DL3020 - Use COPY instead of ADD for files
-- DL3021 - COPY with more than 2 arguments requires slash
-- DL3022 - COPY --from needs valid reference
-- DL3023 - COPY --from cannot reference itself
-- DL3024 - FROM alias must be unique
-- DL3025 - Use JSON notation for CMD/ENTRYPOINT
-- DL3027 - Do not use apt
-- DL3029 - Do not use --platform in FROM
-- DL3043 - ONBUILD requires FROM
-- DL3045 - COPY --chmod invalid format
-- DL3048 - Invalid DNS option
-- DL3059 - Multiple consecutive RUN instructions
-- DL3061 - Multiple instructions for same port
-- DL4000 - MAINTAINER is deprecated
-- DL4003 - Multiple CMD instructions
-- DL4004 - Multiple ENTRYPOINT instructions
+// Custom rules
+linter := sdk.New(sdk.WithRules([]sdk.Rule{
+    rules.DL3000(),
+    rules.DL3007(),
+    myCustomRule, // Implement sdk.Rule interface
+}))
 
-**Shell validation:**
-- DL3008 - Pin versions in apt-get install (requires shellcheck)
-- ShellCheck integration - Full support for shell script validation in RUN instructions
+// Check for specific severity levels
+if result.HasErrors() {
+    fmt.Println("Critical issues found!")
+}
+
+counts := result.CountBySeverity()
+fmt.Printf("Errors: %d, Warnings: %d\n",
+    counts[sdk.SeverityError],
+    counts[sdk.SeverityWarning])
+```
+
+## Why?
+
+> What is wrong with depending on (hadolint) binaries?
+
+### TL;DR
+
+> copy-paste into a powerpoint for your CISO - don't forget to add green check marks
+
+| Aspect | External Binary | Pure Go |
+|--------|----------------|---------|
+| **Supply Chain Risk** | HIGH - Unverified provenance | LOW - Checksummed source |
+| **Compromise Scenarios** | Account takeover, build pipeline, MITM | Requires both GitHub + sum.golang.org |
+| **Cryptographic Verification** | Manual, often missing | Automatic via go.sum |
+| **Reproducibility** | Poor - binary availability not guaranteed | Excellent - source-based |
+| **Multi-arch Support** | Complex per-platform logic | `GOARCH=arm64 go build` |
+| **Installation Complexity** | Bash scripts, sudo, platform detection | `go install` |
+| **CI/CD Integration** | Manual download + caching | Native Go tooling |
+| **Container Image Size** | +50-100MB (deps + binary) | +5-10MB (static binary) |
+| **SBOM Generation** | Manual, incomplete | `go list -m all` |
+| **Vulnerability Scanning** | Opaque binary, hard to scan | `govulncheck ./...` |
+| **License Compliance** | Manual transitive analysis | `go-licenses report` |
+| **TCB Size** | Large (GitHub, CDN, toolchain) | Small (Go compiler, go.sum) |
+| **Offline Builds** | Impossible | `go mod vendor` |
+| **Dependency Updates** | Manual version bumps | `go get -u` + Dependabot |
+
+### With more words
+
+Supply chain concerns:
+* binary provenance is unverifiable
+* no cryptographic verification
+* version pinning is fragile
+* SBOM is incomplete or missing
+* license compliance is opaque / hardcoded
+* trusted computing base is WIDE
+* scanning binaries is difficult
+
+Operational complexity:
+* multi-architecture is hell
+* installation script is hell with fries
+* CI/CD compounds hell further into full-blown hell
+* availability is not guaranteed
+* os-level dependencies if not compiled statically (which you have to figure out)
+
+You COULD (should!) instead build from source (that is, if you like Gentoo).
+At least you would get proper git commit pinning, scannable / auditable source code, SBOM.
+But then, you have to maintain a build environment for it, in a language and with tools
+that does not match the rest of your stack, and that may also raise additional supply
+chain concerns, time and dedicated expertise.
+
+So, yes, there is nothing wrong with hadolint-the-project-and-tool, per-se.
+But if what you do is more than noodling around, if you are not a haskell shop,
+or if you take your security seriously, depending on external binaries is definitely not
+something you should do.
+
+This is why we wrote godolint, for people doing go.
+
+## Relationship with hadolint
+
+All hadolint rules declarations are automatically generated, and all logic has been implemented.
+
+All hadolint unit tests are automatically converted to go tests.
+
+godolint has no intention in fragmenting the community:
+* we will regularly match evolutions of hadolint (rules and tests)
+* any request for new core rules must go through hadolint
+
+## SDK API
+
+The `sdk` package provides a high-level, idiomatic Go API for linting Dockerfiles.
+
+### Core Types
+
+```go
+// Linter performs Dockerfile linting
+type Linter struct { ... }
+
+// Result contains linting results
+type Result struct {
+    Violations []Violation
+    Passed     bool
+}
+
+// Violation represents a single rule violation
+type Violation struct {
+    Code     string   // Rule code (e.g., "DL3000")
+    Severity Severity // error, warning, info, style
+    Message  string   // Human-readable description
+    Line     int      // Line number (1-indexed)
+}
+```
+
+### Configuration Options
+
+```go
+// WithRuleSet - Use a predefined rule set
+sdk.New(sdk.WithRuleSet(sdk.RuleSetRecommended))
+
+// WithDisabledRules - Disable specific rules
+sdk.New(sdk.WithDisabledRules("DL3007", "DL3008"))
+
+// WithShellcheck - Enable shellcheck integration
+sdk.New(sdk.WithShellcheck())
+
+// WithRules - Use custom rules
+sdk.New(sdk.WithRules([]sdk.Rule{...}))
+
+// WithParser - Use custom parser
+sdk.New(sdk.WithParser(customParser))
+```
+
+### Rule Sets
+
+- `RuleSetAll` - All 54 implemented rules (default)
+- `RuleSetRecommended` - Only Error and Warning severity rules
+- `RuleSetStrict` - Same as All (for compatibility)
+
+### Result Methods
+
+```go
+result.HasErrors()           // Check for error-severity violations
+result.HasWarnings()         // Check for warning-severity violations
+result.CountBySeverity()     // Get violation counts by severity
+```
+
+### Typed Errors
+
+```go
+*sdk.ParseError    // Dockerfile parsing failed
+*sdk.RuleError     // Rule execution failed
+```
+
+### Extension API
+
+For advanced use cases (custom rules, custom parsers), the SDK re-exports internal types:
+
+```go
+sdk.Rule                  // Rule interface
+sdk.NewSimpleRule()       // Create simple stateless rule
+sdk.NewBuildkitParser()   // Create buildkit parser
+sdk.ParseShell()          // Parse shell scripts for RUN analysis
+// ... see sdk/export.go for full list
+```
 
 ### Output Format
 
