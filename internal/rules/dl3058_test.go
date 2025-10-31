@@ -3,6 +3,7 @@ package rules
 import (
 	"testing"
 
+	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -12,7 +13,11 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3058(t *testing.T) {
-	allRules := []rule.Rule{ DL3058() }
+	// Config: labelSchema = {"maintainer": Email}
+	cfg := &config.Config{
+		LabelSchema: map[string]config.LabelType{"maintainer": config.LabelTypeEmail},
+	}
+	allRules := []rule.Rule{DL3058WithConfig(cfg)}
 
 
 	t.Run("not ok with label not containing valid email", func(t *testing.T) {

@@ -21,6 +21,13 @@ func DL3053() rule.Rule {
 	}
 }
 
+// DL3053WithConfig creates the rule with custom configuration.
+func DL3053WithConfig(cfg *config.Config) rule.Rule {
+	return &DL3053Rule{
+		cfg: cfg,
+	}
+}
+
 func (r *DL3053Rule) Code() rule.RuleCode {
 	return DL3053Meta.Code
 }

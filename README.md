@@ -1,8 +1,8 @@
+![godolint logo](logo.png)
+
 # godolint
 
 > Same shit, different language
-
-![godolint logo](logo.png)
 
 ## godolint? hadolint?
 
@@ -12,8 +12,8 @@ written in haskell).
 While there is nothing wrong with hadolint in itself, it does not fit well inside the
 go devtools ecosystem (*):
 - it is a foreign dependency, that has to be handled outside the familiar go toolchain
-- it comes as a binary, that you have to shell out to, and parse its output
-- modifying it or extending it requires haskell knowledge
+- it comes as a binary, that you have to shell out to, and parse the output of
+- modifying it requires haskell knowledge
 
 godolint is a pure go port of hadolint, filling an age-old gap in the container tooling landscape:
 the ability to lint dockerfiles in go.
@@ -132,7 +132,7 @@ fmt.Printf("Errors: %d, Warnings: %d\n",
 
 ### TL;DR
 
-> copy-paste into a powerpoint for your CISO - don't forget to add green check marks
+> copy-paste into a powerpoint for your CISO (don't forget to add ✅ and ❌)
 
 | Aspect | External Binary | Pure Go |
 |--------|----------------|---------|
@@ -184,17 +184,16 @@ This is why we wrote godolint, for people doing go.
 
 ## Relationship with hadolint
 
-All hadolint rules declarations are automatically generated, and all logic has been implemented.
+All hadolint rules declarations are automatically generated, and we fully support everything hadolint does.
 
-All hadolint unit tests are automatically converted to go tests.
+All unit tests are automatically converted to go tests.
 
-godolint has no intention in fragmenting the community:
-* we will regularly match evolutions of hadolint (rules and tests)
-* any request for new core rules must go through hadolint
+godolint has no intention whatsover in fragmenting the community, and we consider hadolint the upstream for
+rules definitions and baseline tests:
+* we will regularly match evolutions of hadolint
+* any request for new **core** rules must go through hadolint
 
 ## SDK API
-
-The `sdk` package provides a high-level, idiomatic Go API for linting Dockerfiles.
 
 ### Core Types
 
@@ -255,18 +254,6 @@ result.CountBySeverity()     // Get violation counts by severity
 ```go
 *sdk.ParseError    // Dockerfile parsing failed
 *sdk.RuleError     // Rule execution failed
-```
-
-### Extension API
-
-For advanced use cases (custom rules, custom parsers), the SDK re-exports internal types:
-
-```go
-sdk.Rule                  // Rule interface
-sdk.NewSimpleRule()       // Create simple stateless rule
-sdk.NewBuildkitParser()   // Create buildkit parser
-sdk.ParseShell()          // Parse shell scripts for RUN analysis
-// ... see sdk/export.go for full list
 ```
 
 ### Output Format
@@ -359,7 +346,7 @@ and plan on keeping up with hadolint's updated/new rules.
 
 ### Code Generation
 
-Rule stubs and tests are auto-generated from hadolint's Haskell source:
+Rule stubs and tests are auto-generated from hadolint's source:
 
 ```bash
 # Generate rule stubs and tests (runs both generators)
@@ -433,12 +420,6 @@ func checkDL3007(instruction syntax.Instruction) bool {
 ```
 
 ## Roadmap
-
-### Completed ✓
-- [x] Stateful rule processor for cross-instruction validation
-- [x] ShellCheck integration for shell script validation
-- [x] 30 hadolint rules fully implemented
-- [x] 100% test pass rate
 
 ### Short-term
 - [ ] Add shellcheck rule to default CLI rule set
