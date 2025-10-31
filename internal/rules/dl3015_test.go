@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3015(t *testing.T) {
-	allRules := []rule.Rule{ DL3015() }
-
+	allRules := []rule.Rule{DL3015()}
 
 	t.Run("apt-get no install recommends", func(t *testing.T) {
 		dockerfile := `RUN apt-get install python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3015")
-
 	})
 
 	t.Run("apt-get no install recommends", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3015(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3015")
-
 	})
 
 	t.Run("apt-get no install recommends via option", func(t *testing.T) {
@@ -36,7 +33,5 @@ func TestDL3015(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3015")
-
 	})
-
 }

@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3007(t *testing.T) {
-	allRules := []rule.Rule{ DL3007() }
-
+	allRules := []rule.Rule{DL3007()}
 
 	t.Run("explicit latest", func(t *testing.T) {
 		dockerfile := `FROM debian:latest`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3007")
-
 	})
 
 	t.Run("explicit latest with name", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3007(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3007")
-
 	})
 
 	t.Run("explicit tagged", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3007(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3007")
-
 	})
 
 	t.Run("explicit tagged with name", func(t *testing.T) {
@@ -44,7 +40,5 @@ func TestDL3007(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3007")
-
 	})
-
 }

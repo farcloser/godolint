@@ -58,8 +58,8 @@ type shellcheckOutput struct {
 	Line    int    `json:"line"`
 	EndLine int    `json:"endLine"`
 	Column  int    `json:"column"`
-	Level   string `json:"level"`    // "error", "warning", "info", "style"
-	Code    int    `json:"code"`     // SC code number
+	Level   string `json:"level"` // "error", "warning", "info", "style"
+	Code    int    `json:"code"`  // SC code number
 	Message string `json:"message"`
 }
 
@@ -87,6 +87,7 @@ func (b *BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckF
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
+
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
 
@@ -150,6 +151,7 @@ func buildScript(runCommand string, opts ShellOpts) string {
 	if shebang == "" {
 		shebang = "/bin/sh"
 	}
+
 	b.WriteString("#!")
 	b.WriteString(shebang)
 	b.WriteString("\n")
@@ -176,6 +178,7 @@ func extractShell(shellCmd string) string {
 	if len(parts) > 0 {
 		return parts[0]
 	}
+
 	return ""
 }
 
@@ -254,6 +257,7 @@ func (r *ShellcheckRule) Message() string {
 
 func (r *ShellcheckRule) InitialState() rule.State {
 	defaultOpts := DefaultShellOpts()
+
 	return rule.EmptyState(shellState{
 		opts:        defaultOpts,
 		defaultOpts: defaultOpts,
@@ -294,6 +298,7 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 		for k, v := range ss.opts.EnvVars {
 			envCopy[k] = v
 		}
+
 		envCopy[instr.ArgName] = "1"
 		newOpts.EnvVars = envCopy
 
@@ -313,9 +318,11 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 		for k, v := range ss.opts.EnvVars {
 			envCopy[k] = v
 		}
+
 		for _, pair := range instr.Pairs {
 			envCopy[pair.Key] = "1"
 		}
+
 		newOpts.EnvVars = envCopy
 
 		return state.ReplaceData(shellState{
@@ -347,6 +354,7 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 
 		// Add all shellcheck violations to state with current line number
 		newState := state
+
 		for _, v := range violations {
 			v.Line = line
 			newState = newState.AddFailure(v)

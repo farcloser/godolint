@@ -21,5 +21,6 @@ func checkDL4000(instruction syntax.Instruction) bool {
 	if ok {
 		return false // Maintainer instruction found -> fail
 	}
+
 	return true
 }

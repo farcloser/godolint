@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3036(t *testing.T) {
-	allRules := []rule.Rule{ DL3036() }
-
+	allRules := []rule.Rule{DL3036()}
 
 	t.Run("not ok without zypper clean", func(t *testing.T) {
 		dockerfile := `RUN zypper install -y mariadb=10.4`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3036")
-
 	})
 
 	t.Run("ok when mount type cache is used", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3036(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3036")
-
 	})
 
 	t.Run("ok when mount type tmpfs is used", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3036(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3036")
-
 	})
 
 	t.Run("ok with zypper clean", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3036(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3036")
-
 	})
 
 	t.Run("ok with zypper clean (2)", func(t *testing.T) {
@@ -52,7 +47,5 @@ func TestDL3036(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3036")
-
 	})
-
 }

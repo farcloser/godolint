@@ -40,6 +40,7 @@ func checkDL3060(instruction syntax.Instruction) bool {
 		if shell.CmdHasArgs("yarn", []string{"install"}, cmd) {
 			hasYarnInstall = true
 		}
+
 		if shell.CmdHasArgs("yarn", []string{"cache", "clean"}, cmd) {
 			hasYarnCacheClean = true
 		}

@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3030(t *testing.T) {
-	allRules := []rule.Rule{ DL3030() }
-
+	allRules := []rule.Rule{DL3030()}
 
 	t.Run("not ok when not using `-y` switch", func(t *testing.T) {
 		dockerfile := `RUN yum install httpd-2.4.24 && yum clean all`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3030")
-
 	})
 
 	t.Run("ok when using `-y` switch", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3030(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3030")
-
 	})
 
 	t.Run("ok when using `-y` switch (2)", func(t *testing.T) {
@@ -36,7 +33,5 @@ func TestDL3030(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3030")
-
 	})
-
 }

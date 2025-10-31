@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3016(t *testing.T) {
-	allRules := []rule.Rule{ DL3016() }
-
+	allRules := []rule.Rule{DL3016()}
 
 	t.Run("commit not pinned for git", func(t *testing.T) {
 		dockerfile := `RUN npm install git://github.com/npm/npm.git`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("commit not pinned for git+http", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("commit not pinned for git+ssh", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("don't fire on loglevel flag", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for folder - absolute path", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for folder - relative path from current folder", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for folder - relative path from home", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for folder - relative path to parent folder", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for tarball suffix .tar", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for tarball suffix .tar.gz", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version does not have to be pinned for tarball suffix .tgz", func(t *testing.T) {
@@ -100,7 +89,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version not pinned", func(t *testing.T) {
@@ -108,7 +96,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version not pinned multiple packages", func(t *testing.T) {
@@ -116,7 +103,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version not pinned with --global", func(t *testing.T) {
@@ -124,7 +110,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version not pinned with scope", func(t *testing.T) {
@@ -132,7 +117,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned", func(t *testing.T) {
@@ -140,7 +124,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned in package.json", func(t *testing.T) {
@@ -148,7 +131,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned in package.json with arguments", func(t *testing.T) {
@@ -156,7 +138,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned multiple packages", func(t *testing.T) {
@@ -164,7 +145,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned with --global", func(t *testing.T) {
@@ -172,7 +152,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned with -g", func(t *testing.T) {
@@ -180,7 +159,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned with scope", func(t *testing.T) {
@@ -188,7 +166,6 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
 
 	t.Run("version pinned with scope", func(t *testing.T) {
@@ -196,7 +173,5 @@ func TestDL3016(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3016")
-
 	})
-
 }

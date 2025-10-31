@@ -116,11 +116,11 @@ func isValidSPDX(license string) bool {
 func isSPDXPattern(s string) bool {
 	// Common patterns: XXX-N.N, XXX-N.N-or-later, XXX-N.N-only
 	patterns := []string{
-		`^[A-Z][A-Za-z0-9]+-\d+\.\d+$`,                    // MIT-1.0
-		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-or-later$`,          // GPL-3.0-or-later
-		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-only$`,              // GPL-3.0-only
-		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-Clause$`,            // BSD-3-Clause
-		`^CC-BY(-[A-Z]+)*-\d+\.\d+$`,                      // CC-BY-SA-4.0
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+$`,          // MIT-1.0
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-or-later$`, // GPL-3.0-or-later
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-only$`,     // GPL-3.0-only
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-Clause$`,   // BSD-3-Clause
+		`^CC-BY(-[A-Z]+)*-\d+\.\d+$`,            // CC-BY-SA-4.0
 	}
 
 	for _, pattern := range patterns {

@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3060(t *testing.T) {
-	allRules := []rule.Rule{ DL3060() }
-
+	allRules := []rule.Rule{DL3060()}
 
 	t.Run("not ok when cache mount is in wrong location", func(t *testing.T) {
 		dockerfile := `RUN --mount=type=cache,target=/var/lib/foobar yarn install foobar`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3060")
-
 	})
 
 	t.Run("not ok when tmpfs mount is in wrong location", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3060(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3060")
-
 	})
 
 	t.Run("not ok with no cache clean", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3060(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3060")
-
 	})
 
 	t.Run("ok when cache mount is used", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3060(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3060")
-
 	})
 
 	t.Run("ok when tmpfs mount is used", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3060(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3060")
-
 	})
 
 	t.Run("ok with cache clean", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3060(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3060")
-
 	})
 
 	t.Run("ok with non-yarn commands", func(t *testing.T) {
@@ -68,7 +61,5 @@ func TestDL3060(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3060")
-
 	})
-
 }

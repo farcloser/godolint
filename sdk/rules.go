@@ -5,8 +5,9 @@ import (
 	"github.com/farcloser/godolint/internal/rules"
 )
 
-// AllRules returns all implemented hadolint rules.
-// This includes 54 DL rules but excludes shellcheck integration by default.
+// AllRules returns all 65 implemented hadolint DL#### rules (pure Go).
+// Shellcheck integration (validates RUN instruction shell scripts via external binary)
+// is opt-in via WithShellcheck() and adds SC#### violations.
 func AllRules() []rule.Rule {
 	return []rule.Rule{
 		// DL1xxx - Miscellaneous
@@ -36,6 +37,7 @@ func AllRules() []rule.Rule {
 		rules.DL3023(),
 		rules.DL3024(),
 		rules.DL3025(),
+		rules.DL3026(),
 		rules.DL3027(),
 		rules.DL3028(),
 		rules.DL3029(),
@@ -56,9 +58,18 @@ func AllRules() []rule.Rule {
 		rules.DL3046(),
 		rules.DL3047(),
 		rules.DL3048(),
+		rules.DL3049(),
+		rules.DL3050(),
+		rules.DL3051(),
+		rules.DL3052(),
+		rules.DL3053(),
+		rules.DL3054(),
+		rules.DL3055(),
 		rules.DL3057(),
+		rules.DL3058(),
 		rules.DL3059(),
 		rules.DL3060(),
+		rules.DL3061(),
 		rules.DL3062(),
 		// DL4xxx - Deprecated instructions
 		rules.DL4000(),
@@ -90,11 +101,13 @@ func GetRuleSet(set RuleSet) []rule.Rule {
 	case RuleSetRecommended:
 		// Filter to Error and Warning severity only
 		var filtered []rule.Rule
+
 		for _, r := range all {
 			if r.Severity() == rule.Error || r.Severity() == rule.Warning {
 				filtered = append(filtered, r)
 			}
 		}
+
 		return filtered
 	case RuleSetStrict, RuleSetAll:
 		return all
@@ -118,6 +131,7 @@ func FilterRules(ruleSet []rule.Rule, disabledCodes []string) []rule.Rule {
 
 	// Filter rules
 	var filtered []rule.Rule
+
 	for _, r := range ruleSet {
 		if !disabled[string(r.Code())] {
 			filtered = append(filtered, r)

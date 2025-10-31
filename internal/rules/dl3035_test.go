@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3035(t *testing.T) {
-	allRules := []rule.Rule{ DL3035() }
-
+	allRules := []rule.Rule{DL3035()}
 
 	t.Run("not ok: zypper dist-upgrade", func(t *testing.T) {
 		dockerfile := `RUN zypper dist-upgrade`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3035")
-
 	})
 
 	t.Run("not ok: zypper dist-upgrade (2)", func(t *testing.T) {
@@ -28,7 +26,5 @@ func TestDL3035(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3035")
-
 	})
-
 }

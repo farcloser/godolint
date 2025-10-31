@@ -17,8 +17,7 @@ type DL3026Rule struct {
 	allowedRegistries []string // Empty means all registries allowed
 }
 
-// DL3026 creates the rule for checking allowed registries.
-// TODO: Add configuration support to specify allowed registries
+// TODO: Add configuration support to specify allowed registries.
 func DL3026() rule.Rule {
 	return &DL3026Rule{
 		allowedRegistries: []string{}, // Empty = all allowed (for now)
@@ -108,18 +107,14 @@ func extractRegistry(imageName string) string {
 	return "docker.io"
 }
 
-// isRegistryAllowed checks if a registry matches any allowed pattern.
-// Supports:
-// - Exact match: "docker.io"
-// - Wildcard suffix: "*.example.com"
-// - Wildcard prefix: "example.*"
-// - Full wildcard: "*"
+// - Full wildcard: "*".
 func (r *DL3026Rule) isRegistryAllowed(registry string) bool {
 	for _, allowed := range r.allowedRegistries {
 		if matchRegistry(allowed, registry) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -133,12 +128,14 @@ func matchRegistry(allowed, registry string) bool {
 	// Wildcard suffix: *.example.com
 	if strings.HasPrefix(allowed, "*.") {
 		suffix := strings.TrimPrefix(allowed, "*")
+
 		return strings.HasSuffix(registry, suffix)
 	}
 
 	// Wildcard prefix: example.*
 	if strings.HasSuffix(allowed, ".*") {
 		prefix := strings.TrimSuffix(allowed, ".*")
+
 		return strings.HasPrefix(registry, prefix)
 	}
 

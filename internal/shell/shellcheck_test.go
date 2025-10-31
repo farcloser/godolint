@@ -32,7 +32,7 @@ func TestBinaryShellchecker_Check(t *testing.T) {
 			expectFailure: true, // SC2086: quote to prevent word splitting
 		},
 		{
-			name: "powershell script skipped",
+			name:   "powershell script skipped",
 			script: "Write-Host 'test'",
 			opts: shell.ShellOpts{
 				ShellName: "pwsh -c",
@@ -135,7 +135,6 @@ func TestShellcheckRule_ResetOnFrom(t *testing.T) {
 	for _, instr := range instructions {
 		state = scRule.Check(instr.LineNumber, state, instr.Instruction)
 	}
-
 	// Since shellState is unexported, we test behavior instead of internal state
 	// The fact that the rule processes without error is sufficient for this test
 	// Actual ENV variable tracking is verified through integration tests
@@ -146,7 +145,6 @@ func TestNoopShellchecker(t *testing.T) {
 
 	checker := shell.NewNoopShellchecker()
 	failures, err := checker.Check("any script", shell.DefaultShellOpts())
-
 	if err != nil {
 		t.Errorf("NoopShellchecker.Check() error = %v, want nil", err)
 	}

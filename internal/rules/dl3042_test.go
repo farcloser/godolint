@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3042(t *testing.T) {
-	allRules := []rule.Rule{ DL3042() }
-
+	allRules := []rule.Rule{DL3042()}
 
 	t.Run("don't match on pipenv", func(t *testing.T) {
 		dockerfile := `RUN pipenv install library`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("don't match on pipx", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("ok with cache mount in cache dir", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("ok with tmpfs mount in cache dir", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("pip --no-cache-dir not used", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("pip --no-cache-dir used", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("pip2 --no-cache-dir not used", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("pip2 --no-cache-dir used", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("pip3 --no-cache-dir not used", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("pip3 --no-cache-dir used", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3042(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with falsy values", func(t *testing.T) {
@@ -101,7 +90,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with falsy values (2)", func(t *testing.T) {
@@ -110,7 +98,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with falsy values (3)", func(t *testing.T) {
@@ -119,7 +106,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with falsy values (4)", func(t *testing.T) {
@@ -128,7 +114,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with truthy values", func(t *testing.T) {
@@ -137,7 +122,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with truthy values (2)", func(t *testing.T) {
@@ -146,7 +130,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with truthy values (3)", func(t *testing.T) {
@@ -155,7 +138,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect ENV PIP_NO_CACHE_DIR with truthy values (4)", func(t *testing.T) {
@@ -164,7 +146,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with falsy values", func(t *testing.T) {
@@ -172,7 +153,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with falsy values (2)", func(t *testing.T) {
@@ -180,7 +160,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with falsy values (3)", func(t *testing.T) {
@@ -188,7 +167,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with falsy values (4)", func(t *testing.T) {
@@ -196,7 +174,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with truthy values", func(t *testing.T) {
@@ -204,7 +181,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with truthy values (2)", func(t *testing.T) {
@@ -212,7 +188,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with truthy values (3)", func(t *testing.T) {
@@ -220,7 +195,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN PIP_NO_CACHE_DIR=... with truthy values (4)", func(t *testing.T) {
@@ -228,7 +202,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with falsy values", func(t *testing.T) {
@@ -236,7 +209,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with falsy values (2)", func(t *testing.T) {
@@ -244,7 +216,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with falsy values (3)", func(t *testing.T) {
@@ -252,7 +223,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with falsy values (4)", func(t *testing.T) {
@@ -260,7 +230,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with truthy values", func(t *testing.T) {
@@ -268,7 +237,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with truthy values (2)", func(t *testing.T) {
@@ -276,7 +244,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with truthy values (3)", func(t *testing.T) {
@@ -284,7 +251,6 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
 
 	t.Run("respect RUN export PIP_NO_CACHE_DIR=... with truthy values (4)", func(t *testing.T) {
@@ -292,7 +258,5 @@ RUN pip install MySQL_python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3042")
-
 	})
-
 }

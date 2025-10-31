@@ -34,6 +34,7 @@ func checkDL3032(instruction syntax.Instruction) bool {
 		if shell.CmdHasArgs("yum", []string{"install"}, cmd) {
 			hasYumInstall = true
 		}
+
 		if isYumClean(cmd) {
 			hasYumClean = true
 		}

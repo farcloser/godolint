@@ -82,10 +82,12 @@ func filterNpmFlags(args []string) []string {
 	}
 
 	var result []string
+
 	skip := false
 	for _, arg := range args {
 		if skip {
 			skip = false
+
 			continue
 		}
 
@@ -95,6 +97,7 @@ func filterNpmFlags(args []string) []string {
 			if flagsWithValues[arg] {
 				skip = true
 			}
+
 			continue
 		}
 
@@ -107,7 +110,9 @@ func filterNpmFlags(args []string) []string {
 func stripNpmInstallPrefix(args []string) []string {
 	// Find "install" and skip to packages after it
 	foundInstall := false
+
 	var result []string
+
 	for _, arg := range args {
 		if foundInstall {
 			result = append(result, arg)
@@ -115,6 +120,7 @@ func stripNpmInstallPrefix(args []string) []string {
 			foundInstall = true
 		}
 	}
+
 	return result
 }
 
@@ -146,6 +152,7 @@ func hasNpmGitPrefix(pkg string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -157,6 +164,7 @@ func hasNpmTarballSuffix(pkg string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -168,6 +176,7 @@ func isNpmFolder(pkg string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -178,6 +187,7 @@ func isVersionedGit(pkg string) bool {
 func hasNpmVersionSymbol(pkg string) bool {
 	// Drop scope prefix if present
 	pkg = dropNpmScope(pkg)
+
 	return strings.Contains(pkg, "@")
 }
 
@@ -189,5 +199,6 @@ func dropNpmScope(pkg string) string {
 			return pkg[idx+1:]
 		}
 	}
+
 	return pkg
 }

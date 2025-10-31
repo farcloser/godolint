@@ -84,5 +84,6 @@ func isValidGitHash(hash string) bool {
 
 	// Check if all characters are hexadecimal
 	hexPattern := regexp.MustCompile(`^[0-9a-fA-F]+$`)
+
 	return hexPattern.MatchString(hash)
 }

@@ -11,8 +11,7 @@ type DL3050Rule struct {
 	cfg *config.Config
 }
 
-// DL3050 creates the rule for checking superfluous labels.
-// TODO: Wire up config from main application
+// TODO: Wire up config from main application.
 func DL3050() rule.Rule {
 	return &DL3050Rule{
 		cfg: config.Default(), // Use default config for now

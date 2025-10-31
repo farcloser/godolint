@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3034(t *testing.T) {
-	allRules := []rule.Rule{ DL3034() }
-
+	allRules := []rule.Rule{DL3034()}
 
 	t.Run("not ok without non-interactive switch", func(t *testing.T) {
 		dockerfile := `RUN zypper install httpd=2.4.24 && zypper clean`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3034")
-
 	})
 
 	t.Run("ok with non-interactive switch present", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3034(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3034")
-
 	})
 
 	t.Run("ok with non-interactive switch present (2)", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3034(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3034")
-
 	})
 
 	t.Run("ok with non-interactive switch present (3)", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3034(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3034")
-
 	})
 
 	t.Run("ok with non-interactive switch present (4)", func(t *testing.T) {
@@ -52,7 +47,5 @@ func TestDL3034(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3034")
-
 	})
-
 }

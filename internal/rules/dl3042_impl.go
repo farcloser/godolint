@@ -52,6 +52,7 @@ func (r *DL3042Rule) Check(line int, state rule.State, instruction syntax.Instru
 		} else {
 			s.currentStage = inst.Image.Image
 		}
+
 		return state.ReplaceData(s)
 
 	case *syntax.Env:
@@ -61,6 +62,7 @@ func (r *DL3042Rule) Check(line int, state rule.State, instruction syntax.Instru
 				s.noCacheSet[s.currentStage] = true
 			}
 		}
+
 		return state.ReplaceData(s)
 
 	case *syntax.Run:
@@ -90,7 +92,7 @@ func (r *DL3042Rule) Check(line int, state rule.State, instruction syntax.Instru
 			if forgotPipNoCacheDir(cmd) {
 				return state.AddFailure(rule.CheckFailure{
 					Code:     DL3042Meta.Code,
-					Severity:  DL3042Meta.Severity,
+					Severity: DL3042Meta.Severity,
 					Message:  DL3042Meta.Message,
 					Line:     line,
 				})
@@ -160,17 +162,18 @@ func isPipWrapper(cmd shell.Command) bool {
 
 func isTruthy(value string) bool {
 	truthy := map[string]bool{
-		"1":     true,
-		"true":  true,
-		"True":  true,
-		"TRUE":  true,
-		"on":    true,
-		"On":    true,
-		"ON":    true,
-		"yes":   true,
-		"Yes":   true,
-		"YES":   true,
+		"1":    true,
+		"true": true,
+		"True": true,
+		"TRUE": true,
+		"on":   true,
+		"On":   true,
+		"ON":   true,
+		"yes":  true,
+		"Yes":  true,
+		"YES":  true,
 	}
+
 	return truthy[value]
 }
 
@@ -186,12 +189,15 @@ func pipNoCacheDirSetInCommand(command string) bool {
 
 	// Get the value (up to space or end of string)
 	value := ""
+
 	for i, ch := range rest {
 		if ch == ' ' || ch == '\t' || ch == '\n' {
 			value = rest[:i]
+
 			break
 		}
 	}
+
 	if value == "" {
 		value = rest
 	}

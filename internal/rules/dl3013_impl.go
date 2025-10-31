@@ -73,6 +73,7 @@ func isRequirementInstall(cmd shell.Command) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -107,10 +108,12 @@ func filterPipFlags(args []string) []string {
 	}
 
 	var result []string
+
 	skip := false
 	for _, arg := range args {
 		if skip {
 			skip = false
+
 			continue
 		}
 
@@ -120,6 +123,7 @@ func filterPipFlags(args []string) []string {
 			if flagsWithValues[arg] {
 				skip = true
 			}
+
 			continue
 		}
 
@@ -132,7 +136,9 @@ func filterPipFlags(args []string) []string {
 func stripPipInstallPrefix(args []string) []string {
 	// Find "install" and skip to packages after it
 	foundInstall := false
+
 	var result []string
+
 	for _, arg := range args {
 		if foundInstall {
 			result = append(result, arg)
@@ -140,6 +146,7 @@ func stripPipInstallPrefix(args []string) []string {
 			foundInstall = true
 		}
 	}
+
 	return result
 }
 
@@ -175,6 +182,7 @@ func hasVersionSymbol(pkg string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -191,6 +199,7 @@ func isVcs(pkg string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -206,6 +215,7 @@ func isLocalPackage(pkg string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 

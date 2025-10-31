@@ -78,5 +78,6 @@ func (r *DL3058Rule) Finalize(state rule.State) rule.State {
 // isValidEmail checks if a string is a valid email address (RFC5322).
 func isValidEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
+
 	return err == nil
 }

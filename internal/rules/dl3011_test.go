@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3011(t *testing.T) {
-	allRules := []rule.Rule{ DL3011() }
-
+	allRules := []rule.Rule{DL3011()}
 
 	t.Run("invalid port", func(t *testing.T) {
 		dockerfile := `EXPOSE 80000`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3011")
-
 	})
 
 	t.Run("invalid port in range", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3011(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3011")
-
 	})
 
 	t.Run("valid port", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3011(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3011")
-
 	})
 
 	t.Run("valid port range", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3011(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3011")
-
 	})
 
 	t.Run("valid port range variable", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3011(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3011")
-
 	})
 
 	t.Run("valid port variable", func(t *testing.T) {
@@ -60,7 +54,5 @@ func TestDL3011(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3011")
-
 	})
-
 }

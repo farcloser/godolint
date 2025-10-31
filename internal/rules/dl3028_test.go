@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3028(t *testing.T) {
-	allRules := []rule.Rule{ DL3028() }
-
+	allRules := []rule.Rule{DL3028()}
 
 	t.Run("does not warn on --version with =", func(t *testing.T) {
 		dockerfile := `RUN gem install bundler --version='2.0.1'`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("does not warn on --version without =", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("does not warn on -v", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("does not warn when using extra flags", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("does not warn when using extra flags with double dashes", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("does not warn when using extra flags with equal sign", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("does not warn when using extra flags with equal sign and double dashes", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("multi", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("multi (2)", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("pinned", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("pinned", func(t *testing.T) {
@@ -100,7 +89,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("unpinned", func(t *testing.T) {
@@ -108,7 +96,6 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3028")
-
 	})
 
 	t.Run("unpinned", func(t *testing.T) {
@@ -116,7 +103,5 @@ func TestDL3028(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3028")
-
 	})
-
 }

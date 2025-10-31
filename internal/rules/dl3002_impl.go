@@ -10,7 +10,7 @@ import (
 // dl3002State tracks root USER instructions per stage.
 // Ported from Acc in DL3002.hs.
 type dl3002State struct {
-	currentStage int        // line number of current FROM
+	currentStage int         // line number of current FROM
 	rootUsers    map[int]int // map[stageLine]userLine - tracks last root USER per stage
 }
 
@@ -50,6 +50,7 @@ func (r *DL3002Rule) Check(line int, state rule.State, instruction syntax.Instru
 	// Remember new stage
 	if _, ok := instruction.(*syntax.From); ok {
 		s.currentStage = line
+
 		return state.ReplaceData(s)
 	}
 
@@ -61,19 +62,24 @@ func (r *DL3002Rule) Check(line int, state rule.State, instruction syntax.Instru
 			for k, v := range s.rootUsers {
 				newRootUsers[k] = v
 			}
+
 			newRootUsers[s.currentStage] = line
 			s.rootUsers = newRootUsers
+
 			return state.ReplaceData(s)
 		}
 
 		// Non-root user - forget stage (clear any previous root USER)
 		newRootUsers := make(map[int]int)
+
 		for k, v := range s.rootUsers {
 			if k != s.currentStage {
 				newRootUsers[k] = v
 			}
 		}
+
 		s.rootUsers = newRootUsers
+
 		return state.ReplaceData(s)
 	}
 

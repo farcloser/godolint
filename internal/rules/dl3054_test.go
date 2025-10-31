@@ -3,6 +3,7 @@ package rules
 import (
 	"testing"
 
+	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -12,15 +13,18 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3054(t *testing.T) {
-	allRules := []rule.Rule{ DL3054() }
-
+	cfg := &config.Config{
+		LabelSchema: map[string]config.LabelType{
+			"spdxlabel": config.LabelTypeSPDX,
+		},
+	}
+	allRules := []rule.Rule{DL3054WithConfig(cfg)}
 
 	t.Run("not ok with label not containing SPDX identifier", func(t *testing.T) {
 		dockerfile := `LABEL spdxlabel="not-spdx"`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3054")
-
 	})
 
 	t.Run("ok with label containing SPDX identifier", func(t *testing.T) {
@@ -28,7 +32,6 @@ func TestDL3054(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3054")
-
 	})
 
 	t.Run("ok with other label not containing SPDX identifier", func(t *testing.T) {
@@ -36,7 +39,5 @@ func TestDL3054(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3054")
-
 	})
-
 }

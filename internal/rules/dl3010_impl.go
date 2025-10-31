@@ -123,6 +123,7 @@ func basename(path string) string {
 	if idx != -1 {
 		return path[idx+1:]
 	}
+
 	return path
 }
 

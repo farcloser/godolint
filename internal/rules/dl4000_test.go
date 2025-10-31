@@ -12,8 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4000(t *testing.T) {
-	allRules := []rule.Rule{ DL4000() }
-
+	allRules := []rule.Rule{DL4000()}
 
 	t.Run("has deprecated maintainer", func(t *testing.T) {
 		dockerfile := `FROM busybox
@@ -21,7 +20,6 @@ MAINTAINER hudu@mail.com`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL4000")
-
 	})
 
 	t.Run("has maintainer", func(t *testing.T) {
@@ -30,7 +28,6 @@ MAINTAINER Lukas`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL4000")
-
 	})
 
 	t.Run("has maintainer first", func(t *testing.T) {
@@ -39,7 +36,6 @@ FROM DEBIAN`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL4000")
-
 	})
 
 	t.Run("has no maintainer", func(t *testing.T) {
@@ -47,7 +43,5 @@ FROM DEBIAN`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL4000")
-
 	})
-
 }

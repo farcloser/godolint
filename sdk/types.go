@@ -41,6 +41,7 @@ func (r *Result) HasErrors() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -51,6 +52,7 @@ func (r *Result) HasWarnings() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -60,5 +62,6 @@ func (r *Result) CountBySeverity() map[Severity]int {
 	for _, v := range r.Violations {
 		counts[v.Severity]++
 	}
+
 	return counts
 }

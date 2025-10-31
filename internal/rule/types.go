@@ -158,6 +158,7 @@ func (r *SimpleRule) Check(line int, state State, instruction syntax.Instruction
 			Line:     line,
 		})
 	}
+
 	return state
 }
 

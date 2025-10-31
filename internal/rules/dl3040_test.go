@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3040(t *testing.T) {
-	allRules := []rule.Rule{ DL3040() }
-
+	allRules := []rule.Rule{DL3040()}
 
 	t.Run("no ok without dnf clean all", func(t *testing.T) {
 		dockerfile := `RUN dnf install -y mariadb-10.4`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("no ok without dnf clean all (2)", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with cache mount at /var/cache/yum", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with cache mount at /var/cache/yum (2)", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with dnf clean all", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with dnf clean all (2)", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with dnf clean all (3)", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with rm /var/cache/yum", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with rm /var/cache/yum (2)", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with tmpfs mount at /var/cache/yum", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
 
 	t.Run("ok with tmpfs mount at /var/cache/yum (2)", func(t *testing.T) {
@@ -100,7 +89,5 @@ func TestDL3040(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3040")
-
 	})
-
 }

@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3062(t *testing.T) {
-	allRules := []rule.Rule{ DL3062() }
-
+	allRules := []rule.Rule{DL3062()}
 
 	t.Run("go version not pinned", func(t *testing.T) {
 		dockerfile := `RUN go install example.com/pkg`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version not pinned", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version not pinned", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version pinned", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version pinned", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version pinned", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version pinned as latest", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version pinned as latest", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3062")
-
 	})
 
 	t.Run("go version pinned as latest", func(t *testing.T) {
@@ -84,7 +75,5 @@ func TestDL3062(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3062")
-
 	})
-
 }

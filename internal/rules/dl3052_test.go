@@ -3,6 +3,7 @@ package rules
 import (
 	"testing"
 
+	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -12,15 +13,18 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3052(t *testing.T) {
-	allRules := []rule.Rule{ DL3052() }
-
+	cfg := &config.Config{
+		LabelSchema: map[string]config.LabelType{
+			"urllabel": config.LabelTypeURL,
+		},
+	}
+	allRules := []rule.Rule{DL3052WithConfig(cfg)}
 
 	t.Run("not ok with label not containing URL", func(t *testing.T) {
 		dockerfile := `LABEL urllabel="not-url"`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3052")
-
 	})
 
 	t.Run("ok with label containing URL", func(t *testing.T) {
@@ -28,7 +32,6 @@ func TestDL3052(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3052")
-
 	})
 
 	t.Run("ok with other label not containing URL", func(t *testing.T) {
@@ -36,7 +39,5 @@ func TestDL3052(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3052")
-
 	})
-
 }

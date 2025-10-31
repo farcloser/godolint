@@ -54,6 +54,7 @@ func getGemPackages(cmd shell.Command) []string {
 		if arg == "-v" || arg == "--version" {
 			return nil
 		}
+
 		if strings.HasPrefix(arg, "--version=") {
 			return nil
 		}
@@ -62,20 +63,24 @@ func getGemPackages(cmd shell.Command) []string {
 	// Get packages from arguments
 	// Process only args until "--" separator
 	argsUntilDoubleDash := []string{}
+
 	for _, arg := range args {
 		if arg == "--" {
 			break
 		}
+
 		argsUntilDoubleDash = append(argsUntilDoubleDash, arg)
 	}
 
 	// Remove flags and their values
 	var packages []string
+
 	skipNext := false
 
 	for _, arg := range argsUntilDoubleDash {
 		if skipNext {
 			skipNext = false
+
 			continue
 		}
 
@@ -90,6 +95,7 @@ func getGemPackages(cmd shell.Command) []string {
 			if !strings.Contains(arg, "=") {
 				skipNext = true
 			}
+
 			continue
 		}
 

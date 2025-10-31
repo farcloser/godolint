@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3045(t *testing.T) {
-	allRules := []rule.Rule{ DL3045() }
-
+	allRules := []rule.Rule{DL3045()}
 
 	t.Run("not ok: `COPY` with relative destination and no `WORKDIR` set", func(t *testing.T) {
 		dockerfile := `COPY bla.sh blubb.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("not ok: `COPY` with relative destination and no `WORKDIR` set with quotes", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with absolute destination and no `WORKDIR` set", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with absolute destination and no `WORKDIR` set - windows", func(t *testing.T) {
@@ -44,23 +40,23 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
-	t.Run("ok: `COPY` with absolute destination and no `WORKDIR` set - windows with alternative paths", func(t *testing.T) {
-		dockerfile := `COPY bla.sh c:/system32/blubb.sh`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok: `COPY` with absolute destination and no `WORKDIR` set - windows with alternative paths",
+		func(t *testing.T) {
+			dockerfile := `COPY bla.sh c:/system32/blubb.sh`
+			violations := LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3045")
-
-	})
+			AssertNoViolation(t, violations, "DL3045")
+		},
+	)
 
 	t.Run("ok: `COPY` with absolute destination and no `WORKDIR` set - windows with quotes", func(t *testing.T) {
 		dockerfile := `COPY bla.sh "c:\system32\blubb.sh"`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with absolute destination and no `WORKDIR` set with quotes", func(t *testing.T) {
@@ -68,7 +64,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with destination being an environment variable 1", func(t *testing.T) {
@@ -76,7 +71,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with destination being an environment variable 2", func(t *testing.T) {
@@ -84,7 +78,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with destination being an environment variable 3", func(t *testing.T) {
@@ -92,7 +85,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with destination being an environment variable 4", func(t *testing.T) {
@@ -100,7 +92,6 @@ func TestDL3045(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with relative destination and `WORKDIR` set", func(t *testing.T) {
@@ -110,7 +101,6 @@ COPY bla.sh blubb.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("ok: `COPY` with relative destination and `WORKDIR` set - windows", func(t *testing.T) {
@@ -120,7 +110,6 @@ COPY bla.sh blubb.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3045")
-
 	})
 
 	t.Run("regression: don't crash with single character paths", func(t *testing.T) {
@@ -128,7 +117,5 @@ COPY bla.sh blubb.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3045")
-
 	})
-
 }

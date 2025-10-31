@@ -12,12 +12,10 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3024(t *testing.T) {
-	allRules := []rule.Rule{ DL3024() }
-
+	allRules := []rule.Rule{DL3024()}
 
 	t.Run("don't warn on unique aliases", func(t *testing.T) {
-		dockerfile := `don't warn on unique aliases
-FROM scratch as build
+		dockerfile := `FROM scratch as build
 RUN foo
 FROM node as run
 RUN baz
@@ -25,12 +23,10 @@ DL3024`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3024")
-
 	})
 
 	t.Run("warn on duplicate aliases", func(t *testing.T) {
-		dockerfile := `warn on duplicate aliases
-FROM node as foo
+		dockerfile := `FROM node as foo
 RUN something
 FROM scratch as foo
 RUN something
@@ -38,7 +34,5 @@ DL3024`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3024")
-
 	})
-
 }

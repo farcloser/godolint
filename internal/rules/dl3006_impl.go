@@ -55,6 +55,7 @@ func (r *DL3006Rule) Check(line int, state rule.State, instruction syntax.Instru
 		for k, v := range s.aliases {
 			newAliases[k] = v
 		}
+
 		newAliases[*from.Image.Alias] = true
 		s.aliases = newAliases
 		state = state.ReplaceData(s)

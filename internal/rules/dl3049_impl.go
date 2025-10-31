@@ -18,11 +18,17 @@ type DL3049Rule struct {
 	cfg *config.Config
 }
 
-// DL3049 creates the rule for checking missing labels.
-// TODO: Add full multi-stage tracking with inheritance
+// TODO: Add full multi-stage tracking with inheritance.
 func DL3049() rule.Rule {
 	return &DL3049Rule{
 		cfg: config.Default(),
+	}
+}
+
+// DL3049WithConfig creates the rule with custom configuration.
+func DL3049WithConfig(cfg *config.Config) rule.Rule {
+	return &DL3049Rule{
+		cfg: cfg,
 	}
 }
 
@@ -52,12 +58,14 @@ func (r *DL3049Rule) Check(line int, state rule.State, instruction syntax.Instru
 		for _, pair := range label.Pairs {
 			s.definedLabels[pair.Key] = true
 		}
+
 		return state.ReplaceData(s)
 	}
 
 	// Reset on new FROM (simplified - full version would track inheritance)
 	if _, ok := instruction.(*syntax.From); ok {
 		s.definedLabels = make(map[string]bool)
+
 		return state.ReplaceData(s)
 	}
 

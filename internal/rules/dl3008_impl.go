@@ -50,7 +50,9 @@ func aptGetPackages(cmd shell.Command) []string {
 
 	// Get arguments without flags, excluding "install" itself
 	args := shell.GetArgsNoFlags(cmd)
+
 	var packages []string
+
 	for _, arg := range args {
 		if arg != "install" {
 			packages = append(packages, arg)

@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3004(t *testing.T) {
-	allRules := []rule.Rule{ DL3004() }
-
+	allRules := []rule.Rule{DL3004()}
 
 	t.Run("install sudo", func(t *testing.T) {
 		dockerfile := `RUN apt-get install sudo`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3004")
-
 	})
 
 	t.Run("sudo", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3004(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3004")
-
 	})
 
 	t.Run("sudo chained programs", func(t *testing.T) {
@@ -36,7 +33,5 @@ func TestDL3004(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3004")
-
 	})
-
 }

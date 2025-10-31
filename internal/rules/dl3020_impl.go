@@ -57,5 +57,6 @@ func isArchive(path string) bool {
 // isURL checks if path is a URL.
 func isURL(path string) bool {
 	path = dropQuotes(path)
+
 	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
 }

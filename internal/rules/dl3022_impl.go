@@ -10,7 +10,7 @@ import (
 
 // dl3022State tracks FROM stages to validate COPY --from references.
 type dl3022State struct {
-	count  int              // Number of FROM stages seen
+	count  int             // Number of FROM stages seen
 	stages map[string]bool // Named stages (aliases)
 }
 
@@ -60,6 +60,7 @@ func (r *DL3022Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 		s.count++
 		s.stages = newStages
+
 		return state.ReplaceData(s)
 	}
 

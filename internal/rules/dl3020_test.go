@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3020(t *testing.T) {
-	allRules := []rule.Rule{ DL3020() }
-
+	allRules := []rule.Rule{DL3020()}
 
 	t.Run("add for bz2", func(t *testing.T) {
 		dockerfile := `ADD file.bz2 /usr/src/app/`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for gzip", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for tar", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for tgz", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for tgz with quotes", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for url", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for url with quotes", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("add for xz", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("using add", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("warn for zip", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3020")
-
 	})
 
 	t.Run("warn for zip with quotes", func(t *testing.T) {
@@ -100,7 +89,5 @@ func TestDL3020(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3020")
-
 	})
-
 }

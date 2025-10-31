@@ -12,23 +12,19 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3008(t *testing.T) {
-	allRules := []rule.Rule{ DL3008() }
-
+	allRules := []rule.Rule{DL3008()}
 
 	t.Run("apt-get pinned chained", func(t *testing.T) {
-		dockerfile := `apt-get pinned chained
-RUN apt-get update \
+		dockerfile := `RUN apt-get update \
  && apt-get -yqq --no-install-recommends install nodejs=0.10 \
  && rm -rf /var/lib/apt/lists/*`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3008")
-
 	})
 
 	t.Run("apt-get pinned regression", func(t *testing.T) {
-		dockerfile := `apt-get pinned regression
-RUN apt-get update && apt-get install --no-install-recommends -y \
+		dockerfile := `RUN apt-get update && apt-get install --no-install-recommends -y \
 python-demjson=2.2.2* \
 wget=1.16.1* \
 git=1:2.5.0* \
@@ -36,18 +32,15 @@ ruby=1:2.1.*`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3008")
-
 	})
 
 	t.Run("apt-get tolerate target-release", func(t *testing.T) {
-		dockerfile := `apt-get tolerate target-release
-RUN set -e &&\
+		dockerfile := `RUN set -e &&\
  apt-get update &&\
  rm -rf /var/lib/apt/lists/*`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3008")
-
 	})
 
 	t.Run("apt-get version", func(t *testing.T) {
@@ -55,7 +48,6 @@ RUN set -e &&\
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3008")
-
 	})
 
 	t.Run("apt-get version", func(t *testing.T) {
@@ -63,7 +55,6 @@ RUN set -e &&\
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3008")
-
 	})
 
 	t.Run("apt-get version pinning", func(t *testing.T) {
@@ -71,7 +62,5 @@ RUN set -e &&\
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3008")
-
 	})
-
 }

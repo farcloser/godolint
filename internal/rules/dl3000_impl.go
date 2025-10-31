@@ -43,4 +43,3 @@ func checkDL3000(instruction syntax.Instruction) bool {
 	// Relative path - fail
 	return false
 }
-

@@ -100,6 +100,7 @@ func dnfInstallFilter(cmd shell.Command) []string {
 	}
 
 	args := shell.GetArgsNoFlags(cmd)
+
 	var packages []string
 
 	for _, arg := range args {
@@ -125,6 +126,7 @@ func isDnfPackageVersionFixed(pkg string) bool {
 
 	// Check if parts after first dash look like version
 	versionParts := parts[1:]
+
 	return isDnfVersionLike(versionParts)
 }
 
@@ -139,8 +141,10 @@ func isDnfVersionLike(parts []string) bool {
 	for _, part := range parts {
 		if !isDnfValidVersionPart(part) {
 			allValid = false
+
 			break
 		}
+
 		if len(part) > 0 && unicode.IsDigit(rune(part[0])) {
 			hasDigitStart = true
 		}
@@ -159,6 +163,7 @@ func isDnfValidVersionPart(part string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

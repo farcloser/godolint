@@ -73,7 +73,7 @@ func main() {
 
 	// Check which rules are already implemented (check for _impl.go files)
 	for i := range rules {
-		implFile := fmt.Sprintf("%s_impl.go", strings.ToLower(rules[i].Code))
+		implFile := strings.ToLower(rules[i].Code) + "_impl.go"
 		if _, err := os.Stat(implFile); err == nil {
 			rules[i].Implemented = true
 		}
@@ -97,6 +97,7 @@ func main() {
 
 	// Always generate metadata files (safe to overwrite)
 	metadataGenerated := 0
+
 	for _, rule := range rules {
 		if err := generateMetadata(rule); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to generate metadata for %s: %v\n", rule.Code, err)
@@ -184,10 +185,12 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 	// Match patterns like: check (Maintainer _) = False
 	//                      check _ = True
 	checkPattern := regexp.MustCompile(`(?m)^\s*check\s+(.+?)\s*=`)
+
 	checkMatches := checkPattern.FindAllStringSubmatch(text, -1)
 	if len(checkMatches) > 0 {
 		// Collect all check patterns
 		var checkLines []string
+
 		for _, match := range checkMatches {
 			if len(match) > 1 {
 				pattern := strings.TrimSpace(match[1])
@@ -197,6 +200,7 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 				}
 			}
 		}
+
 		rule.HaskellCheck = strings.Join(checkLines, "\n")
 	}
 
@@ -274,7 +278,7 @@ var {{.Code}}Meta = rule.RuleMeta{
 		return err
 	}
 
-	filename := fmt.Sprintf("%s.go", strings.ToLower(rule.Code))
+	filename := strings.ToLower(rule.Code) + ".go"
 
 	f, err := os.Create(filename)
 	if err != nil {
@@ -288,7 +292,7 @@ var {{.Code}}Meta = rule.RuleMeta{
 
 // generateImplementation generates working implementation from Haskell patterns (only if file doesn't exist).
 func generateImplementation(rule RuleMetadata) error {
-	filename := fmt.Sprintf("%s_impl.go", strings.ToLower(rule.Code))
+	filename := strings.ToLower(rule.Code) + "_impl.go"
 
 	// Check if implementation already exists
 	if _, err := os.Stat(filename); err == nil {

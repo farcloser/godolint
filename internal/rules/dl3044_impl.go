@@ -46,6 +46,7 @@ func (r *DL3044Rule) Check(line int, state rule.State, instruction syntax.Instru
 	case *syntax.Arg:
 		// Track ARG variables
 		s.definedVars[inst.ArgName] = true
+
 		return state.ReplaceData(s)
 
 	case *syntax.Env:
@@ -106,5 +107,6 @@ func referencesVar(value, varName string) bool {
 	// Check for $varName with termination
 	// Match $varName where it's followed by non-variable character
 	pattern := regexp.MustCompile(`\$` + regexp.QuoteMeta(varName) + `(?:[^a-zA-Z0-9_]|$)`)
+
 	return pattern.MatchString(value)
 }

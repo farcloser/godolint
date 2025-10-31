@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3038(t *testing.T) {
-	allRules := []rule.Rule{ DL3038() }
-
+	allRules := []rule.Rule{DL3038()}
 
 	t.Run("not ok without dnf non-interactive flag", func(t *testing.T) {
 		dockerfile := `RUN dnf install httpd-2.4.24 && dnf clean all`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3038")
-
 	})
 
 	t.Run("not ok without dnf non-interactive flag (2)", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3038(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3038")
-
 	})
 
 	t.Run("ok with dnf non-interactive flag", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3038(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3038")
-
 	})
 
 	t.Run("ok with dnf non-interactive flag (2)", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3038(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3038")
-
 	})
 
 	t.Run("ok with dnf non-interactive flag (3)", func(t *testing.T) {
@@ -52,7 +47,5 @@ func TestDL3038(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3038")
-
 	})
-
 }

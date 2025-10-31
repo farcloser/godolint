@@ -88,6 +88,7 @@ func yumInstallFilter(cmd shell.Command) []string {
 	}
 
 	args := shell.GetArgsNoFlags(cmd)
+
 	var packages []string
 
 	for _, arg := range args {
@@ -113,6 +114,7 @@ func isYumPackageVersionFixed(pkg string) bool {
 
 	// Check if parts after first dash look like version
 	versionParts := parts[1:]
+
 	return isVersionLike(versionParts)
 }
 
@@ -127,8 +129,10 @@ func isVersionLike(parts []string) bool {
 	for _, part := range parts {
 		if !isValidVersionPart(part) {
 			allValid = false
+
 			break
 		}
+
 		if len(part) > 0 && unicode.IsDigit(rune(part[0])) {
 			hasDigitStart = true
 		}
@@ -147,6 +151,7 @@ func isValidVersionPart(part string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

@@ -12,17 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3027(t *testing.T) {
-	allRules := []rule.Rule{ DL3027() }
-
+	allRules := []rule.Rule{DL3027()}
 
 	t.Run("apt", func(t *testing.T) {
-		dockerfile := `apt
-FROM ubuntu
+		dockerfile := `FROM ubuntu
 RUN apt install python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3027")
-
 	})
-
 }

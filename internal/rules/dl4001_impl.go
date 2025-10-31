@@ -56,9 +56,10 @@ func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instru
 		newWget := currentState.HasWget
 
 		for _, cmd := range commands {
-			if cmd == "curl" {
+			switch cmd {
+			case "curl":
 				newCurl = true
-			} else if cmd == "wget" {
+			case "wget":
 				newWget = true
 			}
 		}

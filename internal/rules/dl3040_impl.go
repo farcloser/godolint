@@ -42,12 +42,15 @@ func checkDL3040(instruction syntax.Instruction) bool {
 		if shell.CmdHasArgs("dnf", []string{"install"}, cmd) {
 			hasDnfInstall = true
 		}
+
 		if shell.CmdHasArgs("microdnf", []string{"install"}, cmd) {
 			hasMicroDnfInstall = true
 		}
+
 		if isDnfCleanCmd(cmd) {
 			hasDnfClean = true
 		}
+
 		if isMicroDnfCleanCmd(cmd) {
 			hasMicroDnfClean = true
 		}
@@ -70,9 +73,11 @@ func isDnfCleanCmd(cmd shell.Command) bool {
 	if shell.CmdHasArgs("dnf", []string{"clean", "all"}, cmd) {
 		return true
 	}
+
 	if shell.CmdHasArgs("rm", []string{"-rf", "/var/cache/libdnf5*"}, cmd) {
 		return true
 	}
+
 	return false
 }
 
@@ -80,8 +85,10 @@ func isMicroDnfCleanCmd(cmd shell.Command) bool {
 	if shell.CmdHasArgs("microdnf", []string{"clean", "all"}, cmd) {
 		return true
 	}
+
 	if shell.CmdHasArgs("rm", []string{"-rf", "/var/cache/libdnf5*"}, cmd) {
 		return true
 	}
+
 	return false
 }

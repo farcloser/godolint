@@ -27,12 +27,10 @@ func checkDL1001(instruction syntax.Instruction) bool {
 	return !isIgnorePragma(comment.Text)
 }
 
-// isIgnorePragma checks if a comment text contains a hadolint ignore pragma.
-// Matches patterns like:
-// - hadolint ignore=DL3000
-// - hadolint ignore=DL3000,DL3001
+// - hadolint ignore=DL3000,DL3001.
 func isIgnorePragma(text string) bool {
 	// Match hadolint ignore= followed by rule codes
 	pattern := regexp.MustCompile(`hadolint\s+ignore\s*=\s*DL\d{4}`)
+
 	return pattern.MatchString(text)
 }

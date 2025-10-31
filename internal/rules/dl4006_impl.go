@@ -46,6 +46,7 @@ func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instru
 	case *syntax.From:
 		// Reset state on new FROM
 		s.pipefailSet = false
+
 		return state.ReplaceData(s)
 
 	case *syntax.Shell:
@@ -56,12 +57,14 @@ func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instru
 			// Check if it's a non-POSIX shell (fish, powershell, etc)
 			if isNonPosixShell(shellCmd) {
 				s.pipefailSet = true // Skip checks for non-POSIX shells
+
 				return state.ReplaceData(s)
 			}
 
 			// Check if pipefail is set
 			s.pipefailSet = hasPipefailOption(shellCmd)
 		}
+
 		return state.ReplaceData(s)
 
 	case *syntax.Run:
@@ -74,6 +77,7 @@ func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Line:     line,
 			})
 		}
+
 		return state
 	}
 
@@ -102,6 +106,7 @@ func isNonPosixShell(shellCmd string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -132,9 +137,11 @@ func hasPipefailOption(shellCmd string) bool {
 	for _, cmd := range parsed.PresentCommands {
 		// Check if it's a valid shell
 		isValidShell := false
+
 		for _, validShell := range validShells {
 			if cmd.Name == validShell {
 				isValidShell = true
+
 				break
 			}
 		}

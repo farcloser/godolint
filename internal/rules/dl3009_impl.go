@@ -53,6 +53,7 @@ func (r *DL3009Rule) Check(line int, state rule.State, instruction syntax.Instru
 		// Track which image names are referenced by FROM instructions
 		// This is used to detect if a stage (by its alias) is used later
 		s.stages[inst.Image.Image] = line
+
 		return state.ReplaceData(s)
 
 	case *syntax.Run:
@@ -79,6 +80,7 @@ func (r *DL3009Rule) Check(line int, state rule.State, instruction syntax.Instru
 			if s.lastFrom != nil && s.lastFrom.Alias != nil {
 				alias = *s.lastFrom.Alias
 			}
+
 			s.forgets[line] = alias
 		} else if disabledDockerClean(parsed) {
 			s.dockerClean = false
@@ -94,6 +96,7 @@ func (r *DL3009Rule) Finalize(state rule.State) rule.State {
 	s := state.Data.(dl3009State)
 
 	finalState := state
+
 	lastAlias := ""
 	if s.lastFrom != nil && s.lastFrom.Alias != nil {
 		lastAlias = *s.lastFrom.Alias
@@ -109,6 +112,7 @@ func (r *DL3009Rule) Finalize(state rule.State) rule.State {
 				Message:  DL3009Meta.Message,
 				Line:     line,
 			})
+
 			continue
 		}
 

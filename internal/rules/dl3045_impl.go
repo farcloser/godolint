@@ -64,11 +64,13 @@ func (r *DL3045Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 		currentState.CurrentStage = stageName
 		currentState.WorkdirSet[stageName] = inheritWorkdir
+
 		return state.ReplaceData(currentState)
 
 	case *syntax.Workdir:
 		// Mark that WORKDIR has been set in current stage
 		currentState.WorkdirSet[currentState.CurrentStage] = true
+
 		return state.ReplaceData(currentState)
 
 	case *syntax.Copy:

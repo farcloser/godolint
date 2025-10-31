@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3021(t *testing.T) {
-	allRules := []rule.Rule{ DL3021() }
-
+	allRules := []rule.Rule{DL3021()}
 
 	t.Run("no warn on 2 args", func(t *testing.T) {
 		dockerfile := `COPY foo bar`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3021")
-
 	})
 
 	t.Run("no warn on 3 args", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3021(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3021")
-
 	})
 
 	t.Run("no warn on 3 args with quotes", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3021(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3021")
-
 	})
 
 	t.Run("warn on 3 args", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3021(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3021")
-
 	})
 
 	t.Run("warn on 3 args with quotes", func(t *testing.T) {
@@ -52,7 +47,5 @@ func TestDL3021(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3021")
-
 	})
-
 }

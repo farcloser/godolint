@@ -122,8 +122,35 @@ func nextValue(node *parser.Node) string {
 func collectValues(node *parser.Node) []string {
 	var values []string
 
+	var current string
+
+	inQuote := false
+
 	for n := node.Next; n != nil; n = n.Next {
-		values = append(values, n.Value)
+		val := n.Value
+
+		if inQuote {
+			// We're in the middle of a quoted string
+			current += " " + val
+			if strings.HasSuffix(val, "\"") {
+				// End of quoted string
+				values = append(values, current)
+				current = ""
+				inQuote = false
+			}
+		} else if strings.HasPrefix(val, "\"") && !strings.HasSuffix(val, "\"") {
+			// Start of a quoted string that spans multiple nodes
+			current = val
+			inQuote = true
+		} else {
+			// Normal value
+			values = append(values, val)
+		}
+	}
+
+	// Handle unclosed quote (shouldn't happen with valid Dockerfile)
+	if inQuote && current != "" {
+		values = append(values, current)
 	}
 
 	return values
@@ -289,6 +316,7 @@ func unquote(s string) string {
 	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
 		return s[1 : len(s)-1]
 	}
+
 	return s
 }
 
@@ -319,6 +347,7 @@ func stripQuotes(s string) string {
 	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
 		return s[1 : len(s)-1]
 	}
+
 	return s
 }
 

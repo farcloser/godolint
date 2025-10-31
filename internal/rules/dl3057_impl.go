@@ -53,6 +53,7 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 	case *syntax.From:
 		// Create stage ID
 		imageName := inst.Image.Image
+
 		stageName := imageName
 		if inst.Image.Alias != nil {
 			stageName = *inst.Image.Alias
@@ -66,9 +67,11 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 		// Check if this stage inherits from a good stage
 		inherited := false
+
 		for goodStage := range s.goodStages {
 			if goodStage.name == imageName {
 				inherited = true
+
 				break
 			}
 		}
@@ -82,6 +85,7 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 		}
 
 		s.currentStage = &newStage
+
 		return state.ReplaceData(s)
 
 	case *syntax.Healthcheck:
@@ -89,6 +93,7 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 		if s.currentStage != nil {
 			s = markGood(s, *s.currentStage)
 		}
+
 		return state.ReplaceData(s)
 	}
 

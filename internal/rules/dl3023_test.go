@@ -12,12 +12,10 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3023(t *testing.T) {
-	allRules := []rule.Rule{ DL3023() }
-
+	allRules := []rule.Rule{DL3023()}
 
 	t.Run("don't warn on copying from other sources", func(t *testing.T) {
-		dockerfile := `don't warn on copying from other sources
-FROM scratch as build
+		dockerfile := `FROM scratch as build
 RUN foo
 FROM node as run
 COPY --from=build foo .
@@ -26,18 +24,14 @@ DL3023`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3023")
-
 	})
 
 	t.Run("warn on copying from your the same FROM", func(t *testing.T) {
-		dockerfile := `warn on copying from your the same FROM
-FROM node as foo
+		dockerfile := `FROM node as foo
 COPY --from=foo bar .
 DL3023`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3023")
-
 	})
-
 }

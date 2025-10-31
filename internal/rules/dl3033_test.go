@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3033(t *testing.T) {
-	allRules := []rule.Rule{ DL3033() }
-
+	allRules := []rule.Rule{DL3033()}
 
 	t.Run("not ok without yum version pinning", func(t *testing.T) {
 		dockerfile := `RUN yum install -y tomcat && yum clean all`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("not ok without yum version pinning - modules", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning (2)", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning - modules", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning - modules (2)", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning - package name contains `-`", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning - package name contains `-` and `+`", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
 
 	t.Run("ok with yum version pinning - version contains epoch", func(t *testing.T) {
@@ -84,7 +75,5 @@ func TestDL3033(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3033")
-
 	})
-
 }

@@ -12,12 +12,10 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4003(t *testing.T) {
-	allRules := []rule.Rule{ DL4003() }
-
+	allRules := []rule.Rule{DL4003()}
 
 	t.Run("many cmds", func(t *testing.T) {
-		dockerfile := `many cmds
-FROM debian
+		dockerfile := `FROM debian
 CMD bash
 RUN foo
 CMD another
@@ -25,12 +23,10 @@ DL4003`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL4003")
-
 	})
 
 	t.Run("many cmds, different stages", func(t *testing.T) {
-		dockerfile := `many cmds, different stages
-FROM debian as distro1
+		dockerfile := `FROM debian as distro1
 CMD bash
 RUN foo
 CMD another
@@ -40,7 +36,6 @@ DL4003`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL4003")
-
 	})
 
 	t.Run("single cmd", func(t *testing.T) {
@@ -48,12 +43,10 @@ DL4003`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL4003")
-
 	})
 
 	t.Run("single cmds, different stages", func(t *testing.T) {
-		dockerfile := `single cmds, different stages
-FROM debian as distro1
+		dockerfile := `FROM debian as distro1
 CMD bash
 RUN foo
 FROM debian as distro2
@@ -62,7 +55,5 @@ DL4003`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL4003")
-
 	})
-
 }

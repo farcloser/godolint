@@ -40,6 +40,7 @@ func (r *DL3023Rule) Check(line int, state rule.State, instruction syntax.Instru
 		if from.Image.Alias != nil {
 			return state.ReplaceData(*from.Image.Alias)
 		}
+
 		return state.ReplaceData("") // No alias
 	}
 

@@ -12,8 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3059(t *testing.T) {
-	allRules := []rule.Rule{ DL3059() }
-
+	allRules := []rule.Rule{DL3059()}
 
 	t.Run("not ok with two `RUN`s separated by a comment", func(t *testing.T) {
 		dockerfile := `RUN /foo.sh
@@ -22,7 +21,6 @@ RUN /bar.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3059")
-
 	})
 
 	t.Run("not ok with two consecutive `RUN`s", func(t *testing.T) {
@@ -31,7 +29,6 @@ RUN /bar.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3059")
-
 	})
 
 	t.Run("ok with no `RUN` at all", func(t *testing.T) {
@@ -39,7 +36,6 @@ RUN /bar.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3059")
-
 	})
 
 	t.Run("ok with one `RUN`", func(t *testing.T) {
@@ -47,7 +43,6 @@ RUN /bar.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3059")
-
 	})
 
 	t.Run("ok with one `RUN` after a comment", func(t *testing.T) {
@@ -56,7 +51,6 @@ RUN /foo.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3059")
-
 	})
 
 	t.Run("ok with two not consecutive `RUN`", func(t *testing.T) {
@@ -66,7 +60,5 @@ RUN /bar.sh`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3059")
-
 	})
-
 }

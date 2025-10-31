@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3037(t *testing.T) {
-	allRules := []rule.Rule{ DL3037() }
-
+	allRules := []rule.Rule{DL3037()}
 
 	t.Run("not ok without zypper version pinning", func(t *testing.T) {
 		dockerfile := `RUN zypper install -y tomcat && zypper clean`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3037")
-
 	})
 
 	t.Run("ok with different variants of zypper version pinning", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3037(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3037")
-
 	})
 
 	t.Run("ok with different variants of zypper version pinning (2)", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3037(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3037")
-
 	})
 
 	t.Run("ok with different variants of zypper version pinning (3)", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3037(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3037")
-
 	})
 
 	t.Run("ok with different variants of zypper version pinning (4)", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3037(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3037")
-
 	})
 
 	t.Run("ok with different variants of zypper version pinning (5)", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3037(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3037")
-
 	})
 
 	t.Run("ok with different variants of zypper version pinning (6)", func(t *testing.T) {
@@ -68,7 +61,5 @@ func TestDL3037(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3037")
-
 	})
-
 }

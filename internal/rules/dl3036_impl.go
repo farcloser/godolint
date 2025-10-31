@@ -39,6 +39,7 @@ func checkDL3036(instruction syntax.Instruction) bool {
 		if isZypperInstallCmd(cmd) {
 			hasZypperInstall = true
 		}
+
 		if isZypperCleanCmd(cmd) {
 			hasZypperClean = true
 		}

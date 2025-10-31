@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3000(t *testing.T) {
-	allRules := []rule.Rule{ DL3000() }
-
+	allRules := []rule.Rule{DL3000()}
 
 	t.Run("workdir absolute", func(t *testing.T) {
 		dockerfile := `WORKDIR /usr/local`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir absolute double quotes", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir absolute single quotes", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir absolute windows", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir absolute windows alternative", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir absolute windows quotes", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir absolute windows quotes alternative", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir relative", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir relative double quotes", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir relative single quotes", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir variable", func(t *testing.T) {
@@ -100,7 +89,6 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
 
 	t.Run("workdir variable double quotes", func(t *testing.T) {
@@ -108,7 +96,5 @@ func TestDL3000(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3000")
-
 	})
-
 }

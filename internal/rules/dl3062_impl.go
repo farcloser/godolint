@@ -57,6 +57,7 @@ func getGoPackages(parsed *shell.ParsedShell) []string {
 			if arg == "install" || arg == "get" || arg == "run" {
 				continue
 			}
+
 			packages = append(packages, arg)
 		}
 	}

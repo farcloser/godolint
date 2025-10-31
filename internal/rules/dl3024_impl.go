@@ -69,6 +69,7 @@ func (r *DL3024Rule) Check(line int, state rule.State, instruction syntax.Instru
 	for k, v := range s.aliases {
 		newAliases[k] = v
 	}
+
 	newAliases[alias] = line
 	s.aliases = newAliases
 

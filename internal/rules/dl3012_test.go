@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3012(t *testing.T) {
-	allRules := []rule.Rule{ DL3012() }
-
+	allRules := []rule.Rule{DL3012()}
 
 	t.Run("ok with no HEALTHCHECK instruction", func(t *testing.T) {
 		dockerfile := `FROM scratch`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3012")
-
 	})
 
 	t.Run("ok with one HEALTHCHECK instruction", func(t *testing.T) {
@@ -29,7 +27,6 @@ HEALTHCHECK CMD /bin/bla`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3012")
-
 	})
 
 	t.Run("ok with two HEALTHCHECK instructions in two stages", func(t *testing.T) {
@@ -40,7 +37,6 @@ HEALTHCHECK CMD /bin/bla2`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3012")
-
 	})
 
 	t.Run("warn with two HEALTHCHECK instructions", func(t *testing.T) {
@@ -50,7 +46,5 @@ HEALTHCHECK CMD /bin/bla2`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3012")
-
 	})
-
 }

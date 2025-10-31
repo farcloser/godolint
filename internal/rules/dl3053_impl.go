@@ -78,5 +78,6 @@ func (r *DL3053Rule) Finalize(state rule.State) rule.State {
 // isValidRFC3339 checks if a string is a valid RFC3339 timestamp.
 func isValidRFC3339(timestamp string) bool {
 	_, err := time.Parse(time.RFC3339, timestamp)
+
 	return err == nil
 }

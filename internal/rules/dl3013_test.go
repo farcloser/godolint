@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3013(t *testing.T) {
-	allRules := []rule.Rule{ DL3013() }
-
+	allRules := []rule.Rule{DL3013()}
 
 	t.Run("pip install constraints file - long version argument", func(t *testing.T) {
 		dockerfile := `RUN pip install pykafka --constraint http://foo.bar.baz`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install constraints file - short version argument", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install excluded version", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install lower bound", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install no cache dir", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install requirements", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install requirements with long flag", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install upper bound", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install use setup.py", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip install user directory", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version not pinned", func(t *testing.T) {
@@ -100,7 +89,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version not pinned with python -m", func(t *testing.T) {
@@ -108,7 +96,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned", func(t *testing.T) {
@@ -116,7 +103,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with === operator", func(t *testing.T) {
@@ -124,7 +110,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with flag --build", func(t *testing.T) {
@@ -132,7 +117,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with flag --ignore-installed", func(t *testing.T) {
@@ -140,7 +124,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with flag --prefix", func(t *testing.T) {
@@ -148,7 +131,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with flag --root", func(t *testing.T) {
@@ -156,7 +138,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with flag --target", func(t *testing.T) {
@@ -164,7 +145,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with flag --trusted-host", func(t *testing.T) {
@@ -172,7 +152,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with python -m", func(t *testing.T) {
@@ -180,7 +159,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip version pinned with ~= operator", func(t *testing.T) {
@@ -188,7 +166,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip2 version not pinned", func(t *testing.T) {
@@ -196,7 +173,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip3 install from local package", func(t *testing.T) {
@@ -204,7 +180,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip3 install from local package (2)", func(t *testing.T) {
@@ -212,7 +187,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip3 version not pinned", func(t *testing.T) {
@@ -220,7 +194,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pip3 version pinned", func(t *testing.T) {
@@ -228,7 +201,6 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
 
 	t.Run("pipenv is not pip", func(t *testing.T) {
@@ -236,7 +208,5 @@ func TestDL3013(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3013")
-
 	})
-
 }

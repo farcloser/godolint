@@ -34,8 +34,7 @@ func checkDL3011(instruction syntax.Instruction) bool {
 	return true
 }
 
-// isValidPortSpec checks if a port specification is valid.
-// Port spec can be: "80", "80/tcp", "8000-9000", "8000-9000/tcp", "${VAR}", "8000-${VAR}"
+// Port spec can be: "80", "80/tcp", "8000-9000", "8000-9000/tcp", "${VAR}", "8000-${VAR}".
 func isValidPortSpec(portSpec string) bool {
 	// Remove protocol suffix if present (/tcp, /udp, /sctp)
 	parts := strings.Split(portSpec, "/")

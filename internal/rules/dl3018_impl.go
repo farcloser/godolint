@@ -58,6 +58,7 @@ func apkAddPackages(cmd shell.Command) []string {
 
 	// Get flag IDs to skip
 	skipNextArgIDs := make(map[int]bool)
+
 	for _, flag := range cmd.Flags {
 		flagName := strings.TrimPrefix(flag.Arg, "-")
 		flagName = strings.TrimPrefix(flagName, "-")
@@ -78,6 +79,7 @@ func apkAddPackages(cmd shell.Command) []string {
 
 	// Get arguments, excluding flags and their values
 	var packages []string
+
 	for _, arg := range cmd.Arguments {
 		// Skip if it's a flag
 		if flagIDs[arg.ID] {
@@ -91,6 +93,7 @@ func apkAddPackages(cmd shell.Command) []string {
 		if arg.Arg == "add" {
 			continue
 		}
+
 		packages = append(packages, arg.Arg)
 	}
 

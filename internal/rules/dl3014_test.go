@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3014(t *testing.T) {
-	allRules := []rule.Rule{ DL3014() }
-
+	allRules := []rule.Rule{DL3014()}
 
 	t.Run("apt-get --quiet", func(t *testing.T) {
 		dockerfile := `RUN apt-get install --quiet python`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get --quiet --quiet", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get -q", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get -q -q", func(t *testing.T) {
@@ -44,7 +40,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get -q=2", func(t *testing.T) {
@@ -52,7 +47,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get -qq", func(t *testing.T) {
@@ -60,7 +54,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get auto yes", func(t *testing.T) {
@@ -68,7 +61,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get with assume-yes", func(t *testing.T) {
@@ -76,7 +68,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get with auto expanded yes", func(t *testing.T) {
@@ -84,7 +75,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get with auto yes", func(t *testing.T) {
@@ -92,7 +82,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get yes different pos", func(t *testing.T) {
@@ -100,7 +89,6 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
 
 	t.Run("apt-get yes shortflag", func(t *testing.T) {
@@ -108,7 +96,5 @@ func TestDL3014(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3014")
-
 	})
-
 }

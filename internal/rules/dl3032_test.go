@@ -12,15 +12,13 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3032(t *testing.T) {
-	allRules := []rule.Rule{ DL3032() }
-
+	allRules := []rule.Rule{DL3032()}
 
 	t.Run("not ok with no clean all", func(t *testing.T) {
 		dockerfile := `RUN yum install -y mariadb-10.4`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3032")
-
 	})
 
 	t.Run("ok with rm -rf /var/cache/yum/*", func(t *testing.T) {
@@ -28,7 +26,6 @@ func TestDL3032(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3032")
-
 	})
 
 	t.Run("ok with yum clean all ", func(t *testing.T) {
@@ -36,7 +33,6 @@ func TestDL3032(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3032")
-
 	})
 
 	t.Run("ok with yum clean all  (2)", func(t *testing.T) {
@@ -44,7 +40,5 @@ func TestDL3032(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3032")
-
 	})
-
 }

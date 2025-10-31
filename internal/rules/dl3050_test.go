@@ -3,6 +3,7 @@ package rules
 import (
 	"testing"
 
+	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -12,15 +13,19 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3050(t *testing.T) {
-	allRules := []rule.Rule{ DL3050() }
-
+	cfg := &config.Config{
+		LabelSchema: map[string]config.LabelType{
+			"required": config.LabelTypeRawText,
+		},
+		StrictLabels: true,
+	}
+	allRules := []rule.Rule{DL3050WithConfig(cfg)}
 
 	t.Run("not ok with just other label", func(t *testing.T) {
 		dockerfile := `LABEL other="bar"`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3050")
-
 	})
 
 	t.Run("not ok with other label and required label", func(t *testing.T) {
@@ -28,7 +33,6 @@ func TestDL3050(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3050")
-
 	})
 
 	t.Run("ok with no label", func(t *testing.T) {
@@ -36,7 +40,6 @@ func TestDL3050(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3050")
-
 	})
 
 	t.Run("ok with required label", func(t *testing.T) {
@@ -44,7 +47,5 @@ func TestDL3050(t *testing.T) {
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertNoViolation(t, violations, "DL3050")
-
 	})
-
 }

@@ -38,6 +38,7 @@ func ParseShell(script string) (*ParsedShell, error) {
 
 	// Parse the script
 	r := strings.NewReader(fullScript)
+
 	file, err := syntax.NewParser().Parse(r, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse shell script: %w", err)
@@ -63,6 +64,7 @@ func extractCommands(file *syntax.File) []Command {
 				commands = append(commands, *cmd)
 			}
 		}
+
 		return true
 	})
 
@@ -77,6 +79,7 @@ func extractCommand(call *syntax.CallExpr) *Command {
 
 	// Get command name from first argument
 	nameWord := call.Args[0]
+
 	name := wordToString(nameWord)
 	if name == "" {
 		return nil
@@ -84,6 +87,7 @@ func extractCommand(call *syntax.CallExpr) *Command {
 
 	// Extract all arguments with IDs
 	var allArgs []CmdPart
+
 	for i, arg := range call.Args[1:] {
 		argStr := wordToString(arg)
 		allArgs = append(allArgs, CmdPart{
@@ -156,10 +160,12 @@ func extractFlags(args []CmdPart) []CmdPart {
 			if idx := strings.IndexByte(flagName, '='); idx != -1 {
 				flagName = flagName[:idx]
 			}
+
 			flags = append(flags, CmdPart{
 				Arg: flagName,
 				ID:  arg.ID,
 			})
+
 			continue
 		}
 
@@ -185,6 +191,7 @@ func FindCommandNames(ps *ParsedShell) []string {
 	for i, cmd := range ps.PresentCommands {
 		names[i] = cmd.Name
 	}
+
 	return names
 }
 
@@ -215,6 +222,7 @@ func HasFlag(flag string, cmd Command) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -225,6 +233,7 @@ func GetArgs(cmd Command) []string {
 	for i, arg := range cmd.Arguments {
 		args[i] = arg.Arg
 	}
+
 	return args
 }
 
@@ -239,6 +248,7 @@ func GetArgsNoFlags(cmd Command) []string {
 
 	// Return arguments whose IDs are not in flag IDs
 	var result []string
+
 	for _, arg := range cmd.Arguments {
 		if !flagIDs[arg.ID] {
 			result = append(result, arg.Arg)
@@ -262,6 +272,7 @@ func HasAnyFlag(flags []string, cmd Command) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -269,11 +280,13 @@ func HasAnyFlag(flags []string, cmd Command) bool {
 // Ported from Hadolint.Shell.countFlag.
 func CountFlag(flag string, cmd Command) int {
 	count := 0
+
 	for _, f := range cmd.Flags {
 		if f.Arg == flag {
 			count++
 		}
 	}
+
 	return count
 }
 
@@ -285,6 +298,7 @@ func HasArg(arg string, cmd Command) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -296,6 +310,7 @@ func UsingProgram(program string, ps *ParsedShell) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -303,6 +318,7 @@ func UsingProgram(program string, ps *ParsedShell) bool {
 // Ported from Hadolint.Shell.getFlagArg.
 func GetFlagArg(flag string, cmd Command) []string {
 	var values []string
+
 	args := cmd.Arguments
 
 	for i, arg := range args {
@@ -312,6 +328,7 @@ func GetFlagArg(flag string, cmd Command) []string {
 			if i+1 < len(args) {
 				values = append(values, args[i+1].Arg)
 			}
+
 			continue
 		}
 
@@ -332,13 +349,14 @@ func IsPipInstall(cmd Command) bool {
 	// Note: exact match to avoid matching "pipenv"
 	if cmd.Name == "pip" || cmd.Name == "pip2" || cmd.Name == "pip3" {
 		args := GetArgsNoFlags(cmd)
+
 		return len(args) > 0 && args[0] == "install"
 	}
 
 	// Check for: python -m pip install
 	if strings.HasPrefix(cmd.Name, "python") {
 		args := GetArgs(cmd)
-		for i := 0; i < len(args)-1; i++ {
+		for i := range len(args) - 1 {
 			if args[i] == "-m" {
 				pipModule := args[i+1]
 				// Exact match to avoid "pipenv"

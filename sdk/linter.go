@@ -41,8 +41,7 @@ func WithRuleSet(set RuleSet) Option {
 	}
 }
 
-// WithDisabledRules disables specific rules by their codes.
-// Example: WithDisabledRules("DL3000", "DL3007")
+// Example: WithDisabledRules("DL3000", "DL3007").
 func WithDisabledRules(codes ...string) Option {
 	return func(l *Linter) {
 		l.rules = FilterRules(l.rules, codes)

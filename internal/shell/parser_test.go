@@ -43,6 +43,7 @@ func TestParseShell(t *testing.T) {
 
 		argsNoFlags := GetArgsNoFlags(cmd)
 		expectedArgs := []string{"install", "vim"}
+
 		if len(argsNoFlags) != len(expectedArgs) {
 			t.Errorf("expected %d args, got %d: %v", len(expectedArgs), len(argsNoFlags), argsNoFlags)
 		}

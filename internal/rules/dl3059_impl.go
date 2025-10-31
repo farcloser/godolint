@@ -82,6 +82,10 @@ func (r *DL3059Rule) Check(line int, state rule.State, instruction syntax.Instru
 			Count: commandCount,
 		})
 
+	case *syntax.Comment:
+		// Comments don't break consecutive RUN detection
+		return state
+
 	default:
 		// Any other instruction resets the state
 		return state.ReplaceData(dl3059State{})

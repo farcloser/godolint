@@ -27,8 +27,7 @@ RUN apt-get update && apt-get install -y curl
 `)
 
 	linter := sdk.New()
-	result, err := linter.Lint(context.Background(), dockerfile)
-
+	result, err := linter.Lint(t.Context(), dockerfile)
 	if err != nil {
 		t.Fatalf("Lint() error = %v, want nil", err)
 	}
@@ -56,15 +55,16 @@ func TestLinter_Lint_PassesValidDockerfile(t *testing.T) {
 	t.Parallel()
 
 	// Include HEALTHCHECK to satisfy DL3057
-	dockerfile := []byte(`FROM debian:bookworm-slim@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+	dockerfile := []byte(
+		`FROM debian:bookworm-slim@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
 WORKDIR /app
 COPY . /app
 HEALTHCHECK --interval=30s CMD exit 0
-`)
+`,
+	)
 
 	linter := sdk.New()
-	result, err := linter.Lint(context.Background(), dockerfile)
-
+	result, err := linter.Lint(t.Context(), dockerfile)
 	if err != nil {
 		t.Fatalf("Lint() error = %v, want nil", err)
 	}
@@ -88,7 +88,7 @@ func TestLinter_Lint_ContextCancellation(t *testing.T) {
 
 	dockerfile := []byte(`FROM debian:latest`)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel() // Cancel immediately
 
 	linter := sdk.New()
@@ -115,8 +115,7 @@ RUN echo "test"
 `)
 
 	linter := sdk.New()
-	result, err := linter.Lint(context.Background(), dockerfile)
-
+	result, err := linter.Lint(t.Context(), dockerfile)
 	// Note: buildkit may or may not error on missing FROM during parsing.
 	// If it doesn't error during parse, it's still a valid test case showing
 	// that parsing succeeded. Let's adjust test to be realistic.
@@ -163,8 +162,7 @@ func TestLinter_WithRuleSet(t *testing.T) {
 			t.Parallel()
 
 			linter := sdk.New(sdk.WithRuleSet(tt.ruleSet))
-			result, err := linter.Lint(context.Background(), dockerfile)
-
+			result, err := linter.Lint(t.Context(), dockerfile)
 			if err != nil {
 				t.Fatalf("Lint() error = %v, want nil", err)
 			}
@@ -186,7 +184,8 @@ WORKDIR app
 
 	// Lint with all rules - should have DL3007 and DL3000
 	allRulesLinter := sdk.New()
-	allResult, err := allRulesLinter.Lint(context.Background(), dockerfile)
+
+	allResult, err := allRulesLinter.Lint(t.Context(), dockerfile)
 	if err != nil {
 		t.Fatalf("Lint() with all rules error = %v, want nil", err)
 	}
@@ -198,7 +197,8 @@ WORKDIR app
 
 	// Lint with DL3007 disabled - should only have DL3000
 	disabledLinter := sdk.New(sdk.WithDisabledRules("DL3007"))
-	disabledResult, err := disabledLinter.Lint(context.Background(), dockerfile)
+
+	disabledResult, err := disabledLinter.Lint(t.Context(), dockerfile)
 	if err != nil {
 		t.Fatalf("Lint() with disabled rules error = %v, want nil", err)
 	}
@@ -378,7 +378,7 @@ func TestFilterRules(t *testing.T) {
 	}
 }
 
-// Helper function to check error types (simple version of errors.As for testing)
+// Helper function to check error types (simple version of errors.As for testing).
 func AsError(err error, target interface{}) bool {
 	if err == nil {
 		return false
@@ -387,8 +387,10 @@ func AsError(err error, target interface{}) bool {
 	if parseErr, ok := target.(**sdk.ParseError); ok {
 		if pe, ok := err.(*sdk.ParseError); ok {
 			*parseErr = pe
+
 			return true
 		}
 	}
+
 	return false
 }
