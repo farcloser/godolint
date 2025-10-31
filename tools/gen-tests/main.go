@@ -28,10 +28,8 @@ var (
 	// Handles escaped quotes within strings: "ADD \"file.zip\" /app/"
 	simpleTestPattern = regexp.MustCompile(`it\s+"([^"]+)"\s+\$\s+(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+"((?:[^"\\]|\\.)*)"`)
 
-	// Match multi-line: let dockerFile = ["line1", "line2"] in ruleCatches "DL3007" $ Text.unlines dockerFile
-	multilineStartPattern = regexp.MustCompile(`it\s+"([^"]+)"\s+\$\s*\n?\s*let\s+dockerFile\s*=`)
-	multilineListPattern  = regexp.MustCompile(`\[\s*"([^"]*)"(?:\s*,\s*"([^"]*)")*\s*\]`)
-	multilineEndPattern   = regexp.MustCompile(`in\s+(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+\$\s+Text\.unlines`)
+	// Match multi-line end: in ruleCatches "DL3007" $ Text.unlines dockerFile
+	multilineEndPattern = regexp.MustCompile(`in\s+(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+\$\s+Text\.unlines`)
 )
 
 func main() {
@@ -77,8 +75,21 @@ func main() {
 	fmt.Printf("Total test cases extracted: %d\n", totalTests)
 	fmt.Printf("Rules with tests: %d\n\n", len(allTests))
 
-	// Generate Go test files for implemented rules
-	implementedRules := []string{"DL3000", "DL3007", "DL3020", "DL4000"}
+	// Auto-detect implemented rules by checking for _impl.go files
+	implementedRules := []string{}
+	for ruleCode := range allTests {
+		implFile := fmt.Sprintf("%s_impl.go", strings.ToLower(ruleCode))
+		if _, err := os.Stat(implFile); err == nil {
+			implementedRules = append(implementedRules, ruleCode)
+		}
+	}
+
+	// Sort for consistent output
+	sort.Strings(implementedRules)
+
+	fmt.Printf("Detected %d implemented rules\n\n", len(implementedRules))
+
+	// Generate tests for implemented rules
 	generated := 0
 
 	for _, ruleCode := range implementedRules {
@@ -122,6 +133,12 @@ func parseTestFile(path string) (map[string][]TestCase, error) {
 			Dockerfile: unescapeHaskellString(match[4]),
 		}
 
+		tests[testCase.RuleCode] = append(tests[testCase.RuleCode], testCase)
+	}
+
+	// Parse do-block tests
+	doBlockTests := parseDoBlockTests(text)
+	for _, testCase := range doBlockTests {
 		tests[testCase.RuleCode] = append(tests[testCase.RuleCode], testCase)
 	}
 
@@ -177,26 +194,103 @@ func unescapeHaskellString(s string) string {
 	return result
 }
 
+func parseDoBlockTests(text string) []TestCase {
+	var tests []TestCase
+
+	lines := strings.Split(text, "\n")
+
+	// Pattern to match: it "test name" $ do
+	doPattern := regexp.MustCompile(`it\s+"([^"]+)"\s+\$\s+do\s*$`)
+	// Pattern to match assertions: ruleCatches "DL3048" "LABEL ..."
+	// or: onBuildRuleCatches "DL3048" "LABEL ..."
+	assertionPattern := regexp.MustCompile(`\s*(onBuild)?(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+"((?:[^"\\]|\\.)*)"`)
+
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+
+		// Look for "it 'name' $ do" line
+		doMatch := doPattern.FindStringSubmatch(line)
+		if doMatch == nil {
+			continue
+		}
+
+		testName := doMatch[1]
+		baseIndent := len(line) - len(strings.TrimLeft(line, " "))
+
+		// Collect all assertions in this do block
+		assertionCount := 0
+		for j := i + 1; j < len(lines); j++ {
+			currentLine := lines[j]
+
+			// Empty lines are ok
+			if strings.TrimSpace(currentLine) == "" {
+				continue
+			}
+
+			// Check if we've exited the do block (decreased indentation to base level or less)
+			currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
+			if currentIndent <= baseIndent {
+				break
+			}
+
+			// Look for assertion pattern
+			assertMatch := assertionPattern.FindStringSubmatch(currentLine)
+			if assertMatch != nil {
+				assertionCount++
+				shouldFail := assertMatch[2] == "ruleCatches"
+				ruleCode := assertMatch[3]
+				dockerfile := unescapeHaskellString(assertMatch[4])
+
+				// Create unique test name if multiple assertions
+				name := testName
+				if assertionCount > 1 {
+					name = fmt.Sprintf("%s (%d)", testName, assertionCount)
+				}
+
+				tests = append(tests, TestCase{
+					Name:       name,
+					RuleCode:   ruleCode,
+					Dockerfile: dockerfile,
+					ShouldFail: shouldFail,
+				})
+			}
+		}
+	}
+
+	return tests
+}
+
 func parseMultilineTests(text string) []TestCase {
 	var tests []TestCase
 
 	// This is a simplified parser for multi-line tests
-	// Find blocks that match: it "name" $ let dockerFile = [...] in ruleCatches ...
+	// Find blocks that match: it "name" $ (newline) let dockerFile = [...] in ruleCatches ...
 
 	lines := strings.Split(text, "\n")
 	i := 0
 
+	// Pattern to match: it "test name" $
+	itPattern := regexp.MustCompile(`it\s+"([^"]+)"\s+\$\s*$`)
+	// Pattern to match: let dockerFile =
+	letPattern := regexp.MustCompile(`^\s*let\s+dockerFile\s*=`)
+
 	for i < len(lines) {
 		line := lines[i]
 
-		// Look for start of multi-line test
-		startMatch := multilineStartPattern.FindStringSubmatch(line)
-		if startMatch == nil {
+		// Look for "it 'name' $" line
+		itMatch := itPattern.FindStringSubmatch(line)
+		if itMatch == nil {
 			i++
 			continue
 		}
 
-		testName := startMatch[1]
+		testName := itMatch[1]
+
+		// Check if next line starts with "let dockerFile ="
+		if i+1 < len(lines) && !letPattern.MatchString(lines[i+1]) {
+			i++
+			continue
+		}
 
 		// Collect lines until we find the closing "in ruleCatches/ruleCatchesNot"
 		var dockerfileLines []string
@@ -246,6 +340,10 @@ func parseMultilineTests(text string) []TestCase {
 	return tests
 }
 
+func escapeBackticks(s string) string {
+	return strings.ReplaceAll(s, "`", "` + \"`\" + `")
+}
+
 func generateTestFile(ruleCode string, cases []TestCase) error {
 	// Sort test cases by name for consistent output
 	sort.Slice(cases, func(i, j int) bool {
@@ -269,8 +367,8 @@ func Test{{.RuleCode}}(t *testing.T) {
 	allRules := []rule.Rule{ {{.RuleCode}}() }
 
 {{range .TestCases}}
-	t.Run("{{.Name}}", func(t *testing.T) {
-		dockerfile := ` + "`" + `{{.Dockerfile}}` + "`" + `
+	t.Run({{.Name | printf "%q"}}, func(t *testing.T) {
+		dockerfile := ` + "`" + `{{.Dockerfile | escapeBackticks}}` + "`" + `
 		violations := LintDockerfile(dockerfile, allRules)
 {{if .ShouldFail}}
 		AssertContainsViolation(t, violations, "{{.RuleCode}}")
@@ -282,7 +380,11 @@ func Test{{.RuleCode}}(t *testing.T) {
 }
 `
 
-	t, err := template.New("test").Parse(tmpl)
+	funcMap := template.FuncMap{
+		"escapeBackticks": escapeBackticks,
+	}
+
+	t, err := template.New("test").Funcs(funcMap).Parse(tmpl)
 	if err != nil {
 		return err
 	}

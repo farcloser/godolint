@@ -46,10 +46,7 @@ func main() {
 
 			// Create processor with all rules
 			processor := process.NewProcessor([]rule.Rule{
-				rules.DL3007(),
-				rules.DL3000(),
 				rules.DL4000(),
-				rules.DL3020(),
 			})
 
 			// Run rules

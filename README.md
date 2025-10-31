@@ -9,17 +9,18 @@
 This project is a (loving and) friendly port of hadolint, a venerable and wildly used dockerfile linter
 written in haskell.
 
-While there is nothing wrong with hadolint in itself, it does not fit quite well inside
-go tooling ecosytem:
-- it is a foreign dependency, that has to be handled outside the go toolchain
+While there is nothing wrong with hadolint in itself, it does not fit quite well inside the
+go devtools ecosytem:
+- it is a foreign dependency, that has to be handled outside the familiar go toolchain
 - it comes as a binary, that you have to shell out to, and parse its output
-- modifying it or extending it requires haskell knowledge, and presumably a hard fork
+- modifying it or extending it requires haskell knowledge (which might be a foreign proposition for some gophers),
+and maintaining a fork
 
-godolint is a pure go port of hadolint, filling an old glaring gap in the container landscape:
-ability to lint dockerfile in go.
+godolint is a pure go port of hadolint, filling an age-old gap in the container tooling landscape:
+the ability to lint dockerfiles in go.
 
-godolint does leverage the buildkit parser. It comes with an example binary that mimicks hadolint behavior,
-but is primarily meant to be used as a library that can be integrated in other go projects.
+It comes with an example binary that mimicks hadolint behavior, and can also be used (of course,
+and primarily) as a library, integrated into other go projects and devtools.
 
 ## Installation
 
@@ -196,18 +197,15 @@ and plan on keeping up with hadolint's updated/new rules.
 Rule stubs and tests are auto-generated from hadolint's Haskell source:
 
 ```bash
-# Generate rule stubs
+# Generate rule stubs and tests (runs both generators)
 go generate ./internal/rules
-
-# Generate tests from hadolint test suite
-go run tools/gen-tests/main.go hadolint/test/Hadolint/Rule
 ```
 
-The generation tools:
-- Extract rule metadata (code, severity, message) from Haskell source
-- Generate Go function stubs for unimplemented rules
-- Convert Haskell test cases to Go tests
-- Report implementation status
+This single command:
+- Extracts rule metadata (code, severity, message) from Haskell source
+- Generates Go function stubs for unimplemented rules
+- Converts Haskell test cases to Go tests for implemented rules
+- Reports implementation status
 
 ## Development
 

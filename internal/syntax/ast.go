@@ -34,7 +34,8 @@ func (f *From) Name() string {
 
 // Ported from Run in Language.Docker.Syntax.
 type Run struct {
-	Command string // The shell command to execute
+	Command string   // The shell command to execute
+	Flags   []string // RUN instruction flags (e.g., --mount)
 }
 
 func (r *Run) Name() string {
@@ -129,6 +130,7 @@ func (v *Volume) Name() string {
 // Ported from Cmd in Language.Docker.Syntax.
 type Cmd struct {
 	Arguments []string // Command arguments
+	IsJSON    bool     // true if using JSON/exec form, false if shell form
 }
 
 func (c *Cmd) Name() string {
@@ -138,6 +140,7 @@ func (c *Cmd) Name() string {
 // Ported from Entrypoint in Language.Docker.Syntax.
 type Entrypoint struct {
 	Arguments []string // Entrypoint arguments
+	IsJSON    bool     // true if using JSON/exec form, false if shell form
 }
 
 func (e *Entrypoint) Name() string {

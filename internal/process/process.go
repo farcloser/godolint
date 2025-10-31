@@ -20,22 +20,26 @@ func NewProcessor(rules []rule.Rule) *Processor {
 }
 
 // Run processes a Dockerfile AST and returns all rule violations found.
-// Each instruction is checked against all registered rules.
+// Uses fold-style accumulation with state for each rule.
+// Ported from Hadolint's Rule fold pattern.
 func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailure {
-	var failures []rule.CheckFailure
+	var allFailures []rule.CheckFailure
 
-	for _, instrPos := range instructions {
-		for _, r := range p.rules {
-			if !r.Check(instrPos.Instruction) {
-				failures = append(failures, rule.CheckFailure{
-					Code:     r.Code(),
-					Severity: r.Severity(),
-					Message:  r.Message(),
-					Line:     instrPos.LineNumber,
-				})
-			}
+	// For each rule, fold over all instructions with state
+	for _, r := range p.rules {
+		state := r.InitialState()
+
+		// Thread state through each instruction check
+		for _, instrPos := range instructions {
+			state = r.Check(instrPos.LineNumber, state, instrPos.Instruction)
 		}
+
+		// Finalize the state (some rules add failures only at the end)
+		state = r.Finalize(state)
+
+		// Collect failures from final state
+		allFailures = append(allFailures, state.Failures...)
 	}
 
-	return failures
+	return allFailures
 }

@@ -127,6 +127,14 @@ func convertFrom(node *parser.Node) (*syntax.From, error) {
 		Image: values[0],
 	}
 
+	// Extract --platform flag if present
+	for _, flag := range node.Flags {
+		if strings.HasPrefix(flag, "--platform=") {
+			platform := strings.TrimPrefix(flag, "--platform=")
+			baseImage.Platform = &platform
+		}
+	}
+
 	// Check for AS alias (last token after AS keyword)
 	for i := 1; i < len(values); i++ {
 		if values[i] == "AS" || values[i] == "as" {
@@ -187,6 +195,7 @@ func convertRun(node *parser.Node) (*syntax.Run, error) {
 
 	return &syntax.Run{
 		Command: command,
+		Flags:   node.Flags,
 	}, nil
 }
 
@@ -203,23 +212,10 @@ func convertCopy(node *parser.Node) (*syntax.Copy, error) {
 
 	// Check for --from flag
 	// Buildkit parser includes flags in node.Flags
-	if node.Flags != nil {
-		for _, flag := range node.Flags {
-			if flag == "from" && node.Next != nil && node.Next.Next != nil {
-				// The --from value is typically the first value after flags
-				// But buildkit may have already processed it
-				// For now, check if any value starts with --from=
-				for i, v := range values {
-					if len(v) > 7 && v[:7] == "--from=" {
-						fromValue := v[7:]
-						copy.From = &fromValue
-						// Remove this value from sources
-						copy.Source = append(values[:i], values[i+1:len(values)-1]...)
-
-						break
-					}
-				}
-			}
+	for _, flag := range node.Flags {
+		if strings.HasPrefix(flag, "--from=") {
+			fromValue := strings.TrimPrefix(flag, "--from=")
+			copy.From = &fromValue
 		}
 	}
 
@@ -304,14 +300,22 @@ func convertVolume(node *parser.Node) (*syntax.Volume, error) {
 }
 
 func convertCmd(node *parser.Node) (*syntax.Cmd, error) {
+	// Check if using JSON notation (exec form)
+	isJSON := node.Attributes != nil && node.Attributes["json"]
+
 	return &syntax.Cmd{
 		Arguments: collectValues(node),
+		IsJSON:    isJSON,
 	}, nil
 }
 
 func convertEntrypoint(node *parser.Node) (*syntax.Entrypoint, error) {
+	// Check if using JSON notation (exec form)
+	isJSON := node.Attributes != nil && node.Attributes["json"]
+
 	return &syntax.Entrypoint{
 		Arguments: collectValues(node),
+		IsJSON:    isJSON,
 	}, nil
 }
 
@@ -372,13 +376,34 @@ func convertShell(node *parser.Node) (*syntax.Shell, error) {
 
 func convertOnBuild(node *parser.Node) (*syntax.OnBuild, error) {
 	// ONBUILD wraps another instruction
-	if node.Next == nil {
+	// buildkit stores the full instruction in Original field (e.g., "ONBUILD FROM debian")
+	// We need to parse the inner instruction from the Original string
+	original := strings.TrimSpace(node.Original)
+
+	// Remove "ONBUILD " prefix
+	if !strings.HasPrefix(strings.ToUpper(original), "ONBUILD ") {
+		return nil, errors.New("invalid ONBUILD instruction")
+	}
+
+	innerText := strings.TrimSpace(original[8:]) // len("ONBUILD ") = 8
+	if innerText == "" {
 		return nil, errors.New("ONBUILD missing instruction")
 	}
 
-	inner, err := convertNode(node.Next)
+	// Parse the inner instruction as a complete Dockerfile
+	innerResult, err := parser.Parse(bytes.NewReader([]byte(innerText)))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse ONBUILD inner instruction: %w", err)
+	}
+
+	if len(innerResult.AST.Children) == 0 {
+		return nil, errors.New("ONBUILD has no inner instruction")
+	}
+
+	// Convert the first (and only) child instruction
+	inner, err := convertNode(innerResult.AST.Children[0])
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert ONBUILD inner instruction: %w", err)
 	}
 
 	return &syntax.OnBuild{

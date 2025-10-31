@@ -13,12 +13,13 @@ import (
 )
 
 type RuleMetadata struct {
-	Code          string
-	Severity      string
-	Message       string
-	RequiresShell bool
-	SourceFile    string
-	Implemented   bool
+	Code         string
+	Severity     string
+	Message      string
+	SourceFile   string
+	Implemented  bool
+	HaskellCheck string // Raw Haskell check function for pattern detection
+	CanGenerate  bool   // Whether we can auto-generate implementation
 }
 
 var (
@@ -70,10 +71,10 @@ func main() {
 		return rules[i].Code < rules[j].Code
 	})
 
-	// Check which rules are already implemented
+	// Check which rules are already implemented (check for _impl.go files)
 	for i := range rules {
-		goFile := fmt.Sprintf("%s.go", strings.ToLower(rules[i].Code))
-		if _, err := os.Stat(goFile); err == nil {
+		implFile := fmt.Sprintf("%s_impl.go", strings.ToLower(rules[i].Code))
+		if _, err := os.Stat(implFile); err == nil {
 			rules[i].Implemented = true
 		}
 	}
@@ -83,40 +84,43 @@ func main() {
 	fmt.Printf("Total rules: %d\n", len(rules))
 
 	implemented := 0
-	requiresShell := 0
-	canImplement := 0
 
 	for _, r := range rules {
 		if r.Implemented {
 			implemented++
 		}
-
-		if r.RequiresShell {
-			requiresShell++
-		} else {
-			canImplement++
-		}
 	}
 
 	fmt.Printf("Implemented: %d\n", implemented)
-	fmt.Printf("Requires shell parsing: %d\n", requiresShell)
-	fmt.Printf("Can implement without shell: %d\n", canImplement)
+	fmt.Printf("Not implemented: %d\n", len(rules)-implemented)
 	fmt.Printf("\n")
 
-	// Generate stubs for unimplemented rules
-	stubsGenerated := 0
+	// Always generate metadata files (safe to overwrite)
+	metadataGenerated := 0
+	for _, rule := range rules {
+		if err := generateMetadata(rule); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to generate metadata for %s: %v\n", rule.Code, err)
+		} else {
+			metadataGenerated++
+		}
+	}
+
+	fmt.Printf("Generated %d metadata files\n", metadataGenerated)
+
+	// Generate implementations for rules we can auto-generate (never overwrites)
+	implGenerated := 0
 
 	for _, rule := range rules {
-		if !rule.Implemented && !rule.RequiresShell {
-			if err := generateStub(rule); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to generate stub for %s: %v\n", rule.Code, err)
+		if !rule.Implemented && rule.CanGenerate {
+			if err := generateImplementation(rule); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to generate implementation for %s: %v\n", rule.Code, err)
 			} else {
-				stubsGenerated++
+				implGenerated++
 			}
 		}
 	}
 
-	fmt.Printf("Generated %d new rule stubs\n", stubsGenerated)
+	fmt.Printf("Generated %d working implementations\n", implGenerated)
 
 	// Print summary by status
 	fmt.Printf("\n## Rules by Status\n\n")
@@ -129,24 +133,11 @@ func main() {
 		}
 	}
 
-	fmt.Printf("\n### Ready to Implement (%d - no shell parsing required)\n", canImplement-implemented)
+	fmt.Printf("\n### Not Implemented (%d)\n", len(rules)-implemented)
 
 	for _, r := range rules {
-		if !r.Implemented && !r.RequiresShell {
+		if !r.Implemented {
 			fmt.Printf("- ⏳ %s: %s\n", r.Code, r.Message)
-		}
-	}
-
-	fmt.Printf("\n### Requires Shell Parsing (%d)\n", requiresShell)
-
-	for _, r := range rules {
-		if r.RequiresShell {
-			impl := "❌"
-			if r.Implemented {
-				impl = "✅"
-			}
-
-			fmt.Printf("- %s %s: %s\n", impl, r.Code, r.Message)
 		}
 	}
 }
@@ -189,13 +180,61 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 		return rule, errors.New("could not find message")
 	}
 
-	// Check if requires shell parsing
-	if match := ruleTypePattern.FindStringSubmatch(text); len(match) > 1 {
-		ruleType := match[1]
-		rule.RequiresShell = strings.Contains(ruleType, "ParsedShell")
+	// Extract check function patterns
+	// Match patterns like: check (Maintainer _) = False
+	//                      check _ = True
+	checkPattern := regexp.MustCompile(`(?m)^\s*check\s+(.+?)\s*=`)
+	checkMatches := checkPattern.FindAllStringSubmatch(text, -1)
+	if len(checkMatches) > 0 {
+		// Collect all check patterns
+		var checkLines []string
+		for _, match := range checkMatches {
+			if len(match) > 1 {
+				pattern := strings.TrimSpace(match[1])
+				// Skip the "where" clause pattern
+				if !strings.HasPrefix(pattern, "where") {
+					checkLines = append(checkLines, pattern)
+				}
+			}
+		}
+		rule.HaskellCheck = strings.Join(checkLines, "\n")
 	}
 
+	// Detect if we can auto-generate this rule
+	rule.CanGenerate = canGenerateImplementation(rule.HaskellCheck)
+
 	return rule, nil
+}
+
+// canGenerateImplementation determines if we can auto-generate Go code from Haskell patterns.
+func canGenerateImplementation(haskellCheck string) bool {
+	if haskellCheck == "" {
+		return false
+	}
+
+	lines := strings.Split(haskellCheck, "\n")
+
+	// Only generate for the absolute simplest pattern:
+	// Pattern: (InstructionName _) followed by _ (default case)
+	// Example: (Maintainer _) and _
+	// This means: check specific instruction type, always fail, everything else passes
+
+	if len(lines) != 2 {
+		return false
+	}
+
+	// First line must be: (InstructionName _) with ONLY underscore, no nested patterns
+	simplePattern := regexp.MustCompile(`^\((\w+)\s+_\)$`)
+	if !simplePattern.MatchString(strings.TrimSpace(lines[0])) {
+		return false
+	}
+
+	// Second line must be: _ (default wildcard)
+	if strings.TrimSpace(lines[1]) != "_" {
+		return false
+	}
+
+	return true
 }
 
 func mapSeverity(haskellSeverity string) string {
@@ -213,37 +252,24 @@ func mapSeverity(haskellSeverity string) string {
 	}
 }
 
-func generateStub(rule RuleMetadata) error {
-	tmpl := `package rules
+// generateMetadata generates metadata-only file (always overwrites).
+func generateMetadata(rule RuleMetadata) error {
+	tmpl := `// Code generated by go generate; DO NOT EDIT.
+// This file is auto-generated from hadolint rules.
+package rules
 
-import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
-)
+import "github.com/farcloser/godolint/internal/rule"
 
-// {{.Code}} - {{.Message}}
-//
-// Ported from Hadolint.Rule.{{.Code}}
-// Source: {{.SourceFile}}
-func {{.Code}}() rule.Rule {
-	return rule.NewSimpleRule(
-		"{{.Code}}",
-		{{.Severity}},
-		"{{.Message}}",
-		check{{.Code}},
-	)
-}
-
-func check{{.Code}}(instruction syntax.Instruction) bool {
-	// TODO: Port check logic from hadolint/src/Hadolint/Rule/{{.SourceFile}}
-	// See: hadolint/src/Hadolint/Rule/{{.SourceFile}} for implementation
-
-	// Placeholder: allow all instructions for now
-	return true
+// {{.Code}}Meta contains metadata for rule {{.Code}}.
+// Source: hadolint/src/Hadolint/Rule/{{.SourceFile}}
+var {{.Code}}Meta = rule.RuleMeta{
+	Code:     "{{.Code}}",
+	Severity: {{.Severity}},
+	Message:  "{{.Message}}",
 }
 `
 
-	t, err := template.New("rule").Parse(tmpl)
+	t, err := template.New("metadata").Parse(tmpl)
 	if err != nil {
 		return err
 	}
@@ -258,4 +284,89 @@ func check{{.Code}}(instruction syntax.Instruction) bool {
 	defer f.Close()
 
 	return t.Execute(f, rule)
+}
+
+// generateImplementation generates working implementation from Haskell patterns (only if file doesn't exist).
+func generateImplementation(rule RuleMetadata) error {
+	filename := fmt.Sprintf("%s_impl.go", strings.ToLower(rule.Code))
+
+	// Check if implementation already exists
+	if _, err := os.Stat(filename); err == nil {
+		return nil // File exists, don't overwrite
+	}
+
+	// Generate implementation code based on detected pattern
+	implCode := generateCheckFunction(rule)
+
+	tmpl := `package rules
+
+import (
+	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/syntax"
+)
+
+// {{.Code}} creates a rule from the generated metadata.
+// Auto-generated from hadolint Haskell source.
+func {{.Code}}() rule.Rule {
+	return rule.NewSimpleRule(
+		{{.Code}}Meta.Code,
+		{{.Code}}Meta.Severity,
+		{{.Code}}Meta.Message,
+		check{{.Code}},
+	)
+}
+
+{{.ImplCode}}
+`
+
+	t, err := template.New("impl").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	data := struct {
+		Code     string
+		ImplCode string
+	}{
+		Code:     rule.Code,
+		ImplCode: implCode,
+	}
+
+	return t.Execute(f, data)
+}
+
+// generateCheckFunction generates Go check function from Haskell patterns.
+func generateCheckFunction(rule RuleMetadata) string {
+	lines := strings.Split(rule.HaskellCheck, "\n")
+
+	// Pattern 1: Simple instruction type check
+	// Example: (Maintainer _) followed by _
+	simplePattern := regexp.MustCompile(`\((\w+)\s+[_\w]+\)`)
+	if len(lines) == 2 && simplePattern.MatchString(lines[0]) && strings.TrimSpace(lines[1]) == "_" {
+		match := simplePattern.FindStringSubmatch(lines[0])
+		if len(match) > 1 {
+			instructionType := match[1]
+
+			return fmt.Sprintf(`func check%s(instruction syntax.Instruction) bool {
+	_, ok := instruction.(*syntax.%s)
+	if ok {
+		return false // %s instruction found -> fail
+	}
+	return true
+}`, rule.Code, instructionType, instructionType)
+		}
+	}
+
+	// Fallback - should not reach here if canGenerateImplementation is correct
+	return fmt.Sprintf(`func check%s(instruction syntax.Instruction) bool {
+	// TODO: Auto-generation failed, implement manually
+	return true
+}`, rule.Code)
 }

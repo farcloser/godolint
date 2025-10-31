@@ -229,3 +229,8 @@ clean: ## Clean build artifacts
 	@echo "Cleaning..."
 	@rm -rf bin/
 	@echo "Clean complete"
+
+generate:
+	@echo "Generate from hadolint rules"
+	$(GOCMD) generate ./internal/rules
+	@echo "Complete"
