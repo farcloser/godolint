@@ -201,3 +201,12 @@ type OnBuild struct {
 func (o *OnBuild) Name() string {
 	return "ONBUILD"
 }
+
+// Ported from Comment in Language.Docker.Syntax.
+type Comment struct {
+	Text string // Comment text (without # prefix)
+}
+
+func (c *Comment) Name() string {
+	return "COMMENT"
+}

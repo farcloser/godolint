@@ -31,6 +31,23 @@ func (p *BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, erro
 	var instructions []syntax.InstructionPos
 
 	for _, child := range result.AST.Children {
+		// First, add any preceding comments as Comment instructions
+		for i, commentText := range child.PrevComment {
+			// Comments come before the instruction, calculate line number
+			// PrevComment is in order, with the first comment being furthest back
+			commentLine := child.StartLine - (len(child.PrevComment) - i)
+
+			// Strip leading/trailing whitespace and # prefix
+			text := strings.TrimSpace(commentText)
+			text = strings.TrimPrefix(text, "#")
+			text = strings.TrimSpace(text)
+
+			instructions = append(instructions, syntax.InstructionPos{
+				Instruction: &syntax.Comment{Text: text},
+				LineNumber:  commentLine,
+			})
+		}
+
 		instr, err := convertNode(child)
 		if err != nil {
 			// Skip instructions we can't convert (continue linting rest)
@@ -239,20 +256,40 @@ func convertEnv(node *parser.Node) (*syntax.Env, error) {
 
 	var pairs []syntax.EnvPair
 
-	// ENV can be "ENV key=value" or "ENV key value"
-	for i := 0; i < len(values); i++ {
-		if i+1 < len(values) {
+	// ENV has two syntaxes:
+	// 1. "ENV key=value key2=value2" - buildkit tokenizes as: key, value, =, key2, value2, =
+	// 2. "ENV key value" - buildkit tokenizes as: key, value
+	for i := 0; i < len(values); {
+		if i+2 < len(values) && values[i+2] == "=" {
+			// Pattern: key value = (key=value syntax)
 			pairs = append(pairs, syntax.EnvPair{
 				Key:   values[i],
-				Value: values[i+1],
+				Value: unquote(values[i+1]),
 			})
-			i++ // Skip next value
+			i += 3 // Skip key, value, =
+		} else if i+1 < len(values) {
+			// Whitespace syntax: key value
+			pairs = append(pairs, syntax.EnvPair{
+				Key:   values[i],
+				Value: unquote(values[i+1]),
+			})
+			i += 2
+		} else {
+			i++
 		}
 	}
 
 	return &syntax.Env{
 		Pairs: pairs,
 	}, nil
+}
+
+// unquote removes surrounding double quotes from a string if present.
+func unquote(s string) string {
+	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+		return s[1 : len(s)-1]
+	}
+	return s
 }
 
 func convertLabel(node *parser.Node) (*syntax.Label, error) {

@@ -84,6 +84,10 @@ func main() {
         rules.DL3000(), // Absolute WORKDIR
         rules.DL3020(), // Use COPY not ADD
         rules.DL4000(), // No MAINTAINER
+        // ... 26 more rules available
+
+        // Optional: Add shellcheck for RUN validation
+        // shell.NewShellcheckRule(shell.NewBinaryShellchecker())
     }
 
     // Lint
@@ -99,23 +103,49 @@ func main() {
 
 ## Current Status
 
-### Implemented Rules (4)
-
-| Code | Severity | Description |
-|------|----------|-------------|
-| DL3007 | Warning | Using latest is prone to errors |
-| DL3000 | Error | Use absolute WORKDIR |
-| DL3020 | Error | Use COPY instead of ADD for files |
-| DL4000 | Error | MAINTAINER is deprecated |
-
 ### Implementation Progress
 
 - **Total rules**: 65 (matching hadolint)
-- **Fully implemented**: 4 rules
-- **Stubs generated**: 27 rules (ready for implementation)
-- **Requires shell parsing**: 34 rules (blocked on shellcheck integration)
+- **Fully implemented**: 30 rules + ShellCheck integration
+- **Test coverage**: 27 test files with 200+ test cases
+- **Test pass rate**: 100% (all tests passing)
 
-Test suite pass rate: **70%** (23/33 tests passing)
+### Implemented Rules (30)
+
+**Dockerfile best practices:**
+- DL3000 - Use absolute WORKDIR
+- DL3001 - Pipe into commands not supported
+- DL3002 - Last USER should not be root
+- DL3003 - Use WORKDIR instead of cd
+- DL3004 - Do not use sudo
+- DL3006 - Always tag image versions explicitly
+- DL3007 - Using latest is prone to errors
+- DL3011 - Valid UNIX ports range 0-65535
+- DL3012 - Multiple HEALTHCHECK instructions
+- DL3014 - Use -y switch for apt-get
+- DL3015 - Avoid additional packages with yum
+- DL3018 - Pin versions in apk add
+- DL3019 - Use --no-cache in apk add
+- DL3020 - Use COPY instead of ADD for files
+- DL3021 - COPY with more than 2 arguments requires slash
+- DL3022 - COPY --from needs valid reference
+- DL3023 - COPY --from cannot reference itself
+- DL3024 - FROM alias must be unique
+- DL3025 - Use JSON notation for CMD/ENTRYPOINT
+- DL3027 - Do not use apt
+- DL3029 - Do not use --platform in FROM
+- DL3043 - ONBUILD requires FROM
+- DL3045 - COPY --chmod invalid format
+- DL3048 - Invalid DNS option
+- DL3059 - Multiple consecutive RUN instructions
+- DL3061 - Multiple instructions for same port
+- DL4000 - MAINTAINER is deprecated
+- DL4003 - Multiple CMD instructions
+- DL4004 - Multiple ENTRYPOINT instructions
+
+**Shell validation:**
+- DL3008 - Pin versions in apt-get install (requires shellcheck)
+- ShellCheck integration - Full support for shell script validation in RUN instructions
 
 ### Output Format
 
@@ -156,20 +186,33 @@ type Parser interface {
 }
 ```
 
+### Shell Script Validation
+
+godolint includes full shellcheck integration for validating shell commands in RUN instructions:
+
+- **Stateful tracking** - Tracks ENV, ARG, and SHELL instructions across the Dockerfile
+- **Multi-stage support** - Correctly resets state on FROM instructions
+- **Smart skipping** - Automatically skips non-POSIX shells (PowerShell, cmd)
+- **Complete context** - Constructs scripts with proper shebang and environment exports
+
+ShellCheck violations are reported with SC#### codes alongside DL#### rules.
+
 ### Rule Engine
 
-Rules implement a simple interface:
+Rules implement a stateful interface allowing cross-instruction validation:
 
 ```go
 type Rule interface {
     Code() RuleCode              // "DL3007"
     Severity() Severity          // Error, Warning, Info, Style
     Message() string             // Human-readable description
-    Check(instruction) bool      // true=pass, false=fail
+    InitialState() State         // Initialize rule state
+    Check(line int, state State, instruction Instruction) State
+    Finalize(state State) State  // Process final state
 }
 ```
 
-Each rule is stateless and validates individual Dockerfile instructions.
+Rules can maintain state across instructions for complex validations (multi-stage builds, shell context tracking, etc.).
 
 ### Instruction Types
 
@@ -269,23 +312,30 @@ func checkDL3007(instruction syntax.Instruction) bool {
 
 ## Roadmap
 
+### Completed ✓
+- [x] Stateful rule processor for cross-instruction validation
+- [x] ShellCheck integration for shell script validation
+- [x] 30 hadolint rules fully implemented
+- [x] 100% test pass rate
+
 ### Short-term
-- [ ] Implement remaining 27 simple rule stubs
-- [ ] Improve test pass rate to 100%
+- [ ] Add shellcheck rule to default CLI rule set
+- [ ] Implement remaining shell-dependent rules (DL3009, DL3013, DL3016, etc.)
 - [ ] Add CLI flags (verbosity, rule selection, output format)
 - [ ] Configuration file support (YAML/TOML)
 - [ ] Pragma support (`# godolint ignore=DL3007`)
 
 ### Medium-term
-- [ ] Shellcheck integration for 34 shell-dependent rules
 - [ ] Alternative output formats (SARIF, human-readable TTY)
-- [ ] Stateful rule processor for cross-instruction validation
-- [ ] Performance optimization
+- [ ] Performance optimization and benchmarking
+- [ ] Documentation improvements
+- [ ] GitHub Actions integration example
 
 ### Long-term
 - [ ] Plugin architecture for custom rules
 - [ ] Integration with container build tools
 - [ ] Language-agnostic rule repository
+- [ ] IDE extensions (VS Code, GoLand)
 
 ## Limitations
 
@@ -301,18 +351,20 @@ func checkDL3007(instruction syntax.Instruction) bool {
 - Affects ~30% of auto-generated test cases
 
 ### Rule Coverage
-- **4 rules** fully implemented
-- **27 rules** have stubs (need implementation)
-- **34 rules** require shell parsing integration
+- **30 rules** fully implemented and tested
+- **35 rules** remaining (mix of simple rules and shell-dependent)
+- **ShellCheck integration** complete and ready for shell-dependent rules
 
 ## Contributing
 
-Contributions welcome! Areas needing help:
-- Implementing rule stubs (`internal/rules/dlXXXX.go`)
-- Fixing test failures (quote handling, edge cases)
-- Shellcheck integration
-- Configuration file support
-- Alternative output formats
+Contributions welcome! Current priorities:
+- Implementing remaining rules using shellcheck integration
+- Adding CLI flags and configuration file support
+- Alternative output formats (SARIF, GitHub Actions annotations)
+- Performance optimization
+- Documentation and examples
+
+See `SHELLCHECK_IMPLEMENTATION.md` for details on the shell validation architecture.
 
 ## License
 

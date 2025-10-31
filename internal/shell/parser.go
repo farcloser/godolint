@@ -298,3 +298,61 @@ func UsingProgram(program string, ps *ParsedShell) bool {
 	}
 	return false
 }
+
+// GetFlagArg returns the argument values for a specific flag.
+// Ported from Hadolint.Shell.getFlagArg.
+func GetFlagArg(flag string, cmd Command) []string {
+	var values []string
+	args := cmd.Arguments
+
+	for i, arg := range args {
+		// Check for -flag value or --flag value
+		if arg.Arg == "-"+flag || arg.Arg == "--"+flag {
+			// Next argument is the value
+			if i+1 < len(args) {
+				values = append(values, args[i+1].Arg)
+			}
+			continue
+		}
+
+		// Check for --flag=value
+		if strings.HasPrefix(arg.Arg, "--"+flag+"=") {
+			value := strings.TrimPrefix(arg.Arg, "--"+flag+"=")
+			values = append(values, value)
+		}
+	}
+
+	return values
+}
+
+// IsPipInstall checks if a command is a pip install command.
+// Ported from Hadolint.Shell.isPipInstall.
+func IsPipInstall(cmd Command) bool {
+	// Check for: pip install, pip2 install, pip3 install
+	// Note: exact match to avoid matching "pipenv"
+	if cmd.Name == "pip" || cmd.Name == "pip2" || cmd.Name == "pip3" {
+		args := GetArgsNoFlags(cmd)
+		return len(args) > 0 && args[0] == "install"
+	}
+
+	// Check for: python -m pip install
+	if strings.HasPrefix(cmd.Name, "python") {
+		args := GetArgs(cmd)
+		for i := 0; i < len(args)-1; i++ {
+			if args[i] == "-m" {
+				pipModule := args[i+1]
+				// Exact match to avoid "pipenv"
+				if pipModule == "pip" || pipModule == "pip2" || pipModule == "pip3" {
+					// Check if "install" follows
+					for j := i + 2; j < len(args); j++ {
+						if args[j] == "install" {
+							return true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}

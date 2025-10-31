@@ -263,16 +263,39 @@ func parseDoBlockTests(text string) []TestCase {
 func parseMultilineTests(text string) []TestCase {
 	var tests []TestCase
 
-	// This is a simplified parser for multi-line tests
-	// Find blocks that match: it "name" $ (newline) let dockerFile = [...] in ruleCatches ...
+	// This parser handles multiple let-binding formats:
+	// Format 1 (dockerFile list):
+	//   it "name" $
+	//     let dockerFile = [...]
+	//      in do
+	//           ruleCatches "DL3009" $ Text.unlines dockerFile
+	//
+	// Format 2 (line string):
+	//   it "name" $
+	//     let line = "RUN ..."
+	//     in do
+	//         ruleCatches "DL3019" line
+	//
+	// Format 3 (in do on same line as assertion):
+	//   it "name" $
+	//     let dockerFile = [...]
+	//      in do ruleCatches "DL3047" $ Text.unlines dockerFile
 
 	lines := strings.Split(text, "\n")
 	i := 0
 
 	// Pattern to match: it "test name" $
 	itPattern := regexp.MustCompile(`it\s+"([^"]+)"\s+\$\s*$`)
-	// Pattern to match: let dockerFile =
-	letPattern := regexp.MustCompile(`^\s*let\s+dockerFile\s*=`)
+	// Pattern to match: let dockerFile = or let line =
+	letDockerFilePattern := regexp.MustCompile(`^\s*let\s+dockerFile\s*=`)
+	letLinePattern := regexp.MustCompile(`^\s*let\s+line\s*=\s*"((?:[^"\\]|\\.)*)"`)
+	// Pattern to match: in do (standalone)
+	inDoPattern := regexp.MustCompile(`^\s*in\s+do\s*$`)
+	// Pattern to match: in do ruleCatches... (inline)
+	inDoInlinePattern := regexp.MustCompile(`^\s*in\s+do\s+(onBuild)?(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+`)
+	// Pattern to match assertions: ruleCatches "DL3009" $ Text.unlines dockerFile
+	// or: ruleCatches "DL3019" line
+	assertionPattern := regexp.MustCompile(`\s*(onBuild)?(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+(\$\s+Text\.unlines\s+dockerFile|line)`)
 
 	for i < len(lines) {
 		line := lines[i]
@@ -286,17 +309,108 @@ func parseMultilineTests(text string) []TestCase {
 
 		testName := itMatch[1]
 
-		// Check if next line starts with "let dockerFile ="
-		if i+1 < len(lines) && !letPattern.MatchString(lines[i+1]) {
+		// Check if next line has a let binding
+		if i+1 >= len(lines) {
 			i++
 			continue
 		}
 
-		// Collect lines until we find the closing "in ruleCatches/ruleCatchesNot"
+		nextLine := lines[i+1]
+
+		// Check for "let line = ..." format
+		lineMatch := letLinePattern.FindStringSubmatch(nextLine)
+		if lineMatch != nil {
+			// Single line dockerfile
+			dockerfile := unescapeHaskellString(lineMatch[1])
+
+			// Find "in do" and parse assertions
+			foundInDo := false
+			inDoLineIndex := -1
+
+			for j := i + 2; j < len(lines) && j < i+20; j++ {
+				currentLine := lines[j]
+
+				// Look for "in do" pattern (standalone or inline)
+				if inDoPattern.MatchString(currentLine) {
+					foundInDo = true
+					inDoLineIndex = j
+					break
+				}
+
+				// Check for inline "in do ruleCatches..."
+				inlineMatch := inDoInlinePattern.FindStringSubmatch(currentLine)
+				if inlineMatch != nil {
+					foundInDo = true
+					inDoLineIndex = j
+
+					// Parse the inline assertion immediately
+					shouldFail := inlineMatch[2] == "ruleCatches"
+					ruleCode := inlineMatch[3]
+
+					tests = append(tests, TestCase{
+						Name:       testName,
+						RuleCode:   ruleCode,
+						Dockerfile: dockerfile,
+						ShouldFail: shouldFail,
+					})
+
+					// Continue parsing subsequent lines for more assertions
+					break
+				}
+			}
+
+			if foundInDo && inDoLineIndex >= 0 {
+				baseIndent := len(lines[inDoLineIndex]) - len(strings.TrimLeft(lines[inDoLineIndex], " "))
+				assertionCount := 0
+
+				for j := inDoLineIndex + 1; j < len(lines) && j < inDoLineIndex+20; j++ {
+					currentLine := lines[j]
+
+					if strings.TrimSpace(currentLine) == "" {
+						continue
+					}
+
+					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
+					if currentIndent <= baseIndent {
+						i = j - 1
+						break
+					}
+
+					assertMatch := assertionPattern.FindStringSubmatch(currentLine)
+					if assertMatch != nil {
+						assertionCount++
+						shouldFail := assertMatch[2] == "ruleCatches"
+						ruleCode := assertMatch[3]
+
+						name := testName
+						if assertionCount > 1 {
+							name = fmt.Sprintf("%s (%d)", testName, assertionCount)
+						}
+
+						tests = append(tests, TestCase{
+							Name:       name,
+							RuleCode:   ruleCode,
+							Dockerfile: dockerfile,
+							ShouldFail: shouldFail,
+						})
+					}
+				}
+			}
+
+			i++
+			continue
+		}
+
+		// Check for "let dockerFile = [...]" format
+		if !letDockerFilePattern.MatchString(nextLine) {
+			i++
+			continue
+		}
+
+		// Collect dockerfile lines from the let binding
 		var dockerfileLines []string
-		foundEnd := false
-		ruleCode := ""
-		shouldFail := false
+		foundInDo := false
+		inDoLineIndex := -1
 
 		for j := i; j < len(lines) && j < i+50; j++ {
 			currentLine := lines[j]
@@ -314,24 +428,133 @@ func parseMultilineTests(text string) []TestCase {
 				}
 			}
 
-			// Look for end pattern
+			// Look for "in do" pattern (standalone)
+			if inDoPattern.MatchString(currentLine) {
+				foundInDo = true
+				inDoLineIndex = j
+				break
+			}
+
+			// Check for inline "in do ruleCatches..."
+			inlineMatch := inDoInlinePattern.FindStringSubmatch(currentLine)
+			if inlineMatch != nil {
+				foundInDo = true
+				inDoLineIndex = j
+				break
+			}
+
+			// Also support the old format: in ruleCatches (without do-block)
 			endMatch := multilineEndPattern.FindStringSubmatch(currentLine)
 			if endMatch != nil {
-				shouldFail = endMatch[1] == "ruleCatches"
-				ruleCode = endMatch[2]
-				foundEnd = true
+				shouldFail := endMatch[1] == "ruleCatches"
+				ruleCode := endMatch[2]
+
+				if len(dockerfileLines) > 0 {
+					tests = append(tests, TestCase{
+						Name:       testName,
+						RuleCode:   ruleCode,
+						Dockerfile: strings.Join(dockerfileLines, "\n"),
+						ShouldFail: shouldFail,
+					})
+				}
 				i = j
 				break
 			}
 		}
 
-		if foundEnd && len(dockerfileLines) > 0 {
-			tests = append(tests, TestCase{
-				Name:       testName,
-				RuleCode:   ruleCode,
-				Dockerfile: strings.Join(dockerfileLines, "\n"),
-				ShouldFail: shouldFail,
-			})
+		// If we found "in do", parse the assertions in the do-block
+		if foundInDo && len(dockerfileLines) > 0 {
+			dockerfile := strings.Join(dockerfileLines, "\n")
+
+			// Check if it's inline format: "in do ruleCatches..."
+			inlineMatch := inDoInlinePattern.FindStringSubmatch(lines[inDoLineIndex])
+			if inlineMatch != nil {
+				// Parse the inline assertion
+				shouldFail := inlineMatch[2] == "ruleCatches"
+				ruleCode := inlineMatch[3]
+
+				tests = append(tests, TestCase{
+					Name:       testName,
+					RuleCode:   ruleCode,
+					Dockerfile: dockerfile,
+					ShouldFail: shouldFail,
+				})
+
+				// Continue parsing subsequent lines for more assertions
+				baseIndent := len(lines[inDoLineIndex]) - len(strings.TrimLeft(lines[inDoLineIndex], " "))
+				assertionCount := 1
+
+				for j := inDoLineIndex + 1; j < len(lines) && j < inDoLineIndex+20; j++ {
+					currentLine := lines[j]
+
+					if strings.TrimSpace(currentLine) == "" {
+						continue
+					}
+
+					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
+					if currentIndent <= baseIndent {
+						i = j - 1
+						break
+					}
+
+					assertMatch := assertionPattern.FindStringSubmatch(currentLine)
+					if assertMatch != nil {
+						assertionCount++
+						shouldFail := assertMatch[2] == "ruleCatches"
+						ruleCode := assertMatch[3]
+
+						name := fmt.Sprintf("%s (%d)", testName, assertionCount)
+
+						tests = append(tests, TestCase{
+							Name:       name,
+							RuleCode:   ruleCode,
+							Dockerfile: dockerfile,
+							ShouldFail: shouldFail,
+						})
+					}
+				}
+			} else {
+				// Standalone "in do" - parse assertions from next line
+				baseIndent := len(lines[inDoLineIndex]) - len(strings.TrimLeft(lines[inDoLineIndex], " "))
+				assertionCount := 0
+
+				for j := inDoLineIndex + 1; j < len(lines) && j < inDoLineIndex+20; j++ {
+					currentLine := lines[j]
+
+					// Empty lines are ok
+					if strings.TrimSpace(currentLine) == "" {
+						continue
+					}
+
+					// Check if we've exited the do block (decreased indentation to base level or less)
+					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
+					if currentIndent <= baseIndent {
+						i = j - 1
+						break
+					}
+
+					// Look for assertion pattern
+					assertMatch := assertionPattern.FindStringSubmatch(currentLine)
+					if assertMatch != nil {
+						assertionCount++
+						shouldFail := assertMatch[2] == "ruleCatches"
+						ruleCode := assertMatch[3]
+
+						// Create unique test name if multiple assertions
+						name := testName
+						if assertionCount > 1 {
+							name = fmt.Sprintf("%s (%d)", testName, assertionCount)
+						}
+
+						tests = append(tests, TestCase{
+							Name:       name,
+							RuleCode:   ruleCode,
+							Dockerfile: dockerfile,
+							ShouldFail: shouldFail,
+						})
+					}
+				}
+			}
 		}
 
 		i++

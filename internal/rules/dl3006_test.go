@@ -15,6 +15,20 @@ func TestDL3006(t *testing.T) {
 	allRules := []rule.Rule{ DL3006() }
 
 
+	t.Run("local aliases are OK to be untagged", func(t *testing.T) {
+		dockerfile := `local aliases are OK to be untagged
+FROM golang:1.9.3-alpine3.7 AS build
+RUN foo
+FROM build as unit-test
+RUN bar
+FROM alpine:3.7
+RUN baz`
+		violations := LintDockerfile(dockerfile, allRules)
+
+		AssertNoViolation(t, violations, "DL3006")
+
+	})
+
 	t.Run("no untagged", func(t *testing.T) {
 		dockerfile := `FROM debian`
 		violations := LintDockerfile(dockerfile, allRules)
@@ -25,6 +39,20 @@ func TestDL3006(t *testing.T) {
 
 	t.Run("no untagged with name", func(t *testing.T) {
 		dockerfile := `FROM debian AS builder`
+		violations := LintDockerfile(dockerfile, allRules)
+
+		AssertContainsViolation(t, violations, "DL3006")
+
+	})
+
+	t.Run("other untagged cases are not ok", func(t *testing.T) {
+		dockerfile := `other untagged cases are not ok
+FROM golang:1.9.3-alpine3.7 AS build
+RUN foo
+FROM node as unit-test
+RUN bar
+FROM alpine:3.7
+RUN baz`
 		violations := LintDockerfile(dockerfile, allRules)
 
 		AssertContainsViolation(t, violations, "DL3006")

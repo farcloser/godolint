@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 
 	"github.com/farcloser/godolint/internal/parser"
@@ -16,8 +18,36 @@ import (
 	"github.com/farcloser/godolint/internal/rules"
 )
 
+func configureLogger(ctx context.Context, level ...zerolog.Level) {
+	zerolog.TimeFieldFormat = time.RFC3339
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger.WithContext(ctx)
+
+	if len(level) > 0 {
+		// Explicit level provided
+		zerolog.SetGlobalLevel(level[0])
+	} else {
+		// Read from LOG_LEVEL environment variable
+		logLevel := os.Getenv("LOG_LEVEL")
+		if logLevel == "" {
+			logLevel = "info"
+		}
+
+		parsedLevel, err := zerolog.ParseLevel(logLevel)
+		if err != nil {
+			// Invalid level, default to info
+			parsedLevel = zerolog.InfoLevel
+
+			log.Warn().Str("LOG_LEVEL", logLevel).Msg("Invalid log level, defaulting to info")
+		}
+
+		zerolog.SetGlobalLevel(parsedLevel)
+	}
+}
+
 func main() {
-	log := zerolog.New(os.Stderr).With().Timestamp().Logger()
+	ctx := context.Background()
+	configureLogger(ctx, zerolog.DebugLevel)
 
 	cmd := &cli.Command{
 		Name:  "godolint",
