@@ -76,12 +76,58 @@ func (r *DL3054Rule) Finalize(state rule.State) rule.State {
 }
 
 // isValidSPDX checks if a string is a valid SPDX license expression.
-// This is a simplified check that validates basic SPDX patterns.
-// For full SPDX validation, consider using github.com/spdx/tools-golang
+// This validates against common SPDX license identifiers and expressions.
 func isValidSPDX(license string) bool {
-	// Basic SPDX pattern: alphanumeric with dots, hyphens, plus signs
-	// Examples: MIT, Apache-2.0, GPL-3.0-or-later, MIT AND Apache-2.0
-	// Pattern allows: letters, numbers, dots, hyphens, plus, AND, OR, WITH
-	pattern := regexp.MustCompile(`^[A-Za-z0-9.\-+()]+(?: (?:AND|OR|WITH) [A-Za-z0-9.\-+()]+)*$`)
-	return pattern.MatchString(license)
+	// Common SPDX license identifiers (not exhaustive, but covers common cases)
+	commonLicenses := map[string]bool{
+		"MIT": true, "Apache-2.0": true, "GPL-2.0": true, "GPL-3.0": true,
+		"BSD-2-Clause": true, "BSD-3-Clause": true, "ISC": true,
+		"LGPL-2.1": true, "LGPL-3.0": true, "MPL-2.0": true,
+		"AGPL-3.0": true, "Unlicense": true, "CC0-1.0": true,
+		"GPL-3.0-or-later": true, "GPL-2.0-or-later": true,
+		"LGPL-3.0-or-later": true, "LGPL-2.1-or-later": true,
+	}
+
+	// Check if it's a simple license identifier
+	if commonLicenses[license] {
+		return true
+	}
+
+	// Check if it's a compound expression (e.g., "MIT AND Apache-2.0")
+	// Pattern: valid-id (AND|OR|WITH valid-id)*
+	exprPattern := regexp.MustCompile(`^[A-Za-z0-9.\-+()]+(?: (?:AND|OR|WITH) [A-Za-z0-9.\-+()]+)*$`)
+	if !exprPattern.MatchString(license) {
+		return false
+	}
+
+	// For compound expressions, validate each component
+	parts := regexp.MustCompile(`\s+(?:AND|OR|WITH)\s+`).Split(license, -1)
+	for _, part := range parts {
+		// Check if part is a known license or follows SPDX naming convention
+		if !commonLicenses[part] && !isSPDXPattern(part) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isSPDXPattern checks if a string follows common SPDX naming patterns.
+func isSPDXPattern(s string) bool {
+	// Common patterns: XXX-N.N, XXX-N.N-or-later, XXX-N.N-only
+	patterns := []string{
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+$`,                    // MIT-1.0
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-or-later$`,          // GPL-3.0-or-later
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-only$`,              // GPL-3.0-only
+		`^[A-Z][A-Za-z0-9]+-\d+\.\d+-Clause$`,            // BSD-3-Clause
+		`^CC-BY(-[A-Z]+)*-\d+\.\d+$`,                      // CC-BY-SA-4.0
+	}
+
+	for _, pattern := range patterns {
+		if matched, _ := regexp.MatchString(pattern, s); matched {
+			return true
+		}
+	}
+
+	return false
 }

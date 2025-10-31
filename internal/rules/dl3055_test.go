@@ -3,7 +3,6 @@ package rules
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -13,11 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3055(t *testing.T) {
-	// Config: labelSchema = {"githash": GitHash}
-	cfg := &config.Config{
-		LabelSchema: map[string]config.LabelType{"githash": config.LabelTypeGitHash},
-	}
-	allRules := []rule.Rule{DL3055WithConfig(cfg)}
+	allRules := []rule.Rule{ DL3055() }
 
 
 	t.Run("not ok with label not containing git hash", func(t *testing.T) {

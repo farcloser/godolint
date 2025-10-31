@@ -3,7 +3,6 @@ package rules
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -13,11 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3054(t *testing.T) {
-	// Config: labelSchema = {"spdxlabel": Spdx}
-	cfg := &config.Config{
-		LabelSchema: map[string]config.LabelType{"spdxlabel": config.LabelTypeSPDX},
-	}
-	allRules := []rule.Rule{DL3054WithConfig(cfg)}
+	allRules := []rule.Rule{ DL3054() }
 
 
 	t.Run("not ok with label not containing SPDX identifier", func(t *testing.T) {

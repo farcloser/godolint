@@ -3,7 +3,6 @@ package rules
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -13,11 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3053(t *testing.T) {
-	// Config: labelSchema = {"datelabel": Rfc3339}
-	cfg := &config.Config{
-		LabelSchema: map[string]config.LabelType{"datelabel": config.LabelTypeRFC3339},
-	}
-	allRules := []rule.Rule{DL3053WithConfig(cfg)}
+	allRules := []rule.Rule{ DL3053() }
 
 
 	t.Run("not ok with label not containing RFC3339 date", func(t *testing.T) {

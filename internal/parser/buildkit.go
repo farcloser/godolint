@@ -297,19 +297,29 @@ func convertLabel(node *parser.Node) (*syntax.Label, error) {
 
 	var pairs []syntax.LabelPair
 
-	for i := 0; i < len(values); i++ {
-		if i+1 < len(values) {
-			pairs = append(pairs, syntax.LabelPair{
-				Key:   values[i],
-				Value: values[i+1],
-			})
-			i++
-		}
+	// Buildkit returns tokens as: key, value, "=", key2, value2, "=", ...
+	for i := 0; i+2 < len(values); i += 3 {
+		key := values[i]
+		value := stripQuotes(values[i+1])
+		// values[i+2] is "=", skip it
+
+		pairs = append(pairs, syntax.LabelPair{
+			Key:   key,
+			Value: value,
+		})
 	}
 
 	return &syntax.Label{
 		Pairs: pairs,
 	}, nil
+}
+
+// stripQuotes removes surrounding quotes from a string if present.
+func stripQuotes(s string) string {
+	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+		return s[1 : len(s)-1]
+	}
+	return s
 }
 
 func convertWorkdir(node *parser.Node) (*syntax.Workdir, error) {

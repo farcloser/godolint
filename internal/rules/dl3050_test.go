@@ -3,7 +3,6 @@ package rules
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -13,12 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3050(t *testing.T) {
-	// Config: strictLabels = True, labelSchema = {"required": RawText}
-	cfg := &config.Config{
-		LabelSchema:  map[string]config.LabelType{"required": config.LabelTypeRawText},
-		StrictLabels: true,
-	}
-	allRules := []rule.Rule{DL3050WithConfig(cfg)}
+	allRules := []rule.Rule{ DL3050() }
 
 
 	t.Run("not ok with just other label", func(t *testing.T) {

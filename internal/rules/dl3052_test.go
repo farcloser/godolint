@@ -3,7 +3,6 @@ package rules
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
 )
 
@@ -13,11 +12,7 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3052(t *testing.T) {
-	// Config: labelSchema = {"urllabel": Url}
-	cfg := &config.Config{
-		LabelSchema: map[string]config.LabelType{"urllabel": config.LabelTypeURL},
-	}
-	allRules := []rule.Rule{DL3052WithConfig(cfg)}
+	allRules := []rule.Rule{ DL3052() }
 
 
 	t.Run("not ok with label not containing URL", func(t *testing.T) {

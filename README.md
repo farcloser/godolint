@@ -108,13 +108,6 @@ linter := sdk.New(sdk.WithDisabledRules("DL3007", "DL3008"))
 // Enable shellcheck integration
 linter := sdk.New(sdk.WithShellcheck())
 
-// Custom rules
-linter := sdk.New(sdk.WithRules([]sdk.Rule{
-    rules.DL3000(),
-    rules.DL3007(),
-    myCustomRule, // Implement sdk.Rule interface
-}))
-
 // Check for specific severity levels
 if result.HasErrors() {
     fmt.Println("Critical issues found!")
@@ -184,14 +177,18 @@ This is why we wrote godolint, for people doing go.
 
 ## Relationship with hadolint
 
-All hadolint rules declarations are automatically generated, and we fully support everything hadolint does.
+godolint is a faithful port of hadolint to Go. Rule declarations and tests are automatically generated from hadolint's Haskell source.
 
-All unit tests are automatically converted to go tests.
+**Current status:**
+- All unit tests are automatically converted to Go tests
+- Rule metadata (code, severity, message) matches hadolint exactly
+- Ongoing work to implement remaining rules
 
-godolint has no intention whatsover in fragmenting the community, and we consider hadolint the upstream for
-rules definitions and baseline tests:
-* we will regularly match evolutions of hadolint
-* any request for new **core** rules must go through hadolint
+**Project philosophy:**
+- hadolint is the upstream for rule definitions and baseline tests
+- We have no intention of fragmenting the community
+- New **core** rule requests should go through hadolint
+- We will regularly sync with hadolint's evolution
 
 ## SDK API
 
@@ -227,17 +224,11 @@ sdk.New(sdk.WithDisabledRules("DL3007", "DL3008"))
 
 // WithShellcheck - Enable shellcheck integration
 sdk.New(sdk.WithShellcheck())
-
-// WithRules - Use custom rules
-sdk.New(sdk.WithRules([]sdk.Rule{...}))
-
-// WithParser - Use custom parser
-sdk.New(sdk.WithParser(customParser))
 ```
 
 ### Rule Sets
 
-- `RuleSetAll` - All 54 implemented rules (default)
+- `RuleSetAll` - All implemented rules (default)
 - `RuleSetRecommended` - Only Error and Warning severity rules
 - `RuleSetStrict` - Same as All (for compatibility)
 
@@ -422,11 +413,10 @@ func checkDL3007(instruction syntax.Instruction) bool {
 ## Roadmap
 
 ### Short-term
-- [ ] Add shellcheck rule to default CLI rule set
-- [ ] Implement remaining shell-dependent rules (DL3009, DL3013, DL3016, etc.)
+- [ ] Implement remaining hadolint rules
 - [ ] Add CLI flags (verbosity, rule selection, output format)
-- [ ] Configuration file support (YAML/TOML)
 - [ ] Pragma support (`# godolint ignore=DL3007`)
+- [ ] Configuration file support (YAML/TOML)
 
 ### Medium-term
 - [ ] Alternative output formats (SARIF, human-readable TTY)
@@ -443,26 +433,20 @@ func checkDL3007(instruction syntax.Instruction) bool {
 ## Limitations
 
 ### Current
-- **No configuration file support** (hardcoded rules)
-- **No pragma/inline ignore directives**
-- **JSON output only**
-- **No CLI flags** (except file path)
+- **No pragma/inline ignore directives** - Coming soon
+- **CLI limited** - JSON output only, minimal flags (SDK has full flexibility)
+- **No configuration file support** - Use SDK for programmatic configuration
 
 ### Parser Differences
 - Quote handling differs slightly from hadolint (buildkit includes quotes in values)
 - Some escape sequences handled differently
 - Affects ~30% of auto-generated test cases
 
-### Rule Coverage
-- **30 rules** fully implemented and tested
-- **35 rules** remaining (mix of simple rules and shell-dependent)
-- **ShellCheck integration** complete and ready for shell-dependent rules
-
 ## Contributing
 
 Contributions welcome! Current priorities:
-- Implementing remaining rules using shellcheck integration
-- Adding CLI flags and configuration file support
+- Implementing remaining hadolint rules
+- Adding CLI flags and pragma support
 - Alternative output formats (SARIF, GitHub Actions annotations)
 - Performance optimization
 - Documentation and examples
