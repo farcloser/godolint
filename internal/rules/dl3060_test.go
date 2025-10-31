@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3060 ported from hadolint test suite.
@@ -12,54 +14,93 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3060(t *testing.T) {
-	allRules := []rule.Rule{DL3060()}
+	t.Parallel()
 
-	t.Run("not ok when cache mount is in wrong location", func(t *testing.T) {
-		dockerfile := `RUN --mount=type=cache,target=/var/lib/foobar yarn install foobar`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3060(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3060")
-	})
+	t.Run(
+		"not ok when cache mount is in wrong location",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("not ok when tmpfs mount is in wrong location", func(t *testing.T) {
-		dockerfile := `RUN --mount=type=tmpfs,target=/var/lib/foobar yarn install foobar`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN --mount=type=cache,target=/var/lib/foobar yarn install foobar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3060")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3060")
+		},
+	)
 
-	t.Run("not ok with no cache clean", func(t *testing.T) {
-		dockerfile := `RUN yarn install foo`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok when tmpfs mount is in wrong location",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3060")
-	})
+			dockerfile := `RUN --mount=type=tmpfs,target=/var/lib/foobar yarn install foobar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok when cache mount is used", func(t *testing.T) {
-		dockerfile := `RUN --mount=type=cache,target=/root/.cache/yarn yarn install foobar`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3060")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3060")
-	})
+	t.Run(
+		"not ok with no cache clean",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok when tmpfs mount is used", func(t *testing.T) {
-		dockerfile := `RUN --mount=type=tmpfs,target=/root/.cache/yarn yarn install foobar`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN yarn install foo`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3060")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3060")
+		},
+	)
 
-	t.Run("ok with cache clean", func(t *testing.T) {
-		dockerfile := `RUN yarn install bar && yarn cache clean`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok when cache mount is used",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3060")
-	})
+			dockerfile := `RUN --mount=type=cache,target=/root/.cache/yarn yarn install foobar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with non-yarn commands", func(t *testing.T) {
-		dockerfile := `RUN foo`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3060")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3060")
-	})
+	t.Run(
+		"ok when tmpfs mount is used",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN --mount=type=tmpfs,target=/root/.cache/yarn yarn install foobar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3060")
+		},
+	)
+
+	t.Run(
+		"ok with cache clean",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN yarn install bar && yarn cache clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3060")
+		},
+	)
+
+	t.Run(
+		"ok with non-yarn commands",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN foo`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3060")
+		},
+	)
 }

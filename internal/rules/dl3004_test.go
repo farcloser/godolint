@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3004 ported from hadolint test suite.
@@ -12,26 +14,45 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3004(t *testing.T) {
-	allRules := []rule.Rule{DL3004()}
+	t.Parallel()
 
-	t.Run("install sudo", func(t *testing.T) {
-		dockerfile := `RUN apt-get install sudo`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3004(),
+	}
 
-		AssertNoViolation(t, violations, "DL3004")
-	})
+	t.Run(
+		"install sudo",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("sudo", func(t *testing.T) {
-		dockerfile := `RUN sudo apt-get update`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN apt-get install sudo`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3004")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3004")
+		},
+	)
 
-	t.Run("sudo chained programs", func(t *testing.T) {
-		dockerfile := `RUN apt-get update && sudo apt-get install`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"sudo",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3004")
-	})
+			dockerfile := `RUN sudo apt-get update`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3004")
+		},
+	)
+
+	t.Run(
+		"sudo chained programs",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN apt-get update && sudo apt-get install`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3004")
+		},
+	)
 }

@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3037 ported from hadolint test suite.
@@ -12,54 +14,93 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3037(t *testing.T) {
-	allRules := []rule.Rule{DL3037()}
+	t.Parallel()
 
-	t.Run("not ok without zypper version pinning", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3037(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3037")
-	})
+	t.Run(
+		"not ok without zypper version pinning",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with different variants of zypper version pinning", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat=9.0.39 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN zypper install -y tomcat && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3037")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3037")
+		},
+	)
 
-	t.Run("ok with different variants of zypper version pinning (2)", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat\>=9.0 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with different variants of zypper version pinning",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3037")
-	})
+			dockerfile := `RUN zypper install -y tomcat=9.0.39 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with different variants of zypper version pinning (3)", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat\>9.0 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3037")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3037")
-	})
+	t.Run(
+		"ok with different variants of zypper version pinning (2)",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with different variants of zypper version pinning (4)", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat\<=9.0 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN zypper install -y tomcat\>=9.0 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3037")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3037")
+		},
+	)
 
-	t.Run("ok with different variants of zypper version pinning (5)", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat\<9.0 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with different variants of zypper version pinning (3)",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3037")
-	})
+			dockerfile := `RUN zypper install -y tomcat\>9.0 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with different variants of zypper version pinning (6)", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y tomcat-9.0.39-1.rpm && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3037")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3037")
-	})
+	t.Run(
+		"ok with different variants of zypper version pinning (4)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN zypper install -y tomcat\<=9.0 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3037")
+		},
+	)
+
+	t.Run(
+		"ok with different variants of zypper version pinning (5)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN zypper install -y tomcat\<9.0 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3037")
+		},
+	)
+
+	t.Run(
+		"ok with different variants of zypper version pinning (6)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN zypper install -y tomcat-9.0.39-1.rpm && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3037")
+		},
+	)
 }

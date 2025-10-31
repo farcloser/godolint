@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3001 ported from hadolint test suite.
@@ -12,19 +14,33 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3001(t *testing.T) {
-	allRules := []rule.Rule{DL3001()}
+	t.Parallel()
 
-	t.Run("install ssh", func(t *testing.T) {
-		dockerfile := `RUN apt-get install ssh`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3001(),
+	}
 
-		AssertNoViolation(t, violations, "DL3001")
-	})
+	t.Run(
+		"install ssh",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("invalid cmd", func(t *testing.T) {
-		dockerfile := `RUN top`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN apt-get install ssh`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3001")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3001")
+		},
+	)
+
+	t.Run(
+		"invalid cmd",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN top`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3001")
+		},
+	)
 }

@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3062 ported from hadolint test suite.
@@ -12,68 +14,117 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3062(t *testing.T) {
-	allRules := []rule.Rule{DL3062()}
+	t.Parallel()
 
-	t.Run("go version not pinned", func(t *testing.T) {
-		dockerfile := `RUN go install example.com/pkg`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3062(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3062")
-	})
+	t.Run(
+		"go version not pinned",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("go version not pinned", func(t *testing.T) {
-		dockerfile := `RUN go get example.com/pkg`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN go install example.com/pkg`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3062")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3062")
+		},
+	)
 
-	t.Run("go version not pinned", func(t *testing.T) {
-		dockerfile := `RUN go run example.com/pkg`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"go version not pinned",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3062")
-	})
+			dockerfile := `RUN go get example.com/pkg`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("go version pinned", func(t *testing.T) {
-		dockerfile := `RUN go install example.com/pkg@v1.2.3`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3062")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3062")
-	})
+	t.Run(
+		"go version not pinned",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("go version pinned", func(t *testing.T) {
-		dockerfile := `RUN go get example.com/pkg@v1.2.3`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN go run example.com/pkg`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3062")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3062")
+		},
+	)
 
-	t.Run("go version pinned", func(t *testing.T) {
-		dockerfile := `RUN go run example.com/pkg@v1.2.3`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"go version pinned",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3062")
-	})
+			dockerfile := `RUN go install example.com/pkg@v1.2.3`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("go version pinned as latest", func(t *testing.T) {
-		dockerfile := `RUN go install example.com/pkg@latest`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3062")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3062")
-	})
+	t.Run(
+		"go version pinned",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("go version pinned as latest", func(t *testing.T) {
-		dockerfile := `RUN go get example.com/pkg@latest`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN go get example.com/pkg@v1.2.3`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3062")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3062")
+		},
+	)
 
-	t.Run("go version pinned as latest", func(t *testing.T) {
-		dockerfile := `RUN go run example.com/pkg@latest`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"go version pinned",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3062")
-	})
+			dockerfile := `RUN go run example.com/pkg@v1.2.3`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3062")
+		},
+	)
+
+	t.Run(
+		"go version pinned as latest",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN go install example.com/pkg@latest`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3062")
+		},
+	)
+
+	t.Run(
+		"go version pinned as latest",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN go get example.com/pkg@latest`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3062")
+		},
+	)
+
+	t.Run(
+		"go version pinned as latest",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN go run example.com/pkg@latest`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3062")
+		},
+	)
 }

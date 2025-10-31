@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL4001 ported from hadolint test suite.
@@ -12,56 +14,80 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4001(t *testing.T) {
-	allRules := []rule.Rule{DL4001()}
+	t.Parallel()
 
-	t.Run("does not warn when using both curl and wget in different stages", func(t *testing.T) {
-		dockerfile := `FROM node as foo
+	allRules := []rule.Rule{
+		rules.DL4001(),
+	}
+
+	t.Run(
+		"does not warn when using both curl and wget in different stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM node as foo
 RUN wget my.xyz
 FROM scratch
-RUN curl localhost
-DL4001`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN curl localhost`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL4001")
-	})
+			testutils.AssertNoViolation(t, violations, "DL4001")
+		},
+	)
 
-	t.Run("does not warn when using only wget", func(t *testing.T) {
-		dockerfile := `FROM node as foo
-RUN wget my.xyz
-DL4001`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"does not warn when using only wget",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL4001")
-	})
+			dockerfile := `FROM node as foo
+RUN wget my.xyz`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("does not warns when using both, on a single stage", func(t *testing.T) {
-		dockerfile := `FROM node as foo
+			testutils.AssertNoViolation(t, violations, "DL4001")
+		},
+	)
+
+	t.Run(
+		"does not warns when using both, on a single stage",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM node as foo
 RUN wget my.xyz
 RUN curl localhost
 FROM scratch
-RUN curl localhost
-DL4001`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN curl localhost`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4001")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4001")
+		},
+	)
 
-	t.Run("warns when using both wget and curl", func(t *testing.T) {
-		dockerfile := `FROM node as foo
+	t.Run(
+		"warns when using both wget and curl",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM node as foo
 RUN wget my.xyz
-RUN curl localhost
-DL4001`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN curl localhost`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4001")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4001")
+		},
+	)
 
-	t.Run("warns when using both wget and curl in same instruction", func(t *testing.T) {
-		dockerfile := `FROM node as foo
-RUN wget my.xyz && curl localhost
-DL4001`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"warns when using both wget and curl in same instruction",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL4001")
-	})
+			dockerfile := `FROM node as foo
+RUN wget my.xyz && curl localhost`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL4001")
+		},
+	)
 }

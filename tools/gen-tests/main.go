@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"text/template"
 )
+
+var ErrTestGeneration = errors.New("test generation error")
 
 type TestCase struct {
 	Name       string
@@ -41,7 +44,7 @@ var (
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <hadolint-test-dir>\n", os.Args[0])
+		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s <hadolint-test-dir>\n", os.Args[0])
 		os.Exit(1)
 	}
 
@@ -52,12 +55,12 @@ func main() {
 
 	files, err := filepath.Glob(pattern)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to glob tests: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to glob tests: %v\n", err)
 		os.Exit(1)
 	}
 
 	if len(files) == 0 {
-		fmt.Fprintf(os.Stderr, "No test files found in %s\n", hadolintTestDir)
+		_, _ = fmt.Fprintf(os.Stderr, "No test files found in %s\n", hadolintTestDir)
 		os.Exit(1)
 	}
 
@@ -69,7 +72,7 @@ func main() {
 	for _, file := range files {
 		tests, configs, err := parseTestFile(file)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to parse %s: %v\n", file, err)
+			_, _ = fmt.Fprintf(os.Stderr, "Warning: failed to parse %s: %v\n", file, err)
 
 			continue
 		}
@@ -118,7 +121,7 @@ func main() {
 		config := allConfigs[ruleCode] // May be nil if no config found
 
 		if err := generateTestFile(ruleCode, cases, config); err != nil {
-			fmt.Fprintf(os.Stderr, "Error generating tests for %s: %v\n", ruleCode, err)
+			_, _ = fmt.Fprintf(os.Stderr, "Error generating tests for %s: %v\n", ruleCode, err)
 		} else {
 			fmt.Printf("Generated tests for %s (%d cases)\n", ruleCode, len(cases))
 
@@ -132,7 +135,7 @@ func main() {
 func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConfig, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("%w: %w", ErrTestGeneration, err)
 	}
 
 	text := string(content)
@@ -238,7 +241,7 @@ func parseHadolintConfig(text string) *HadolintConfig {
 	}
 
 	// Match: let ?config = def { ... }
-	configPattern := regexp.MustCompile(`let\s+\?config\s*=\s*def\s*\{([^}]+)\}`)
+	configPattern := regexp.MustCompile(`let\s+\?config\s*=\s*def\s*\{([^}]+)}`)
 
 	configMatch := configPattern.FindStringSubmatch(text)
 	if configMatch == nil {
@@ -248,7 +251,7 @@ func parseHadolintConfig(text string) *HadolintConfig {
 	configBody := configMatch[1]
 
 	// Extract labelSchema: Map.fromList [("label1", Rule.Type1), ...]
-	labelSchemaPattern := regexp.MustCompile(`labelSchema\s*=\s*Map\.fromList\s*\[(.*?)\]`)
+	labelSchemaPattern := regexp.MustCompile(`labelSchema\s*=\s*Map\.fromList\s*\[(.*?)]`)
 
 	labelMatch := labelSchemaPattern.FindStringSubmatch(configBody)
 	if labelMatch != nil {
@@ -294,8 +297,8 @@ func parseDoBlockTests(text string) []TestCase {
 		`\s*(onBuild)?(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+"((?:[^"\\]|\\.)*)"`,
 	)
 
-	for i := range len(lines) {
-		line := lines[i]
+	for idx := range lines {
+		line := lines[idx]
 
 		// Look for "it 'name' $ do" line
 		doMatch := doPattern.FindStringSubmatch(line)
@@ -309,7 +312,7 @@ func parseDoBlockTests(text string) []TestCase {
 		// Collect all assertions in this do block
 		assertionCount := 0
 
-		for j := i + 1; j < len(lines); j++ {
+		for j := idx + 1; j < len(lines); j++ {
 			currentLine := lines[j]
 
 			// Empty lines are ok
@@ -372,7 +375,7 @@ func parseMultilineTests(text string) []TestCase {
 	//      in do ruleCatches "DL3047" $ Text.unlines dockerFile
 
 	lines := strings.Split(text, "\n")
-	i := 0
+	idx := 0
 
 	// Pattern to match: it "test name" $
 	itPattern := regexp.MustCompile(`it\s+"([^"]+)"\s+\$\s*$`)
@@ -389,13 +392,13 @@ func parseMultilineTests(text string) []TestCase {
 		`\s*(onBuild)?(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+(\$\s+Text\.unlines\s+dockerFile|line)`,
 	)
 
-	for i < len(lines) {
-		line := lines[i]
+	for idx < len(lines) {
+		line := lines[idx]
 
 		// Look for "it 'name' $" line
 		itMatch := itPattern.FindStringSubmatch(line)
 		if itMatch == nil {
-			i++
+			idx++
 
 			continue
 		}
@@ -403,13 +406,13 @@ func parseMultilineTests(text string) []TestCase {
 		testName := itMatch[1]
 
 		// Check if next line has a let binding
-		if i+1 >= len(lines) {
-			i++
+		if idx+1 >= len(lines) {
+			idx++
 
 			continue
 		}
 
-		nextLine := lines[i+1]
+		nextLine := lines[idx+1]
 
 		// Check for "let line = ..." format
 		lineMatch := letLinePattern.FindStringSubmatch(nextLine)
@@ -421,7 +424,7 @@ func parseMultilineTests(text string) []TestCase {
 			foundInDo := false
 			inDoLineIndex := -1
 
-			for j := i + 2; j < len(lines) && j < i+20; j++ {
+			for j := idx + 2; j < len(lines) && j < idx+20; j++ {
 				currentLine := lines[j]
 
 				// Look for "in do" pattern (standalone or inline)
@@ -467,7 +470,7 @@ func parseMultilineTests(text string) []TestCase {
 
 					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
 					if currentIndent <= baseIndent {
-						i = j - 1
+						idx = j - 1
 
 						break
 					}
@@ -493,14 +496,14 @@ func parseMultilineTests(text string) []TestCase {
 				}
 			}
 
-			i++
+			idx++
 
 			continue
 		}
 
 		// Check for "let dockerFile = [...]" format
 		if !letDockerFilePattern.MatchString(nextLine) {
-			i++
+			idx++
 
 			continue
 		}
@@ -511,21 +514,11 @@ func parseMultilineTests(text string) []TestCase {
 		foundInDo := false
 		inDoLineIndex := -1
 
-		for j := i + 1; j < len(lines) && j < i+50; j++ {
+		for j := idx + 1; j < len(lines) && j < idx+50; j++ {
 			currentLine := lines[j]
 
-			// Look for dockerfile lines in the list
-			if strings.Contains(currentLine, "\"") {
-				// Extract quoted strings, handling escaped quotes
-				quotedStrings := regexp.MustCompile(`"((?:[^"\\]|\\.)*)"`).FindAllStringSubmatch(currentLine, -1)
-				for _, match := range quotedStrings {
-					if len(match) > 1 && match[1] != "" {
-						// Unescape Haskell string escape sequences
-						unescaped := unescapeHaskellString(match[1])
-						dockerfileLines = append(dockerfileLines, unescaped)
-					}
-				}
-			}
+			// Check for terminating patterns FIRST (before extracting quotes)
+			// to avoid including rule codes in Dockerfile content
 
 			// Look for "in do" pattern (standalone)
 			if inDoPattern.MatchString(currentLine) {
@@ -559,9 +552,22 @@ func parseMultilineTests(text string) []TestCase {
 					})
 				}
 
-				i = j
+				idx = j
 
 				break
+			}
+
+			// Extract dockerfile lines from quoted strings (only if not a terminating pattern)
+			if strings.Contains(currentLine, "\"") {
+				// Extract quoted strings, handling escaped quotes
+				quotedStrings := regexp.MustCompile(`"((?:[^"\\]|\\.)*)"`).FindAllStringSubmatch(currentLine, -1)
+				for _, match := range quotedStrings {
+					if len(match) > 1 && match[1] != "" {
+						// Unescape Haskell string escape sequences
+						unescaped := unescapeHaskellString(match[1])
+						dockerfileLines = append(dockerfileLines, unescaped)
+					}
+				}
 			}
 		}
 
@@ -596,7 +602,7 @@ func parseMultilineTests(text string) []TestCase {
 
 					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
 					if currentIndent <= baseIndent {
-						i = j - 1
+						idx = j - 1
 
 						break
 					}
@@ -633,7 +639,7 @@ func parseMultilineTests(text string) []TestCase {
 					// Check if we've exited the do block (decreased indentation to base level or less)
 					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
 					if currentIndent <= baseIndent {
-						i = j - 1
+						idx = j - 1
 
 						break
 					}
@@ -662,7 +668,7 @@ func parseMultilineTests(text string) []TestCase {
 			}
 		}
 
-		i++
+		idx++
 	}
 
 	return tests
@@ -697,13 +703,15 @@ func generateTestFile(ruleCode string, cases []TestCase, config *HadolintConfig)
 		return cases[i].Name < cases[j].Name
 	})
 
-	tmpl := `package rules
+	tmpl := `package rules_test
 
 import (
 	"testing"
-{{if .Config}}
-	"github.com/farcloser/godolint/internal/config"
+
+{{if .Config}}	"github.com/farcloser/godolint/internal/config"
 {{end}}	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for {{.RuleCode}} ported from hadolint test suite.
@@ -712,28 +720,34 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func Test{{.RuleCode}}(t *testing.T) {
+	t.Parallel()
+
 {{if .Config}}	cfg := &config.Config{
 {{if .Config.LabelSchema}}		LabelSchema: map[string]config.LabelType{
 {{range $key, $val := .Config.LabelSchema}}			"{{$key}}": config.LabelType{{goLabelType $val}},
 {{end}}		},
 {{end}}{{if .Config.StrictLabels}}		StrictLabels: true,
 {{end}}	}
-	allRules := []rule.Rule{ {{.RuleCode}}WithConfig(cfg)}
-{{else}}	allRules := []rule.Rule{ {{.RuleCode}}()}
-{{end}}
+	allRules := []rule.Rule{
+		rules.{{.RuleCode}}WithConfig(cfg),
+	}
+{{else}}	allRules := []rule.Rule{
+		rules.{{.RuleCode}}(),
+	}
+{{end}}{{range .TestCases}}
+	t.Run(
+		{{.Name | printf "%q"}},
+		func(t *testing.T) {
+			t.Parallel()
 
-{{range .TestCases}}
-	t.Run({{.Name | printf "%q"}}, func(t *testing.T) {
-		dockerfile := ` + "`" + `{{.Dockerfile | escapeBackticks}}` + "`" + `
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := ` + "`" + `{{.Dockerfile | escapeBackticks}}` + "`" + `
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 {{if .ShouldFail}}
-		AssertContainsViolation(t, violations, "{{.RuleCode}}")
-{{else}}
-		AssertNoViolation(t, violations, "{{.RuleCode}}")
-{{end}}
-	})
-{{end}}
-}
+			testutils.AssertContainsViolation(t, violations, "{{.RuleCode}}"){{else}}
+			testutils.AssertNoViolation(t, violations, "{{.RuleCode}}"){{end}}
+		},
+	)
+{{end}}}
 `
 
 	funcMap := template.FuncMap{
@@ -741,29 +755,32 @@ func Test{{.RuleCode}}(t *testing.T) {
 		"goLabelType":     goLabelType,
 	}
 
-	t, err := template.New("test").Funcs(funcMap).Parse(tmpl)
+	tpl, err := template.New("test").Funcs(funcMap).Parse(tmpl)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrTestGeneration, err)
 	}
 
 	filename := strings.ToLower(ruleCode) + "_test.go"
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrTestGeneration, err)
 	}
 
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
-	data := struct {
-		RuleCode  string
-		TestCases []TestCase
-		Config    *HadolintConfig
-	}{
+	data := RuleTests{
 		RuleCode:  ruleCode,
 		TestCases: cases,
 		Config:    config,
 	}
 
-	return t.Execute(f, data)
+	err = tpl.Execute(f, data)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrTestGeneration, err)
+	}
+
+	return nil
 }

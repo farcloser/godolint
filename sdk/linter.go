@@ -41,6 +41,7 @@ func WithRuleSet(set RuleSet) Option {
 	}
 }
 
+// WithDisabledRules returns an option that disables specific rules by their codes.
 // Example: WithDisabledRules("DL3000", "DL3007").
 func WithDisabledRules(codes ...string) Option {
 	return func(l *Linter) {
@@ -61,16 +62,16 @@ func WithShellcheck() Option {
 // New creates a new Linter with the given options.
 // By default, uses all implemented rules and the buildkit parser.
 func New(opts ...Option) *Linter {
-	l := &Linter{
+	lint := &Linter{
 		parser: parser.NewBuildkitParser(),
 		rules:  AllRules(),
 	}
 
 	for _, opt := range opts {
-		opt(l)
+		opt(lint)
 	}
 
-	return l
+	return lint
 }
 
 // Lint lints the given Dockerfile content.

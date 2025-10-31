@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3055 ported from hadolint test suite.
@@ -13,38 +15,62 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3055(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"githash": config.LabelTypeGitHash,
 		},
 	}
-	allRules := []rule.Rule{DL3055WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3055WithConfig(cfg),
+	}
 
-	t.Run("not ok with label not containing git hash", func(t *testing.T) {
-		dockerfile := `LABEL githash="not-git-hash"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with label not containing git hash",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3055")
-	})
+			dockerfile := `LABEL githash="not-git-hash"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with label containing long git hash", func(t *testing.T) {
-		dockerfile := `LABEL githash="43c572f1272b6b3171dd1db9e41b7027128ce080"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3055")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3055")
-	})
+	t.Run(
+		"ok with label containing long git hash",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with label containing short git hash", func(t *testing.T) {
-		dockerfile := `LABEL githash="2dbfae9"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL githash="43c572f1272b6b3171dd1db9e41b7027128ce080"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3055")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3055")
+		},
+	)
 
-	t.Run("ok with other label not containing git hash", func(t *testing.T) {
-		dockerfile := `LABEL other="foo"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with label containing short git hash",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3055")
-	})
+			dockerfile := `LABEL githash="2dbfae9"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3055")
+		},
+	)
+
+	t.Run(
+		"ok with other label not containing git hash",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other="foo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3055")
+		},
+	)
 }

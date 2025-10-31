@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3058 ported from hadolint test suite.
@@ -13,31 +15,50 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3058(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"maintainer": config.LabelTypeEmail,
 		},
 	}
-	allRules := []rule.Rule{DL3058WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3058WithConfig(cfg),
+	}
 
-	t.Run("not ok with label not containing valid email", func(t *testing.T) {
-		dockerfile := `LABEL maintainer="not-email"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with label not containing valid email",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3058")
-	})
+			dockerfile := `LABEL maintainer="not-email"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with label containing valid email", func(t *testing.T) {
-		dockerfile := `LABEL maintainer="abcd@google.com"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3058")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3058")
-	})
+	t.Run(
+		"ok with label containing valid email",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with other label not containing valid email", func(t *testing.T) {
-		dockerfile := `LABEL other="doo"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL maintainer="abcd@google.com"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3058")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3058")
+		},
+	)
+
+	t.Run(
+		"ok with other label not containing valid email",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other="doo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3058")
+		},
+	)
 }

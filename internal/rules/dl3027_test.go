@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3027 ported from hadolint test suite.
@@ -12,13 +14,22 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3027(t *testing.T) {
-	allRules := []rule.Rule{DL3027()}
+	t.Parallel()
 
-	t.Run("apt", func(t *testing.T) {
-		dockerfile := `FROM ubuntu
+	allRules := []rule.Rule{
+		rules.DL3027(),
+	}
+
+	t.Run(
+		"apt",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM ubuntu
 RUN apt install python`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3027")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3027")
+		},
+	)
 }

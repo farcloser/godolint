@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3002 ported from hadolint test suite.
@@ -12,99 +14,139 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3002(t *testing.T) {
-	allRules := []rule.Rule{DL3002()}
+	t.Parallel()
 
-	t.Run("can switch back to non root", func(t *testing.T) {
-		dockerfile := `FROM scratch
+	allRules := []rule.Rule{
+		rules.DL3002(),
+	}
+
+	t.Run(
+		"can switch back to non root",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
 USER root
 RUN something
-USER foo
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+USER foo`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3002")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3002")
+		},
+	)
 
-	t.Run("does not warn when switching in multiple stages", func(t *testing.T) {
-		dockerfile := `FROM debian as base
+	t.Run(
+		"does not warn when switching in multiple stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as base
 USER root
 RUN something
 USER foo
 FROM scratch
-RUN something else
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN something else`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3002")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3002")
+		},
+	)
 
-	t.Run("last user should not be root", func(t *testing.T) {
-		dockerfile := `FROM scratch
-USER root
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"last user should not be root",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3002")
-	})
+			dockerfile := `FROM scratch
+USER root`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("no UID:GID", func(t *testing.T) {
-		dockerfile := `FROM scratch
-USER 0:0
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3002")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3002")
-	})
+	t.Run(
+		"no UID:GID",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("no root", func(t *testing.T) {
-		dockerfile := `FROM scratch
-USER foo
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM scratch
+USER 0:0`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3002")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3002")
+		},
+	)
 
-	t.Run("no root UID", func(t *testing.T) {
-		dockerfile := `FROM scratch
-USER 0
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"no root",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3002")
-	})
+			dockerfile := `FROM scratch
+USER foo`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("no root:root", func(t *testing.T) {
-		dockerfile := `FROM scratch
-USER root:root
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3002")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3002")
-	})
+	t.Run(
+		"no root UID",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("warns on multiple stages", func(t *testing.T) {
-		dockerfile := `FROM debian as base
+			dockerfile := `FROM scratch
+USER 0`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3002")
+		},
+	)
+
+	t.Run(
+		"no root:root",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
+USER root:root`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3002")
+		},
+	)
+
+	t.Run(
+		"warns on multiple stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as base
 USER root
 RUN something
 FROM scratch
 USER foo
-RUN something else
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN something else`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3002")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3002")
+		},
+	)
 
-	t.Run("warns on transitive root user", func(t *testing.T) {
-		dockerfile := `FROM debian as base
+	t.Run(
+		"warns on transitive root user",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as base
 USER root
 RUN something
 FROM base
-RUN something else
-DL3002`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN something else`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3002")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3002")
+		},
+	)
 }

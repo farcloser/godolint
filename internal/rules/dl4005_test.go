@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL4005 ported from hadolint test suite.
@@ -12,26 +14,45 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4005(t *testing.T) {
-	allRules := []rule.Rule{DL4005()}
+	t.Parallel()
 
-	t.Run("RUN ln", func(t *testing.T) {
-		dockerfile := `RUN ln -sfv /bin/bash /bin/sh`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL4005(),
+	}
 
-		AssertContainsViolation(t, violations, "DL4005")
-	})
+	t.Run(
+		"RUN ln",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("RUN ln with multiple acceptable commands", func(t *testing.T) {
-		dockerfile := `RUN ln -s foo bar && unrelated && something_with /bin/sh`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN ln -sfv /bin/bash /bin/sh`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL4005")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4005")
+		},
+	)
 
-	t.Run("RUN ln with unrelated symlinks", func(t *testing.T) {
-		dockerfile := `RUN ln -sf /bin/true /sbin/initctl`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"RUN ln with multiple acceptable commands",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL4005")
-	})
+			dockerfile := `RUN ln -s foo bar && unrelated && something_with /bin/sh`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL4005")
+		},
+	)
+
+	t.Run(
+		"RUN ln with unrelated symlinks",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN ln -sf /bin/true /sbin/initctl`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL4005")
+		},
+	)
 }

@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3046 ported from hadolint test suite.
@@ -12,40 +14,69 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3046(t *testing.T) {
-	allRules := []rule.Rule{DL3046()}
+	t.Parallel()
 
-	t.Run("ok with `useradd` alone", func(t *testing.T) {
-		dockerfile := `RUN useradd luser`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3046(),
+	}
 
-		AssertNoViolation(t, violations, "DL3046")
-	})
+	t.Run(
+		"ok with `useradd` alone",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `useradd` and just flag `-l`", func(t *testing.T) {
-		dockerfile := `RUN useradd -l luser`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN useradd luser`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3046")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3046")
+		},
+	)
 
-	t.Run("ok with `useradd` long uid and flag `-l`", func(t *testing.T) {
-		dockerfile := `RUN useradd -l -u 123456 luser`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with `useradd` and just flag `-l`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3046")
-	})
+			dockerfile := `RUN useradd -l luser`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `useradd` short uid", func(t *testing.T) {
-		dockerfile := `RUN useradd -u 12345 luser`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3046")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3046")
-	})
+	t.Run(
+		"ok with `useradd` long uid and flag `-l`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("warn when `useradd` and long uid without flag `-l`", func(t *testing.T) {
-		dockerfile := `RUN useradd -u 123456 luser`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN useradd -l -u 123456 luser`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3046")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3046")
+		},
+	)
+
+	t.Run(
+		"ok with `useradd` short uid",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN useradd -u 12345 luser`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3046")
+		},
+	)
+
+	t.Run(
+		"warn when `useradd` and long uid without flag `-l`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN useradd -u 123456 luser`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3046")
+		},
+	)
 }

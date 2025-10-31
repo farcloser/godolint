@@ -144,7 +144,7 @@ func (b *BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckF
 // buildScript constructs the complete script to pass to shellcheck.
 // Ported from the script construction in Hadolint.Shell.shellcheck.
 func buildScript(runCommand string, opts ShellOpts) string {
-	var b strings.Builder
+	var build strings.Builder
 
 	// Add shebang from shell option
 	shebang := extractShell(opts.ShellName)
@@ -152,21 +152,21 @@ func buildScript(runCommand string, opts ShellOpts) string {
 		shebang = "/bin/sh"
 	}
 
-	b.WriteString("#!")
-	b.WriteString(shebang)
-	b.WriteString("\n")
+	build.WriteString("#!")
+	build.WriteString(shebang)
+	build.WriteString("\n")
 
 	// Export environment variables
 	for key := range opts.EnvVars {
-		b.WriteString("export ")
-		b.WriteString(key)
-		b.WriteString("=1\n")
+		build.WriteString("export ")
+		build.WriteString(key)
+		build.WriteString("=1\n")
 	}
 
 	// Add the actual RUN command
-	b.WriteString(runCommand)
+	build.WriteString(runCommand)
 
-	return b.String()
+	return build.String()
 }
 
 // extractShell extracts the shell path from shell command.
@@ -268,12 +268,12 @@ func (r *ShellcheckRule) InitialState() rule.State {
 // Ported from scrule in Hadolint.Rule.Shellcheck.
 func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	// Extract current shell state
-	var ss shellState
+	var shState shellState
 	if state.Data != nil {
-		ss = state.Data.(shellState)
+		shState = state.Data.(shellState)
 	} else {
 		defaultOpts := DefaultShellOpts()
-		ss = shellState{
+		shState = shellState{
 			opts:        defaultOpts,
 			defaultOpts: defaultOpts,
 		}
@@ -283,19 +283,19 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 	case *syntax.From:
 		// New stage - reset to default options
 		return state.ReplaceData(shellState{
-			opts:        ss.defaultOpts,
-			defaultOpts: ss.defaultOpts,
+			opts:        shState.defaultOpts,
+			defaultOpts: shState.defaultOpts,
 		})
 
 	case *syntax.Arg:
 		// Add ARG to environment variables
-		newOpts := ss.opts
+		newOpts := shState.opts
 		if newOpts.EnvVars == nil {
 			newOpts.EnvVars = make(map[string]string)
 		}
 		// Copy existing vars
 		envCopy := make(map[string]string)
-		for k, v := range ss.opts.EnvVars {
+		for k, v := range shState.opts.EnvVars {
 			envCopy[k] = v
 		}
 
@@ -304,18 +304,18 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 
 		return state.ReplaceData(shellState{
 			opts:        newOpts,
-			defaultOpts: ss.defaultOpts,
+			defaultOpts: shState.defaultOpts,
 		})
 
 	case *syntax.Env:
 		// Add ENV variables
-		newOpts := ss.opts
+		newOpts := shState.opts
 		if newOpts.EnvVars == nil {
 			newOpts.EnvVars = make(map[string]string)
 		}
 		// Copy existing vars
 		envCopy := make(map[string]string)
-		for k, v := range ss.opts.EnvVars {
+		for k, v := range shState.opts.EnvVars {
 			envCopy[k] = v
 		}
 
@@ -327,25 +327,25 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 
 		return state.ReplaceData(shellState{
 			opts:        newOpts,
-			defaultOpts: ss.defaultOpts,
+			defaultOpts: shState.defaultOpts,
 		})
 
 	case *syntax.Shell:
 		// Update shell command
 		if len(instr.Arguments) > 0 {
 			shellCmd := strings.Join(instr.Arguments, " ")
-			newOpts := ss.opts
+			newOpts := shState.opts
 			newOpts.ShellName = shellCmd
 
 			return state.ReplaceData(shellState{
 				opts:        newOpts,
-				defaultOpts: ss.defaultOpts,
+				defaultOpts: shState.defaultOpts,
 			})
 		}
 
 	case *syntax.Run:
 		// Run shellcheck on the command
-		violations, err := r.checker.Check(instr.Command, ss.opts)
+		violations, err := r.checker.Check(instr.Command, shState.opts)
 		if err != nil {
 			// Log error but don't fail the rule
 			// (matching hadolint behavior - shellcheck failures are not fatal)

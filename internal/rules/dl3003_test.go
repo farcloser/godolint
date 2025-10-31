@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3003 ported from hadolint test suite.
@@ -12,19 +14,33 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3003(t *testing.T) {
-	allRules := []rule.Rule{DL3003()}
+	t.Parallel()
 
-	t.Run("not ok using cd", func(t *testing.T) {
-		dockerfile := `RUN cd /opt`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3003(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3003")
-	})
+	t.Run(
+		"not ok using cd",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok using WORKDIR", func(t *testing.T) {
-		dockerfile := `WORKDIR /opt`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN cd /opt`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3003")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3003")
+		},
+	)
+
+	t.Run(
+		"ok using WORKDIR",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `WORKDIR /opt`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3003")
+		},
+	)
 }

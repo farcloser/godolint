@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3050 ported from hadolint test suite.
@@ -13,39 +15,63 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3050(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"required": config.LabelTypeRawText,
 		},
 		StrictLabels: true,
 	}
-	allRules := []rule.Rule{DL3050WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3050WithConfig(cfg),
+	}
 
-	t.Run("not ok with just other label", func(t *testing.T) {
-		dockerfile := `LABEL other="bar"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with just other label",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3050")
-	})
+			dockerfile := `LABEL other="bar"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("not ok with other label and required label", func(t *testing.T) {
-		dockerfile := `LABEL required="foo" other="bar"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3050")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3050")
-	})
+	t.Run(
+		"not ok with other label and required label",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with no label", func(t *testing.T) {
-		dockerfile := ``
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL required="foo" other="bar"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3050")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3050")
+		},
+	)
 
-	t.Run("ok with required label", func(t *testing.T) {
-		dockerfile := `LABEL required="foo"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with no label",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3050")
-	})
+			dockerfile := ``
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3050")
+		},
+	)
+
+	t.Run(
+		"ok with required label",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL required="foo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3050")
+		},
+	)
 }

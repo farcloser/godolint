@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3030 ported from hadolint test suite.
@@ -12,26 +14,45 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3030(t *testing.T) {
-	allRules := []rule.Rule{DL3030()}
+	t.Parallel()
 
-	t.Run("not ok when not using `-y` switch", func(t *testing.T) {
-		dockerfile := `RUN yum install httpd-2.4.24 && yum clean all`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3030(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3030")
-	})
+	t.Run(
+		"not ok when not using `-y` switch",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok when using `-y` switch", func(t *testing.T) {
-		dockerfile := `RUN yum install -y httpd-2.4.24 && yum clean all`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN yum install httpd-2.4.24 && yum clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3030")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3030")
+		},
+	)
 
-	t.Run("ok when using `-y` switch (2)", func(t *testing.T) {
-		dockerfile := `RUN bash -c ` + "`" + `# not even a yum command` + "`" + ``
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok when using `-y` switch",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3030")
-	})
+			dockerfile := `RUN yum install -y httpd-2.4.24 && yum clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3030")
+		},
+	)
+
+	t.Run(
+		"ok when using `-y` switch (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN bash -c ` + "`" + `# not even a yum command` + "`" + ``
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3030")
+		},
+	)
 }

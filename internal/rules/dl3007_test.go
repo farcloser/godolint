@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3007 ported from hadolint test suite.
@@ -12,33 +14,57 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3007(t *testing.T) {
-	allRules := []rule.Rule{DL3007()}
+	t.Parallel()
 
-	t.Run("explicit latest", func(t *testing.T) {
-		dockerfile := `FROM debian:latest`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3007(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3007")
-	})
+	t.Run(
+		"explicit latest",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("explicit latest with name", func(t *testing.T) {
-		dockerfile := `FROM debian:latest AS builder`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM debian:latest`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3007")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3007")
+		},
+	)
 
-	t.Run("explicit tagged", func(t *testing.T) {
-		dockerfile := `FROM debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"explicit latest with name",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3007")
-	})
+			dockerfile := `FROM debian:latest AS builder`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("explicit tagged with name", func(t *testing.T) {
-		dockerfile := `FROM debian:jessie AS builder`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3007")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3007")
-	})
+	t.Run(
+		"explicit tagged",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3007")
+		},
+	)
+
+	t.Run(
+		"explicit tagged with name",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian:jessie AS builder`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3007")
+		},
+	)
 }

@@ -18,6 +18,7 @@ type DL3049Rule struct {
 	cfg *config.Config
 }
 
+// DL3049 creates a rule that checks for missing required labels.
 // TODO: Add full multi-stage tracking with inheritance.
 func DL3049() rule.Rule {
 	return &DL3049Rule{

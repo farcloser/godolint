@@ -109,37 +109,37 @@ func extractCommand(call *syntax.CallExpr) *Command {
 // wordToString converts a Word node to a string.
 // Similar to ShellCheck.ASTLib.oversimplify.
 func wordToString(word *syntax.Word) string {
-	var sb strings.Builder
+	var build strings.Builder
 
 	for _, part := range word.Parts {
-		switch p := part.(type) {
+		switch typart := part.(type) {
 		case *syntax.Lit:
-			sb.WriteString(p.Value)
+			build.WriteString(typart.Value)
 		case *syntax.SglQuoted:
-			sb.WriteString(p.Value)
+			build.WriteString(typart.Value)
 		case *syntax.DblQuoted:
 			// Recursively process quoted parts
-			for _, qp := range p.Parts {
+			for _, qp := range typart.Parts {
 				if lit, ok := qp.(*syntax.Lit); ok {
-					sb.WriteString(lit.Value)
+					build.WriteString(lit.Value)
 				} else {
 					// Variables, expansions, etc. - simplified as ${VAR}
-					sb.WriteString("${VAR}")
+					build.WriteString("${VAR}")
 				}
 			}
 		case *syntax.ParamExp:
-			sb.WriteString("${VAR}")
+			build.WriteString("${VAR}")
 		case *syntax.CmdSubst:
-			sb.WriteString("${VAR}")
+			build.WriteString("${VAR}")
 		case *syntax.ArithmExp:
-			sb.WriteString("${VAR}")
+			build.WriteString("${VAR}")
 		default:
 			// Other expansions simplified
-			sb.WriteString("${VAR}")
+			build.WriteString("${VAR}")
 		}
 	}
 
-	return sb.String()
+	return build.String()
 }
 
 // extractFlags extracts flag arguments from a list of arguments.
@@ -356,13 +356,13 @@ func IsPipInstall(cmd Command) bool {
 	// Check for: python -m pip install
 	if strings.HasPrefix(cmd.Name, "python") {
 		args := GetArgs(cmd)
-		for i := range len(args) - 1 {
-			if args[i] == "-m" {
-				pipModule := args[i+1]
+		for idx := range len(args) - 1 {
+			if args[idx] == "-m" {
+				pipModule := args[idx+1]
 				// Exact match to avoid "pipenv"
 				if pipModule == "pip" || pipModule == "pip2" || pipModule == "pip3" {
 					// Check if "install" follows
-					for j := i + 2; j < len(args); j++ {
+					for j := idx + 2; j < len(args); j++ {
 						if args[j] == "install" {
 							return true
 						}

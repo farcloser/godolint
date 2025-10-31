@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3024 ported from hadolint test suite.
@@ -12,27 +14,39 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3024(t *testing.T) {
-	allRules := []rule.Rule{DL3024()}
+	t.Parallel()
 
-	t.Run("don't warn on unique aliases", func(t *testing.T) {
-		dockerfile := `FROM scratch as build
+	allRules := []rule.Rule{
+		rules.DL3024(),
+	}
+
+	t.Run(
+		"don't warn on unique aliases",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch as build
 RUN foo
 FROM node as run
-RUN baz
-DL3024`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN baz`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3024")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3024")
+		},
+	)
 
-	t.Run("warn on duplicate aliases", func(t *testing.T) {
-		dockerfile := `FROM node as foo
+	t.Run(
+		"warn on duplicate aliases",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM node as foo
 RUN something
 FROM scratch as foo
-RUN something
-DL3024`
-		violations := LintDockerfile(dockerfile, allRules)
+RUN something`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3024")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3024")
+		},
+	)
 }

@@ -17,6 +17,7 @@ type DL3026Rule struct {
 	allowedRegistries []string // Empty means all registries allowed
 }
 
+// DL3026 creates a rule that checks for allowed registries.
 // TODO: Add configuration support to specify allowed registries.
 func DL3026() rule.Rule {
 	return &DL3026Rule{

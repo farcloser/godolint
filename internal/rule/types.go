@@ -4,7 +4,7 @@ package rule
 
 import "github.com/farcloser/godolint/internal/syntax"
 
-// Ported from DLSeverity in Hadolint/Rule.hs.
+// Severity is ported from DLSeverity in Hadolint/Rule.hs.
 type Severity int
 
 const (
@@ -33,7 +33,7 @@ func (s Severity) String() string {
 	}
 }
 
-// Ported from RuleCode in Hadolint/Rule.hs.
+// RuleCode is ported from RuleCode in Hadolint/Rule.hs.
 type RuleCode string
 
 // RuleMeta contains metadata extracted from hadolint rule definitions.
@@ -44,7 +44,7 @@ type RuleMeta struct {
 	Message  string
 }
 
-// Ported from CheckFailure in Hadolint/Rule.hs.
+// CheckFailure is ported from CheckFailure in Hadolint/Rule.hs.
 type CheckFailure struct {
 	Code     RuleCode
 	Severity Severity
@@ -83,7 +83,7 @@ func (s State) ReplaceData(data interface{}) State {
 	}
 }
 
-// Ported from the concept of Rule in Hadolint/Rule.hs.
+// Rule is ported from the concept of Rule in Hadolint/Rule.hs.
 // All rules are stateful - simple rules just use empty state.
 type Rule interface {
 	// Code returns the unique rule identifier
@@ -109,7 +109,7 @@ type Rule interface {
 	Finalize(state State) State
 }
 
-// Ported from simpleRule in Hadolint/Rule.hs.
+// SimpleRule is ported from simpleRule in Hadolint/Rule.hs.
 type SimpleRule struct {
 	code     RuleCode
 	severity Severity

@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL4000 ported from hadolint test suite.
@@ -12,36 +14,60 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4000(t *testing.T) {
-	allRules := []rule.Rule{DL4000()}
+	t.Parallel()
 
-	t.Run("has deprecated maintainer", func(t *testing.T) {
-		dockerfile := `FROM busybox
+	allRules := []rule.Rule{
+		rules.DL4000(),
+	}
+
+	t.Run(
+		"has deprecated maintainer",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM busybox
 MAINTAINER hudu@mail.com`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4000")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4000")
+		},
+	)
 
-	t.Run("has maintainer", func(t *testing.T) {
-		dockerfile := `FROM debian
+	t.Run(
+		"has maintainer",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian
 MAINTAINER Lukas`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4000")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4000")
+		},
+	)
 
-	t.Run("has maintainer first", func(t *testing.T) {
-		dockerfile := `MAINTAINER Lukas
+	t.Run(
+		"has maintainer first",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `MAINTAINER Lukas
 FROM DEBIAN`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4000")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4000")
+		},
+	)
 
-	t.Run("has no maintainer", func(t *testing.T) {
-		dockerfile := `FROM debian`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"has no maintainer",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL4000")
-	})
+			dockerfile := `FROM debian`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL4000")
+		},
+	)
 }

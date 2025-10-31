@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3053 ported from hadolint test suite.
@@ -13,31 +15,50 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3053(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"datelabel": config.LabelTypeRFC3339,
 		},
 	}
-	allRules := []rule.Rule{DL3053WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3053WithConfig(cfg),
+	}
 
-	t.Run("not ok with label not containing RFC3339 date", func(t *testing.T) {
-		dockerfile := `LABEL datelabel="not-date"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with label not containing RFC3339 date",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3053")
-	})
+			dockerfile := `LABEL datelabel="not-date"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with label containing RFC3339 date", func(t *testing.T) {
-		dockerfile := `LABEL datelabel="2021-03-10T10:26:33.564595127+01:00"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3053")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3053")
-	})
+	t.Run(
+		"ok with label containing RFC3339 date",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with other label not containing RFC3339 date", func(t *testing.T) {
-		dockerfile := `LABEL other="doo"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL datelabel="2021-03-10T10:26:33.564595127+01:00"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3053")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3053")
+		},
+	)
+
+	t.Run(
+		"ok with other label not containing RFC3339 date",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other="doo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3053")
+		},
+	)
 }

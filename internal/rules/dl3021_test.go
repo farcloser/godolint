@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3021 ported from hadolint test suite.
@@ -12,40 +14,69 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3021(t *testing.T) {
-	allRules := []rule.Rule{DL3021()}
+	t.Parallel()
 
-	t.Run("no warn on 2 args", func(t *testing.T) {
-		dockerfile := `COPY foo bar`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3021(),
+	}
 
-		AssertNoViolation(t, violations, "DL3021")
-	})
+	t.Run(
+		"no warn on 2 args",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("no warn on 3 args", func(t *testing.T) {
-		dockerfile := `COPY foo bar baz/`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `COPY foo bar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3021")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3021")
+		},
+	)
 
-	t.Run("no warn on 3 args with quotes", func(t *testing.T) {
-		dockerfile := `COPY foo bar "baz/"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"no warn on 3 args",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3021")
-	})
+			dockerfile := `COPY foo bar baz/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("warn on 3 args", func(t *testing.T) {
-		dockerfile := `COPY foo bar baz`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3021")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3021")
-	})
+	t.Run(
+		"no warn on 3 args with quotes",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("warn on 3 args with quotes", func(t *testing.T) {
-		dockerfile := `COPY foo bar "baz"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `COPY foo bar "baz/"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3021")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3021")
+		},
+	)
+
+	t.Run(
+		"warn on 3 args",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY foo bar baz`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3021")
+		},
+	)
+
+	t.Run(
+		"warn on 3 args with quotes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY foo bar "baz"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3021")
+		},
+	)
 }

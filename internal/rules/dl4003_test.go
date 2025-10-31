@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL4003 ported from hadolint test suite.
@@ -12,48 +14,69 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4003(t *testing.T) {
-	allRules := []rule.Rule{DL4003()}
+	t.Parallel()
 
-	t.Run("many cmds", func(t *testing.T) {
-		dockerfile := `FROM debian
+	allRules := []rule.Rule{
+		rules.DL4003(),
+	}
+
+	t.Run(
+		"many cmds",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian
 CMD bash
 RUN foo
-CMD another
-DL4003`
-		violations := LintDockerfile(dockerfile, allRules)
+CMD another`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4003")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4003")
+		},
+	)
 
-	t.Run("many cmds, different stages", func(t *testing.T) {
-		dockerfile := `FROM debian as distro1
+	t.Run(
+		"many cmds, different stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as distro1
 CMD bash
 RUN foo
 CMD another
 FROM debian as distro2
-CMD another
-DL4003`
-		violations := LintDockerfile(dockerfile, allRules)
+CMD another`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4003")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4003")
+		},
+	)
 
-	t.Run("single cmd", func(t *testing.T) {
-		dockerfile := `CMD /bin/true`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"single cmd",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL4003")
-	})
+			dockerfile := `CMD /bin/true`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("single cmds, different stages", func(t *testing.T) {
-		dockerfile := `FROM debian as distro1
+			testutils.AssertNoViolation(t, violations, "DL4003")
+		},
+	)
+
+	t.Run(
+		"single cmds, different stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as distro1
 CMD bash
 RUN foo
 FROM debian as distro2
-CMD another
-DL4003`
-		violations := LintDockerfile(dockerfile, allRules)
+CMD another`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL4003")
-	})
+			testutils.AssertNoViolation(t, violations, "DL4003")
+		},
+	)
 }

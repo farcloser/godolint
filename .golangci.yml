@@ -68,6 +68,7 @@ linters:
         linters:
           - varnamelen
           - dupl
+          - dupword  # Test Dockerfiles intentionally contain duplicate words (e.g., "ONBUILD ONBUILD")
       - path: _test.go
         text: "add-constant|cognitive-complexity|confusing-results"
         linters:

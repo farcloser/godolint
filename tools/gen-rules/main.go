@@ -12,6 +12,8 @@ import (
 	"text/template"
 )
 
+var ErrRuleGeneration = errors.New("rule metadata generation error")
+
 type RuleMetadata struct {
 	Code         string
 	Severity     string
@@ -27,12 +29,11 @@ var (
 	codePattern     = regexp.MustCompile(`code\s*=\s*"(DL\d+)"`)
 	severityPattern = regexp.MustCompile(`severity\s*=\s*(DL\w+)`)
 	messagePattern  = regexp.MustCompile(`message\s*=\s*\n?\s*"([^"]*(?:\\\s*\\[^"]*)*)"`)
-	ruleTypePattern = regexp.MustCompile(`rule\s*::\s*Rule\s+(.+)`)
 )
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <hadolint-rule-dir>\n", os.Args[0])
+		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s <hadolint-rule-dir>\n", os.Args[0])
 		os.Exit(1)
 	}
 
@@ -43,12 +44,12 @@ func main() {
 
 	files, err := filepath.Glob(pattern)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to glob rules: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to glob rules: %v\n", err)
 		os.Exit(1)
 	}
 
 	if len(files) == 0 {
-		fmt.Fprintf(os.Stderr, "No rule files found in %s\n", hadolintRuleDir)
+		_, _ = fmt.Fprintf(os.Stderr, "No rule files found in %s\n", hadolintRuleDir)
 		os.Exit(1)
 	}
 
@@ -58,7 +59,7 @@ func main() {
 	for _, file := range files {
 		rule, err := parseRuleFile(file)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to parse %s: %v\n", file, err)
+			_, _ = fmt.Fprintf(os.Stderr, "Warning: failed to parse %s: %v\n", file, err)
 
 			continue
 		}
@@ -100,7 +101,7 @@ func main() {
 
 	for _, rule := range rules {
 		if err := generateMetadata(rule); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to generate metadata for %s: %v\n", rule.Code, err)
+			_, _ = fmt.Fprintf(os.Stderr, "Warning: failed to generate metadata for %s: %v\n", rule.Code, err)
 		} else {
 			metadataGenerated++
 		}
@@ -114,7 +115,7 @@ func main() {
 	for _, rule := range rules {
 		if !rule.Implemented && rule.CanGenerate {
 			if err := generateImplementation(rule); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to generate implementation for %s: %v\n", rule.Code, err)
+				_, _ = fmt.Fprintf(os.Stderr, "Warning: failed to generate implementation for %s: %v\n", rule.Code, err)
 			} else {
 				implGenerated++
 			}
@@ -146,7 +147,7 @@ func main() {
 func parseRuleFile(path string) (RuleMetadata, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return RuleMetadata{}, err
+		return RuleMetadata{}, fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
 	text := string(content)
@@ -273,21 +274,28 @@ var {{.Code}}Meta = rule.RuleMeta{
 }
 `
 
-	t, err := template.New("metadata").Parse(tmpl)
+	tpl, err := template.New("metadata").Parse(tmpl)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
 	filename := strings.ToLower(rule.Code) + ".go"
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
-	return t.Execute(f, rule)
+	err = tpl.Execute(f, rule)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
+	}
+
+	return nil
 }
 
 // generateImplementation generates working implementation from Haskell patterns (only if file doesn't exist).
@@ -323,17 +331,19 @@ func {{.Code}}() rule.Rule {
 {{.ImplCode}}
 `
 
-	t, err := template.New("impl").Parse(tmpl)
+	tpl, err := template.New("impl").Parse(tmpl)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	data := struct {
 		Code     string
@@ -343,7 +353,12 @@ func {{.Code}}() rule.Rule {
 		ImplCode: implCode,
 	}
 
-	return t.Execute(f, data)
+	err = tpl.Execute(f, data)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
+	}
+
+	return nil
 }
 
 // generateCheckFunction generates Go check function from Haskell patterns.

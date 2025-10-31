@@ -1,4 +1,4 @@
-package rules
+package testutils
 
 import (
 	"testing"

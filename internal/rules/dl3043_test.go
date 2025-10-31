@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3043 ported from hadolint test suite.
@@ -12,147 +14,249 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3043(t *testing.T) {
-	allRules := []rule.Rule{DL3043()}
+	t.Parallel()
 
-	t.Run("error when using `FROM` within `ONBUILD`", func(t *testing.T) {
-		dockerfile := `ONBUILD FROM debian:buster
-DL3043`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3043(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"error when using `FROM` within `ONBUILD`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("error when using `MAINTAINER` within `ONBUILD`", func(t *testing.T) {
-		dockerfile := `ONBUILD MAINTAINER "BoJack Horseman"
-DL3043`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ONBUILD FROM debian:buster`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3043")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3043")
+		},
+	)
 
-	t.Run("error when using `ONBUILD` within `ONBUILD`", func(t *testing.T) {
-		dockerfile := "ONBUILD RUN anything\nDL3043"
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"error when using `MAINTAINER` within `ONBUILD`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3043")
-	})
+			dockerfile := `ONBUILD MAINTAINER "BoJack Horseman"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `ADD`", func(t *testing.T) {
-		dockerfile := `ONBUILD ADD anything anywhere`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3043")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"error when using `ONBUILD` within `ONBUILD`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `ARG`", func(t *testing.T) {
-		dockerfile := `ONBUILD ARG anything`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ONBUILD ONBUILD RUN anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3043")
+		},
+	)
 
-	t.Run("ok with `CMD`", func(t *testing.T) {
-		dockerfile := `ONBUILD CMD anything`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with `ADD`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			dockerfile := `ONBUILD ADD anything anywhere`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `COPY`", func(t *testing.T) {
-		dockerfile := `ONBUILD COPY anything anywhere`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"ok with `ARG`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `ENTRYPOINT`", func(t *testing.T) {
-		dockerfile := `ONBUILD ENTRYPOINT anything`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ONBUILD ARG anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-	t.Run("ok with `ENV`", func(t *testing.T) {
-		dockerfile := `ONBUILD ENV MYVAR="bla"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with `CMD`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			dockerfile := `ONBUILD CMD anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `EXPOSE`", func(t *testing.T) {
-		dockerfile := `ONBUILD EXPOSE 69`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"ok with `COPY`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `FROM` outside of `ONBUILD`", func(t *testing.T) {
-		dockerfile := `FROM debian:buster`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ONBUILD COPY anything anywhere`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-	t.Run("ok with `HEALTHCHECK`", func(t *testing.T) {
-		dockerfile := `ONBUILD HEALTHCHECK NONE`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with `ENTRYPOINT`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			dockerfile := `ONBUILD ENTRYPOINT anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `LABEL`", func(t *testing.T) {
-		dockerfile := `ONBUILD LABEL bla="blubb"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"ok with `ENV`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `MAINTAINER` outside of `ONBUILD`", func(t *testing.T) {
-		dockerfile := `MAINTAINER "Some Guy"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ONBUILD ENV MYVAR="bla"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-	t.Run("ok with `RUN`", func(t *testing.T) {
-		dockerfile := `ONBUILD RUN anything`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with `EXPOSE`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			dockerfile := `ONBUILD EXPOSE 69`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `SHELL`", func(t *testing.T) {
-		dockerfile := `ONBUILD SHELL anything`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"ok with `FROM` outside of `ONBUILD`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `STOPSIGNAL`", func(t *testing.T) {
-		dockerfile := `ONBUILD STOPSIGNAL anything`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM debian:buster`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-	t.Run("ok with `USER`", func(t *testing.T) {
-		dockerfile := `ONBUILD USER anything`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with `HEALTHCHECK`",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			dockerfile := `ONBUILD HEALTHCHECK NONE`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with `VOLUME`", func(t *testing.T) {
-		dockerfile := `ONBUILD VOLUME anything`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+	t.Run(
+		"ok with `LABEL`",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with `WORKDIR`", func(t *testing.T) {
-		dockerfile := `ONBUILD WORKDIR anything`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ONBUILD LABEL bla="blubb"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3043")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `MAINTAINER` outside of `ONBUILD`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `MAINTAINER "Some Guy"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `RUN`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ONBUILD RUN anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `SHELL`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ONBUILD SHELL anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `STOPSIGNAL`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ONBUILD STOPSIGNAL anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `USER`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ONBUILD USER anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `VOLUME`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ONBUILD VOLUME anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
+
+	t.Run(
+		"ok with `WORKDIR`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ONBUILD WORKDIR anything`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3043")
+		},
+	)
 }
