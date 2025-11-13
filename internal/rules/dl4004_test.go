@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL4004 ported from hadolint test suite.
@@ -12,62 +14,93 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL4004(t *testing.T) {
-	allRules := []rule.Rule{DL4004()}
+	t.Parallel()
 
-	t.Run("many entrypoints", func(t *testing.T) {
-		dockerfile := `FROM debian
+	allRules := []rule.Rule{
+		rules.DL4004(),
+	}
+
+	t.Run(
+		"many entrypoints",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian
 ENTRYPOINT bash
 RUN foo
-ENTRYPOINT another
-DL4004`
-		violations := LintDockerfile(dockerfile, allRules)
+ENTRYPOINT another`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4004")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4004")
+		},
+	)
 
-	t.Run("many entrypoints, different stages", func(t *testing.T) {
-		dockerfile := `FROM debian as distro1
+	t.Run(
+		"many entrypoints, different stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as distro1
 ENTRYPOINT bash
 RUN foo
 ENTRYPOINT another
 FROM debian as distro2
-ENTRYPOINT another
-DL4004`
-		violations := LintDockerfile(dockerfile, allRules)
+ENTRYPOINT another`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL4004")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL4004")
+		},
+	)
 
-	t.Run("no cmd", func(t *testing.T) {
-		dockerfile := `FROM busybox`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"no cmd",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL4004")
-	})
+			dockerfile := `FROM busybox`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("no entry", func(t *testing.T) {
-		dockerfile := `FROM busybox`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL4004")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL4004")
-	})
+	t.Run(
+		"no entry",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("single entry", func(t *testing.T) {
-		dockerfile := `ENTRYPOINT /bin/true`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM busybox`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL4004")
-	})
+			testutils.AssertNoViolation(t, violations, "DL4004")
+		},
+	)
 
-	t.Run("single entrypoint, different stages", func(t *testing.T) {
-		dockerfile := `FROM debian as distro1
+	t.Run(
+		"single entry",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ENTRYPOINT /bin/true`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL4004")
+		},
+	)
+
+	t.Run(
+		"single entrypoint, different stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian as distro1
 ENTRYPOINT bash
 RUN foo
 FROM debian as distro2
-ENTRYPOINT another
-DL4004`
-		violations := LintDockerfile(dockerfile, allRules)
+ENTRYPOINT another`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL4004")
-	})
+			testutils.AssertNoViolation(t, violations, "DL4004")
+		},
+	)
 }

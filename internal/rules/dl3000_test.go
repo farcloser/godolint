@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3000 ported from hadolint test suite.
@@ -12,89 +14,153 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3000(t *testing.T) {
-	allRules := []rule.Rule{DL3000()}
+	t.Parallel()
 
-	t.Run("workdir absolute", func(t *testing.T) {
-		dockerfile := `WORKDIR /usr/local`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3000(),
+	}
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+	t.Run(
+		"workdir absolute",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("workdir absolute double quotes", func(t *testing.T) {
-		dockerfile := `WORKDIR "/usr/local"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `WORKDIR /usr/local`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-	t.Run("workdir absolute single quotes", func(t *testing.T) {
-		dockerfile := `WORKDIR '/usr/local'`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"workdir absolute double quotes",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+			dockerfile := `WORKDIR "/usr/local"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("workdir absolute windows", func(t *testing.T) {
-		dockerfile := `WORKDIR 'C:\'`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+	t.Run(
+		"workdir absolute single quotes",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("workdir absolute windows alternative", func(t *testing.T) {
-		dockerfile := `WORKDIR C:/`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `WORKDIR '/usr/local'`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-	t.Run("workdir absolute windows quotes", func(t *testing.T) {
-		dockerfile := `WORKDIR "C:\"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"workdir absolute windows",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+			dockerfile := `WORKDIR 'C:\'`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("workdir absolute windows quotes alternative", func(t *testing.T) {
-		dockerfile := `WORKDIR "C:/"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+	t.Run(
+		"workdir absolute windows alternative",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("workdir relative", func(t *testing.T) {
-		dockerfile := `WORKDIR relative/dir`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `WORKDIR C:/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3000")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-	t.Run("workdir relative double quotes", func(t *testing.T) {
-		dockerfile := `WORKDIR "relative/dir"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"workdir absolute windows quotes",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3000")
-	})
+			dockerfile := `WORKDIR "C:\"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("workdir relative single quotes", func(t *testing.T) {
-		dockerfile := `WORKDIR 'relative/dir'`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3000")
-	})
+	t.Run(
+		"workdir absolute windows quotes alternative",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("workdir variable", func(t *testing.T) {
-		dockerfile := `WORKDIR ${work}`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `WORKDIR "C:/"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 
-	t.Run("workdir variable double quotes", func(t *testing.T) {
-		dockerfile := `WORKDIR "${dir}"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"workdir relative",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3000")
-	})
+			dockerfile := `WORKDIR relative/dir`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3000")
+		},
+	)
+
+	t.Run(
+		"workdir relative double quotes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `WORKDIR "relative/dir"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3000")
+		},
+	)
+
+	t.Run(
+		"workdir relative single quotes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `WORKDIR 'relative/dir'`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3000")
+		},
+	)
+
+	t.Run(
+		"workdir variable",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `WORKDIR ${work}`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
+
+	t.Run(
+		"workdir variable double quotes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `WORKDIR "${dir}"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3000")
+		},
+	)
 }

@@ -22,19 +22,23 @@ func DL3042() rule.Rule {
 	return &DL3042Rule{}
 }
 
-func (r *DL3042Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3042Rule) Code() rule.RuleCode {
 	return DL3042Meta.Code
 }
 
-func (r *DL3042Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3042Rule) Severity() rule.Severity {
 	return DL3042Meta.Severity
 }
 
-func (r *DL3042Rule) Message() string {
+// Message returns the rule message.
+func (*DL3042Rule) Message() string {
 	return DL3042Meta.Message
 }
 
-func (r *DL3042Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3042Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3042State{
 		currentStage: "",
 		noCacheSet:   make(map[string]bool),
@@ -105,7 +109,8 @@ func (r *DL3042Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3042Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3042Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 

@@ -4,9 +4,10 @@ package rule
 
 import "github.com/farcloser/godolint/internal/syntax"
 
-// Ported from DLSeverity in Hadolint/Rule.hs.
+// Severity is ported from DLSeverity in Hadolint/Rule.hs.
 type Severity int
 
+// Severity levels for rule violations.
 const (
 	Error Severity = iota
 	Warning
@@ -33,7 +34,7 @@ func (s Severity) String() string {
 	}
 }
 
-// Ported from RuleCode in Hadolint/Rule.hs.
+// RuleCode is ported from RuleCode in Hadolint/Rule.hs.
 type RuleCode string
 
 // RuleMeta contains metadata extracted from hadolint rule definitions.
@@ -44,23 +45,23 @@ type RuleMeta struct {
 	Message  string
 }
 
-// Ported from CheckFailure in Hadolint/Rule.hs.
+// CheckFailure is ported from CheckFailure in Hadolint/Rule.hs.
 type CheckFailure struct {
-	Code     RuleCode
-	Severity Severity
-	Message  string
-	Line     int
+	Code     RuleCode `json:"code"`
+	Severity Severity `json:"severity"`
+	Message  string   `json:"message"`
+	Line     int      `json:"line"`
 }
 
 // State holds failures and custom state for a rule.
 // Ported from State a in Hadolint/Rule.hs.
 type State struct {
 	Failures []CheckFailure
-	Data     interface{} // Custom state data
+	Data     any // Custom state data
 }
 
 // EmptyState creates a new state with no failures and the given initial data.
-func EmptyState(data interface{}) State {
+func EmptyState(data any) State {
 	return State{
 		Failures: nil,
 		Data:     data,
@@ -76,14 +77,14 @@ func (s State) AddFailure(failure CheckFailure) State {
 }
 
 // ReplaceData replaces the custom state data.
-func (s State) ReplaceData(data interface{}) State {
+func (s State) ReplaceData(data any) State {
 	return State{
 		Failures: s.Failures,
 		Data:     data,
 	}
 }
 
-// Ported from the concept of Rule in Hadolint/Rule.hs.
+// Rule is ported from the concept of Rule in Hadolint/Rule.hs.
 // All rules are stateful - simple rules just use empty state.
 type Rule interface {
 	// Code returns the unique rule identifier
@@ -109,7 +110,7 @@ type Rule interface {
 	Finalize(state State) State
 }
 
-// Ported from simpleRule in Hadolint/Rule.hs.
+// SimpleRule is ported from simpleRule in Hadolint/Rule.hs.
 type SimpleRule struct {
 	code     RuleCode
 	severity Severity
@@ -132,22 +133,27 @@ func NewSimpleRule(
 	}
 }
 
+// Code returns the rule code.
 func (r *SimpleRule) Code() RuleCode {
 	return r.code
 }
 
+// Severity returns the rule severity level.
 func (r *SimpleRule) Severity() Severity {
 	return r.severity
 }
 
+// Message returns the rule violation message.
 func (r *SimpleRule) Message() string {
 	return r.message
 }
 
-func (r *SimpleRule) InitialState() State {
+// InitialState returns an empty state for stateless rules.
+func (*SimpleRule) InitialState() State {
 	return EmptyState(nil)
 }
 
+// Check executes the rule checker function against the instruction.
 func (r *SimpleRule) Check(line int, state State, instruction syntax.Instruction) State {
 	if !r.checker(instruction) {
 		// Checker failed, add failure to state
@@ -162,6 +168,39 @@ func (r *SimpleRule) Check(line int, state State, instruction syntax.Instruction
 	return state
 }
 
-func (r *SimpleRule) Finalize(state State) State {
+// Finalize performs final checks after processing all instructions.
+func (*SimpleRule) Finalize(state State) State {
 	return state // Simple rules don't need finalization
+}
+
+// StatefulRuleBase provides default implementations for stateful rules.
+// Embed this in stateful rule structs to avoid boilerplate.
+type StatefulRuleBase struct {
+	meta RuleMeta
+}
+
+// NewStatefulRuleBase creates a base for stateful rules.
+func NewStatefulRuleBase(meta RuleMeta) StatefulRuleBase {
+	return StatefulRuleBase{meta: meta}
+}
+
+// Code returns the rule code.
+func (b *StatefulRuleBase) Code() RuleCode {
+	return b.meta.Code
+}
+
+// Severity returns the rule severity level.
+func (b *StatefulRuleBase) Severity() Severity {
+	return b.meta.Severity
+}
+
+// Message returns the rule violation message.
+func (b *StatefulRuleBase) Message() string {
+	return b.meta.Message
+}
+
+// Finalize performs final checks after processing all instructions.
+// Default implementation does nothing. Override in rules that need custom finalization.
+func (*StatefulRuleBase) Finalize(state State) State {
+	return state
 }

@@ -22,19 +22,23 @@ func DL3010() rule.Rule {
 	return &DL3010Rule{}
 }
 
-func (r *DL3010Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3010Rule) Code() rule.RuleCode {
 	return DL3010Meta.Code
 }
 
-func (r *DL3010Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3010Rule) Severity() rule.Severity {
 	return DL3010Meta.Severity
 }
 
-func (r *DL3010Rule) Message() string {
+// Message returns the rule message.
+func (*DL3010Rule) Message() string {
 	return DL3010Meta.Message
 }
 
-func (r *DL3010Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3010Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3010State{
 		archives:  make(map[string]int),
 		extracted: make(map[string]int),
@@ -96,7 +100,8 @@ func (r *DL3010Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3010Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3010Rule) Finalize(state rule.State) rule.State {
 	s := state.Data.(dl3010State)
 
 	finalState := state

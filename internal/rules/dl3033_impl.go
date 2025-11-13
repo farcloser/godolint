@@ -155,16 +155,16 @@ func isValidVersionPart(part string) bool {
 	return true
 }
 
-func isVersionChar(ch rune) bool {
-	return unicode.IsDigit(ch) ||
-		unicode.IsUpper(ch) ||
-		unicode.IsLower(ch) ||
-		ch == '.' ||
-		ch == '~' ||
-		ch == '^' ||
-		ch == '_' ||
-		ch == ':' ||
-		ch == '+'
+func isVersionChar(char rune) bool {
+	return unicode.IsDigit(char) ||
+		unicode.IsUpper(char) ||
+		unicode.IsLower(char) ||
+		char == '.' ||
+		char == '~' ||
+		char == '^' ||
+		char == '_' ||
+		char == ':' ||
+		char == '+'
 }
 
 func isYumModuleVersionFixed(mod string) bool {

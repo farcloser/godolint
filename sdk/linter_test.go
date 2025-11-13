@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y curl
 `)
 
 	linter := sdk.New()
+
 	result, err := linter.Lint(t.Context(), dockerfile)
 	if err != nil {
 		t.Fatalf("Lint() error = %v, want nil", err)
@@ -64,6 +65,7 @@ HEALTHCHECK --interval=30s CMD exit 0
 	)
 
 	linter := sdk.New()
+
 	result, err := linter.Lint(t.Context(), dockerfile)
 	if err != nil {
 		t.Fatalf("Lint() error = %v, want nil", err)
@@ -130,7 +132,6 @@ RUN echo "test"
 			t.Errorf("Lint() with parse error returned non-nil result: %+v", result)
 		}
 	}
-	// If no error, parser accepted it - that's also valid behavior for buildkit
 }
 
 // INTENTION: WithRuleSet should allow selecting different rule sets.
@@ -162,6 +163,7 @@ func TestLinter_WithRuleSet(t *testing.T) {
 			t.Parallel()
 
 			linter := sdk.New(sdk.WithRuleSet(tt.ruleSet))
+
 			result, err := linter.Lint(t.Context(), dockerfile)
 			if err != nil {
 				t.Fatalf("Lint() error = %v, want nil", err)
@@ -379,7 +381,7 @@ func TestFilterRules(t *testing.T) {
 }
 
 // Helper function to check error types (simple version of errors.As for testing).
-func AsError(err error, target interface{}) bool {
+func AsError(err error, target any) bool {
 	if err == nil {
 		return false
 	}

@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3038 ported from hadolint test suite.
@@ -12,40 +14,69 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3038(t *testing.T) {
-	allRules := []rule.Rule{DL3038()}
+	t.Parallel()
 
-	t.Run("not ok without dnf non-interactive flag", func(t *testing.T) {
-		dockerfile := `RUN dnf install httpd-2.4.24 && dnf clean all`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3038(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3038")
-	})
+	t.Run(
+		"not ok without dnf non-interactive flag",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("not ok without dnf non-interactive flag (2)", func(t *testing.T) {
-		dockerfile := `RUN microdnf install httpd-2.4.24 && microdnf clean all`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN dnf install httpd-2.4.24 && dnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3038")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3038")
+		},
+	)
 
-	t.Run("ok with dnf non-interactive flag", func(t *testing.T) {
-		dockerfile := `RUN dnf install -y httpd-2.4.24 && dnf clean all`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok without dnf non-interactive flag (2)",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3038")
-	})
+			dockerfile := `RUN microdnf install httpd-2.4.24 && microdnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with dnf non-interactive flag (2)", func(t *testing.T) {
-		dockerfile := `RUN microdnf install -y httpd-2.4.24 && microdnf clean all`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3038")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3038")
-	})
+	t.Run(
+		"ok with dnf non-interactive flag",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with dnf non-interactive flag (3)", func(t *testing.T) {
-		dockerfile := `RUN notdnf install httpd`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN dnf install -y httpd-2.4.24 && dnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3038")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3038")
+		},
+	)
+
+	t.Run(
+		"ok with dnf non-interactive flag (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN microdnf install -y httpd-2.4.24 && microdnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3038")
+		},
+	)
+
+	t.Run(
+		"ok with dnf non-interactive flag (3)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN notdnf install httpd`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3038")
+		},
+	)
 }

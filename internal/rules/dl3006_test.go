@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3006 ported from hadolint test suite.
@@ -12,71 +14,115 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3006(t *testing.T) {
-	allRules := []rule.Rule{DL3006()}
+	t.Parallel()
 
-	t.Run("local aliases are OK to be untagged", func(t *testing.T) {
-		dockerfile := `FROM golang:1.9.3-alpine3.7 AS build
+	allRules := []rule.Rule{
+		rules.DL3006(),
+	}
+
+	t.Run(
+		"local aliases are OK to be untagged",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM golang:1.9.3-alpine3.7 AS build
 RUN foo
 FROM build as unit-test
 RUN bar
 FROM alpine:3.7
 RUN baz`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3006")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3006")
+		},
+	)
 
-	t.Run("no untagged", func(t *testing.T) {
-		dockerfile := `FROM debian`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"no untagged",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3006")
-	})
+			dockerfile := `FROM debian`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("no untagged with name", func(t *testing.T) {
-		dockerfile := `FROM debian AS builder`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3006")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3006")
-	})
+	t.Run(
+		"no untagged with name",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("other untagged cases are not ok", func(t *testing.T) {
-		dockerfile := `FROM golang:1.9.3-alpine3.7 AS build
+			dockerfile := `FROM debian AS builder`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3006")
+		},
+	)
+
+	t.Run(
+		"other untagged cases are not ok",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM golang:1.9.3-alpine3.7 AS build
 RUN foo
 FROM node as unit-test
 RUN bar
 FROM alpine:3.7
 RUN baz`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3006")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3006")
+		},
+	)
 
-	t.Run("scratch", func(t *testing.T) {
-		dockerfile := `FROM scratch`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"scratch",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3006")
-	})
+			dockerfile := `FROM scratch`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("untagged digest is not an error", func(t *testing.T) {
-		dockerfile := `FROM ruby@sha256:f1dbca0f5dbc9`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3006")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3006")
-	})
+	t.Run(
+		"untagged digest is not an error",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("untagged digest is not an error", func(t *testing.T) {
-		dockerfile := `FROM ruby:2`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM ruby@sha256:f1dbca0f5dbc9`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3006")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3006")
+		},
+	)
 
-	t.Run("using args is not an error", func(t *testing.T) {
-		dockerfile := `FROM ${VALUE}`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"untagged digest is not an error",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3006")
-	})
+			dockerfile := `FROM ruby:2`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3006")
+		},
+	)
+
+	t.Run(
+		"using args is not an error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM ${VALUE}`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3006")
+		},
+	)
 }

@@ -6,15 +6,15 @@ import (
 )
 
 // dropQuotes removes surrounding quotes from a string.
-func dropQuotes(s string) string {
-	s = strings.TrimSpace(s)
-	if len(s) >= 2 {
-		if (s[0] == '"' && s[len(s)-1] == '"') || (s[0] == '\'' && s[len(s)-1] == '\'') {
-			return s[1 : len(s)-1]
+func dropQuotes(str string) string {
+	str = strings.TrimSpace(str)
+	if len(str) >= 2 {
+		if (str[0] == '"' && str[len(str)-1] == '"') || (str[0] == '\'' && str[len(str)-1] == '\'') {
+			return str[1 : len(str)-1]
 		}
 	}
 
-	return s
+	return str
 }
 
 // isWindowsAbsolute checks if a path is a Windows absolute path (e.g., C:\).

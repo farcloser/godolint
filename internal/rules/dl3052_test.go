@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3052 ported from hadolint test suite.
@@ -13,31 +15,50 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3052(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"urllabel": config.LabelTypeURL,
 		},
 	}
-	allRules := []rule.Rule{DL3052WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3052WithConfig(cfg),
+	}
 
-	t.Run("not ok with label not containing URL", func(t *testing.T) {
-		dockerfile := `LABEL urllabel="not-url"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with label not containing URL",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3052")
-	})
+			dockerfile := `LABEL urllabel="not-url"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with label containing URL", func(t *testing.T) {
-		dockerfile := `LABEL urllabel="http://example.com"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3052")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3052")
-	})
+	t.Run(
+		"ok with label containing URL",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with other label not containing URL", func(t *testing.T) {
-		dockerfile := `LABEL other="foo"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL urllabel="http://example.com"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3052")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3052")
+		},
+	)
+
+	t.Run(
+		"ok with other label not containing URL",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other="foo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3052")
+		},
+	)
 }

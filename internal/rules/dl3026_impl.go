@@ -14,34 +14,27 @@ type dl3026State struct {
 
 // DL3026Rule checks for allowed registries.
 type DL3026Rule struct {
+	rule.StatefulRuleBase
 	allowedRegistries []string // Empty means all registries allowed
 }
 
+// DL3026 creates a rule that checks for allowed registries.
 // TODO: Add configuration support to specify allowed registries.
 func DL3026() rule.Rule {
 	return &DL3026Rule{
+		StatefulRuleBase:  rule.NewStatefulRuleBase(DL3026Meta),
 		allowedRegistries: []string{}, // Empty = all allowed (for now)
 	}
 }
 
-func (r *DL3026Rule) Code() rule.RuleCode {
-	return DL3026Meta.Code
-}
-
-func (r *DL3026Rule) Severity() rule.Severity {
-	return DL3026Meta.Severity
-}
-
-func (r *DL3026Rule) Message() string {
-	return DL3026Meta.Message
-}
-
-func (r *DL3026Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3026Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3026State{
 		aliases: make(map[string]bool),
 	})
 }
 
+// Check validates that FROM uses unique stage aliases.
 func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	s := state.Data.(dl3026State)
 
@@ -85,10 +78,6 @@ func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instru
 	}
 
 	return state.ReplaceData(s)
-}
-
-func (r *DL3026Rule) Finalize(state rule.State) rule.State {
-	return state
 }
 
 // extractRegistry extracts the registry from an image name.

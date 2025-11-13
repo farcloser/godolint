@@ -131,19 +131,20 @@ func TestShellcheckRule_ResetOnFrom(t *testing.T) {
 		// After second FROM, STAGE1_VAR should not be in environment
 	}
 
+	// Since shellState is unexported, we test behavior instead of internal state
+	// The fact that the rule processes without error is sufficient for this test
+	// Actual ENV variable tracking is verified through integration tests
 	state := scRule.InitialState()
 	for _, instr := range instructions {
 		state = scRule.Check(instr.LineNumber, state, instr.Instruction)
 	}
-	// Since shellState is unexported, we test behavior instead of internal state
-	// The fact that the rule processes without error is sufficient for this test
-	// Actual ENV variable tracking is verified through integration tests
 }
 
 func TestNoopShellchecker(t *testing.T) {
 	t.Parallel()
 
 	checker := shell.NewNoopShellchecker()
+
 	failures, err := checker.Check("any script", shell.DefaultShellOpts())
 	if err != nil {
 		t.Errorf("NoopShellchecker.Check() error = %v, want nil", err)

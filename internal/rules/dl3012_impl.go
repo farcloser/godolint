@@ -21,25 +21,29 @@ func DL3012() rule.Rule {
 	return &DL3012Rule{}
 }
 
-func (r *DL3012Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3012Rule) Code() rule.RuleCode {
 	return DL3012Meta.Code
 }
 
-func (r *DL3012Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3012Rule) Severity() rule.Severity {
 	return DL3012Meta.Severity
 }
 
-func (r *DL3012Rule) Message() string {
+// Message returns the rule message.
+func (*DL3012Rule) Message() string {
 	return DL3012Meta.Message
 }
 
-func (r *DL3012Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3012Rule) InitialState() rule.State {
 	return rule.EmptyState(noHealthcheck)
 }
 
 // Check implements the stateful check for multiple HEALTHCHECK instructions.
 // Ported from the check function in DL3012.hs.
-func (r *DL3012Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3012Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	// Reset state on each FROM (new stage)
 	if _, ok := instruction.(*syntax.From); ok {
 		return state.ReplaceData(noHealthcheck)
@@ -66,6 +70,7 @@ func (r *DL3012Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3012Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3012Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

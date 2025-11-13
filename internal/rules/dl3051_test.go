@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3051 ported from hadolint test suite.
@@ -13,31 +15,50 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3051(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"emptylabel": config.LabelTypeRawText,
 		},
 	}
-	allRules := []rule.Rule{DL3051WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3051WithConfig(cfg),
+	}
 
-	t.Run("not ok with label empty", func(t *testing.T) {
-		dockerfile := `LABEL emptylabel=""`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with label empty",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3051")
-	})
+			dockerfile := `LABEL emptylabel=""`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with label not empty", func(t *testing.T) {
-		dockerfile := `LABEL emptylabel="foo"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3051")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3051")
-	})
+	t.Run(
+		"ok with label not empty",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with other label empty", func(t *testing.T) {
-		dockerfile := `LABEL other=""`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL emptylabel="foo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3051")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3051")
+		},
+	)
+
+	t.Run(
+		"ok with other label empty",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other=""`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3051")
+		},
+	)
 }

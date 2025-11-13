@@ -13,5 +13,5 @@ package rules
 // Rule stubs include placeholder check functions that need manual implementation.
 // Tests are automatically ported from hadolint's test suite.
 
-//go:generate go run ../../tools/gen-rules/main.go ../../hadolint/src/Hadolint/Rule
-//go:generate go run ../../tools/gen-tests/main.go ../../hadolint/test/Hadolint/Rule
+//go:generate go run ../../tools/gen-rules/main.go ../../third-party/hadolint/src/Hadolint/Rule
+//go:generate go run ../../tools/gen-tests/main.go ../../third-party/hadolint/test/Hadolint/Rule

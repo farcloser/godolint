@@ -12,21 +12,26 @@ func DL3045() rule.Rule {
 	return &DL3045Rule{}
 }
 
+// DL3045Rule implements the rule for checking COPY with relative paths.
 type DL3045Rule struct{}
 
-func (r *DL3045Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3045Rule) Code() rule.RuleCode {
 	return DL3045Meta.Code
 }
 
-func (r *DL3045Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3045Rule) Severity() rule.Severity {
 	return DL3045Meta.Severity
 }
 
-func (r *DL3045Rule) Message() string {
+// Message returns the rule message.
+func (*DL3045Rule) Message() string {
 	return DL3045Meta.Message
 }
 
-func (r *DL3045Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3045Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3045State{
 		WorkdirSet: make(map[string]bool),
 	})
@@ -38,6 +43,7 @@ type dl3045State struct {
 	WorkdirSet map[string]bool
 }
 
+// Check validates COPY instructions use absolute paths or have WORKDIR set.
 func (r *DL3045Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	var currentState dl3045State
 	if state.Data != nil {
@@ -113,7 +119,8 @@ func (r *DL3045Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state.ReplaceData(currentState)
 }
 
-func (r *DL3045Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3045Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }
 

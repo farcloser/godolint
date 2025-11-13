@@ -1,3 +1,4 @@
+// Package rules implements all Dockerfile linting rules ported from hadolint.
 package rules
 
 import (

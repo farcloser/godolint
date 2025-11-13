@@ -21,19 +21,23 @@ func DL4006() rule.Rule {
 	return &DL4006Rule{}
 }
 
-func (r *DL4006Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL4006Rule) Code() rule.RuleCode {
 	return DL4006Meta.Code
 }
 
-func (r *DL4006Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL4006Rule) Severity() rule.Severity {
 	return DL4006Meta.Severity
 }
 
-func (r *DL4006Rule) Message() string {
+// Message returns the rule message.
+func (*DL4006Rule) Message() string {
 	return DL4006Meta.Message
 }
 
-func (r *DL4006Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL4006Rule) InitialState() rule.State {
 	return rule.EmptyState(dl4006State{
 		pipefailSet: false,
 	})
@@ -84,7 +88,8 @@ func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL4006Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL4006Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 

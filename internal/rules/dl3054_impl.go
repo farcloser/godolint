@@ -28,22 +28,27 @@ func DL3054WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3054Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3054Rule) Code() rule.RuleCode {
 	return DL3054Meta.Code
 }
 
-func (r *DL3054Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3054Rule) Severity() rule.Severity {
 	return DL3054Meta.Severity
 }
 
-func (r *DL3054Rule) Message() string {
+// Message returns the rule message.
+func (*DL3054Rule) Message() string {
 	return DL3054Meta.Message
 }
 
-func (r *DL3054Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3054Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that SPDX license labels are valid.
 func (r *DL3054Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -71,7 +76,8 @@ func (r *DL3054Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3054Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3054Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 
@@ -113,7 +119,7 @@ func isValidSPDX(license string) bool {
 }
 
 // isSPDXPattern checks if a string follows common SPDX naming patterns.
-func isSPDXPattern(s string) bool {
+func isSPDXPattern(license string) bool {
 	// Common patterns: XXX-N.N, XXX-N.N-or-later, XXX-N.N-only
 	patterns := []string{
 		`^[A-Z][A-Za-z0-9]+-\d+\.\d+$`,          // MIT-1.0
@@ -124,7 +130,7 @@ func isSPDXPattern(s string) bool {
 	}
 
 	for _, pattern := range patterns {
-		if matched, _ := regexp.MatchString(pattern, s); matched {
+		if matched, _ := regexp.MatchString(pattern, license); matched {
 			return true
 		}
 	}

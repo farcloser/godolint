@@ -1,8 +1,10 @@
+// Package config defines configuration types and defaults for godolint.
 package config
 
 // LabelType defines the validation type for a label.
 type LabelType string
 
+// Label types supported for validation.
 const (
 	LabelTypeEmail   LabelType = "email"
 	LabelTypeGitHash LabelType = "git-hash"

@@ -21,19 +21,23 @@ func DL3006() rule.Rule {
 	return &DL3006Rule{}
 }
 
-func (r *DL3006Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3006Rule) Code() rule.RuleCode {
 	return DL3006Meta.Code
 }
 
-func (r *DL3006Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3006Rule) Severity() rule.Severity {
 	return DL3006Meta.Severity
 }
 
-func (r *DL3006Rule) Message() string {
+// Message returns the rule message.
+func (*DL3006Rule) Message() string {
 	return DL3006Meta.Message
 }
 
-func (r *DL3006Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3006Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3006State{
 		aliases: make(map[string]bool),
 	})
@@ -41,7 +45,7 @@ func (r *DL3006Rule) InitialState() rule.State {
 
 // Check examines FROM instructions and tracks aliases.
 // Ported from the check function in DL3006.hs.
-func (r *DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	from, ok := instruction.(*syntax.From)
 	if !ok {
 		return state
@@ -96,6 +100,7 @@ func (r *DL3006Rule) Check(line int, state rule.State, instruction syntax.Instru
 	})
 }
 
-func (r *DL3006Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3006Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

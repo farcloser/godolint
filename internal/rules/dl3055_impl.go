@@ -28,22 +28,27 @@ func DL3055WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3055Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3055Rule) Code() rule.RuleCode {
 	return DL3055Meta.Code
 }
 
-func (r *DL3055Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3055Rule) Severity() rule.Severity {
 	return DL3055Meta.Severity
 }
 
-func (r *DL3055Rule) Message() string {
+// Message returns the rule message.
+func (*DL3055Rule) Message() string {
 	return DL3055Meta.Message
 }
 
-func (r *DL3055Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3055Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that git hash labels are valid.
 func (r *DL3055Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -71,7 +76,8 @@ func (r *DL3055Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3055Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3055Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 

@@ -28,22 +28,27 @@ func DL3058WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3058Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3058Rule) Code() rule.RuleCode {
 	return DL3058Meta.Code
 }
 
-func (r *DL3058Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3058Rule) Severity() rule.Severity {
 	return DL3058Meta.Severity
 }
 
-func (r *DL3058Rule) Message() string {
+// Message returns the rule message.
+func (*DL3058Rule) Message() string {
 	return DL3058Meta.Message
 }
 
-func (r *DL3058Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3058Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that email labels are valid email addresses.
 func (r *DL3058Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -71,7 +76,8 @@ func (r *DL3058Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3058Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3058Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 

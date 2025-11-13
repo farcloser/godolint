@@ -26,16 +26,16 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 	var allFailures []rule.CheckFailure
 
 	// For each rule, fold over all instructions with state
-	for _, r := range p.rules {
-		state := r.InitialState()
+	for _, currentRule := range p.rules {
+		state := currentRule.InitialState()
 
 		// Thread state through each instruction check
 		for _, instrPos := range instructions {
-			state = r.Check(instrPos.LineNumber, state, instrPos.Instruction)
+			state = currentRule.Check(instrPos.LineNumber, state, instrPos.Instruction)
 		}
 
 		// Finalize the state (some rules add failures only at the end)
-		state = r.Finalize(state)
+		state = currentRule.Finalize(state)
 
 		// Collect failures from final state
 		allFailures = append(allFailures, state.Failures...)

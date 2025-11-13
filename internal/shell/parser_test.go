@@ -1,12 +1,18 @@
-package shell
+package shell_test
 
 import (
 	"testing"
+
+	"github.com/farcloser/godolint/internal/shell"
 )
 
 func TestParseShell(t *testing.T) {
+	t.Parallel()
+
 	t.Run("simple command", func(t *testing.T) {
-		ps, err := ParseShell("apt-get update")
+		t.Parallel()
+
+		ps, err := shell.ParseShell("apt-get update")
 		if err != nil {
 			t.Fatalf("failed to parse: %v", err)
 		}
@@ -20,14 +26,16 @@ func TestParseShell(t *testing.T) {
 			t.Errorf("expected command name 'apt-get', got '%s'", cmd.Name)
 		}
 
-		args := GetArgs(cmd)
+		args := shell.GetArgs(cmd)
 		if len(args) != 1 || args[0] != "update" {
 			t.Errorf("expected args ['update'], got %v", args)
 		}
 	})
 
 	t.Run("command with flags", func(t *testing.T) {
-		ps, err := ParseShell("apt-get install -y vim")
+		t.Parallel()
+
+		ps, err := shell.ParseShell("apt-get install -y vim")
 		if err != nil {
 			t.Fatalf("failed to parse: %v", err)
 		}
@@ -37,11 +45,11 @@ func TestParseShell(t *testing.T) {
 			t.Errorf("expected command name 'apt-get', got '%s'", cmd.Name)
 		}
 
-		if !HasFlag("y", cmd) {
+		if !shell.HasFlag("y", cmd) {
 			t.Error("expected command to have -y flag")
 		}
 
-		argsNoFlags := GetArgsNoFlags(cmd)
+		argsNoFlags := shell.GetArgsNoFlags(cmd)
 		expectedArgs := []string{"install", "vim"}
 
 		if len(argsNoFlags) != len(expectedArgs) {
@@ -50,7 +58,9 @@ func TestParseShell(t *testing.T) {
 	})
 
 	t.Run("chained commands with &&", func(t *testing.T) {
-		ps, err := ParseShell("apt-get update && apt-get install -y vim")
+		t.Parallel()
+
+		ps, err := shell.ParseShell("apt-get update && apt-get install -y vim")
 		if err != nil {
 			t.Fatalf("failed to parse: %v", err)
 		}
@@ -59,14 +69,16 @@ func TestParseShell(t *testing.T) {
 			t.Fatalf("expected 2 commands, got %d", len(ps.PresentCommands))
 		}
 
-		names := FindCommandNames(ps)
+		names := shell.FindCommandNames(ps)
 		if len(names) != 2 || names[0] != "apt-get" || names[1] != "apt-get" {
 			t.Errorf("expected ['apt-get', 'apt-get'], got %v", names)
 		}
 	})
 
 	t.Run("chained commands with semicolon", func(t *testing.T) {
-		ps, err := ParseShell("echo foo; echo bar")
+		t.Parallel()
+
+		ps, err := shell.ParseShell("echo foo; echo bar")
 		if err != nil {
 			t.Fatalf("failed to parse: %v", err)
 		}
@@ -77,48 +89,56 @@ func TestParseShell(t *testing.T) {
 	})
 
 	t.Run("long flag with equals", func(t *testing.T) {
-		ps, err := ParseShell("useradd --uid=1000 user")
+		t.Parallel()
+
+		ps, err := shell.ParseShell("useradd --uid=1000 user")
 		if err != nil {
 			t.Fatalf("failed to parse: %v", err)
 		}
 
 		cmd := ps.PresentCommands[0]
-		if !HasFlag("uid", cmd) {
+		if !shell.HasFlag("uid", cmd) {
 			t.Error("expected command to have --uid flag")
 		}
 	})
 
 	t.Run("multiple short flags", func(t *testing.T) {
-		ps, err := ParseShell("tar -xzf archive.tar.gz")
+		t.Parallel()
+
+		ps, err := shell.ParseShell("tar -xzf archive.tar.gz")
 		if err != nil {
 			t.Fatalf("failed to parse: %v", err)
 		}
 
 		cmd := ps.PresentCommands[0]
-		if !HasFlag("x", cmd) || !HasFlag("z", cmd) || !HasFlag("f", cmd) {
+		if !shell.HasFlag("x", cmd) || !shell.HasFlag("z", cmd) || !shell.HasFlag("f", cmd) {
 			t.Error("expected command to have -x, -z, and -f flags")
 		}
 	})
 }
 
 func TestCmdHasArgs(t *testing.T) {
-	ps, _ := ParseShell("apt-get install vim")
+	t.Parallel()
+
+	ps, _ := shell.ParseShell("apt-get install vim")
 	cmd := ps.PresentCommands[0]
 
-	if !CmdHasArgs("apt-get", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs("apt-get", []string{"install"}, cmd) {
 		t.Error("expected CmdHasArgs to return true for apt-get with install")
 	}
 
-	if CmdHasArgs("apt-get", []string{"update"}, cmd) {
+	if shell.CmdHasArgs("apt-get", []string{"update"}, cmd) {
 		t.Error("expected CmdHasArgs to return false for apt-get with update")
 	}
 
-	if CmdHasArgs("yum", []string{"install"}, cmd) {
+	if shell.CmdHasArgs("yum", []string{"install"}, cmd) {
 		t.Error("expected CmdHasArgs to return false for different command")
 	}
 }
 
 func TestCountCommands(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		script   string
@@ -132,12 +152,14 @@ func TestCountCommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ps, err := ParseShell(tt.script)
+			t.Parallel()
+
+			ps, err := shell.ParseShell(tt.script)
 			if err != nil {
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			count := CountCommands(ps)
+			count := shell.CountCommands(ps)
 			if count != tt.expected {
 				t.Errorf("expected %d commands, got %d", tt.expected, count)
 			}

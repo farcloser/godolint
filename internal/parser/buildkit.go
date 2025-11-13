@@ -20,7 +20,7 @@ func NewBuildkitParser() *BuildkitParser {
 }
 
 // Parse parses a Dockerfile using moby/buildkit and converts to our AST format.
-func (p *BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, error) {
+func (*BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, error) {
 	// Parse using buildkit
 	result, err := parser.Parse(bytes.NewReader(dockerfile))
 	if err != nil {
@@ -225,6 +225,7 @@ func indexOf(s string, ch rune) int {
 	return -1
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertRun(node *parser.Node) (*syntax.Run, error) {
 	// Collect all parts of the RUN command
 	command := ""
@@ -278,6 +279,7 @@ func convertAdd(node *parser.Node) (*syntax.Add, error) {
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertEnv(node *parser.Node) (*syntax.Env, error) {
 	values := collectValues(node)
 
@@ -286,23 +288,23 @@ func convertEnv(node *parser.Node) (*syntax.Env, error) {
 	// ENV has two syntaxes:
 	// 1. "ENV key=value key2=value2" - buildkit tokenizes as: key, value, =, key2, value2, =
 	// 2. "ENV key value" - buildkit tokenizes as: key, value
-	for i := 0; i < len(values); {
-		if i+2 < len(values) && values[i+2] == "=" {
+	for idx := 0; idx < len(values); {
+		if idx+2 < len(values) && values[idx+2] == "=" {
 			// Pattern: key value = (key=value syntax)
 			pairs = append(pairs, syntax.EnvPair{
-				Key:   values[i],
-				Value: unquote(values[i+1]),
+				Key:   values[idx],
+				Value: unquote(values[idx+1]),
 			})
-			i += 3 // Skip key, value, =
-		} else if i+1 < len(values) {
+			idx += 3 // Skip key, value, =
+		} else if idx+1 < len(values) {
 			// Whitespace syntax: key value
 			pairs = append(pairs, syntax.EnvPair{
-				Key:   values[i],
-				Value: unquote(values[i+1]),
+				Key:   values[idx],
+				Value: unquote(values[idx+1]),
 			})
-			i += 2
+			idx += 2
 		} else {
-			i++
+			idx++
 		}
 	}
 
@@ -320,6 +322,7 @@ func unquote(s string) string {
 	return s
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertLabel(node *parser.Node) (*syntax.Label, error) {
 	values := collectValues(node)
 
@@ -351,30 +354,35 @@ func stripQuotes(s string) string {
 	return s
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertWorkdir(node *parser.Node) (*syntax.Workdir, error) {
 	return &syntax.Workdir{
 		Directory: nextValue(node),
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertUser(node *parser.Node) (*syntax.User, error) {
 	return &syntax.User{
 		User: nextValue(node),
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertExpose(node *parser.Node) (*syntax.Expose, error) {
 	return &syntax.Expose{
 		Ports: collectValues(node),
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertVolume(node *parser.Node) (*syntax.Volume, error) {
 	return &syntax.Volume{
 		Volumes: collectValues(node),
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertCmd(node *parser.Node) (*syntax.Cmd, error) {
 	// Check if using JSON notation (exec form)
 	isJSON := node.Attributes != nil && node.Attributes["json"]
@@ -385,6 +393,7 @@ func convertCmd(node *parser.Node) (*syntax.Cmd, error) {
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertEntrypoint(node *parser.Node) (*syntax.Entrypoint, error) {
 	// Check if using JSON notation (exec form)
 	isJSON := node.Attributes != nil && node.Attributes["json"]
@@ -395,6 +404,7 @@ func convertEntrypoint(node *parser.Node) (*syntax.Entrypoint, error) {
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertHealthcheck(node *parser.Node) (*syntax.Healthcheck, error) {
 	command := ""
 
@@ -411,6 +421,7 @@ func convertHealthcheck(node *parser.Node) (*syntax.Healthcheck, error) {
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertMaintainer(node *parser.Node) (*syntax.Maintainer, error) {
 	return &syntax.Maintainer{
 		MaintainerName: nextValue(node),
@@ -438,12 +449,14 @@ func convertArg(node *parser.Node) (*syntax.Arg, error) {
 	return arg, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertStopSignal(node *parser.Node) (*syntax.StopSignal, error) {
 	return &syntax.StopSignal{
 		Signal: nextValue(node),
 	}, nil
 }
 
+//nolint:unparam // Uniform signature with other converters for consistent error handling
 func convertShell(node *parser.Node) (*syntax.Shell, error) {
 	return &syntax.Shell{
 		Arguments: collectValues(node),

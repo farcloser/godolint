@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3012 ported from hadolint test suite.
@@ -12,39 +14,63 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3012(t *testing.T) {
-	allRules := []rule.Rule{DL3012()}
+	t.Parallel()
 
-	t.Run("ok with no HEALTHCHECK instruction", func(t *testing.T) {
-		dockerfile := `FROM scratch`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3012(),
+	}
 
-		AssertNoViolation(t, violations, "DL3012")
-	})
+	t.Run(
+		"ok with no HEALTHCHECK instruction",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with one HEALTHCHECK instruction", func(t *testing.T) {
-		dockerfile := `FROM scratch
+			dockerfile := `FROM scratch`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3012")
+		},
+	)
+
+	t.Run(
+		"ok with one HEALTHCHECK instruction",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
 HEALTHCHECK CMD /bin/bla`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3012")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3012")
+		},
+	)
 
-	t.Run("ok with two HEALTHCHECK instructions in two stages", func(t *testing.T) {
-		dockerfile := `FROM scratch
+	t.Run(
+		"ok with two HEALTHCHECK instructions in two stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
 HEALTHCHECK CMD /bin/bla1
 FROM scratch
 HEALTHCHECK CMD /bin/bla2`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3012")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3012")
+		},
+	)
 
-	t.Run("warn with two HEALTHCHECK instructions", func(t *testing.T) {
-		dockerfile := `FROM scratch
+	t.Run(
+		"warn with two HEALTHCHECK instructions",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
 HEALTHCHECK CMD /bin/bla1
 HEALTHCHECK CMD /bin/bla2`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3012")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3012")
+		},
+	)
 }

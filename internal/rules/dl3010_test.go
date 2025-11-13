@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3010 ported from hadolint test suite.
@@ -12,68 +14,112 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3010(t *testing.T) {
-	allRules := []rule.Rule{DL3010()}
+	t.Parallel()
 
-	t.Run("catch: copy archive then extract 1", func(t *testing.T) {
-		dockerfile := `COPY packaged-app.tar /usr/src/app
+	allRules := []rule.Rule{
+		rules.DL3010(),
+	}
+
+	t.Run(
+		"catch: copy archive then extract 1",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY packaged-app.tar /usr/src/app
 RUN tar -xf /usr/src/app/packaged-app.tar`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3010")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3010")
+		},
+	)
 
-	t.Run("catch: copy archive then extract 2", func(t *testing.T) {
-		dockerfile := `COPY packaged-app.tar /usr/src/app
+	t.Run(
+		"catch: copy archive then extract 2",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY packaged-app.tar /usr/src/app
 WORKDIR /usr/src/app
 RUN foo bar && echo something && tar -xf packaged-app.tar`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3010")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3010")
+		},
+	)
 
-	t.Run("catch: copy archive then extract 3", func(t *testing.T) {
-		dockerfile := `COPY foo/bar/packaged-app.tar /foo.tar
+	t.Run(
+		"catch: copy archive then extract 3",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY foo/bar/packaged-app.tar /foo.tar
 RUN tar -xf /foo.tar`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3010")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3010")
+		},
+	)
 
-	t.Run("catch: copy archive then extract windows paths 1", func(t *testing.T) {
-		dockerfile := `COPY build\foo\bar.tar.gz "C:\Program Files\Foo"
+	t.Run(
+		"catch: copy archive then extract windows paths 1",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY build\foo\bar.tar.gz "C:\Program Files\Foo"
 RUN tar -xf "C:\Program Files\Foo\bar.tar.gz"`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3010")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3010")
+		},
+	)
 
-	t.Run("catch: copy archive then extract windows paths 2", func(t *testing.T) {
-		dockerfile := `COPY build\foo\bar.tar.gz "C:\Program Files\foo.tar.gz"
+	t.Run(
+		"catch: copy archive then extract windows paths 2",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY build\foo\bar.tar.gz "C:\Program Files\foo.tar.gz"
 RUN tar -xf foo.tar.gz`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3010")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3010")
+		},
+	)
 
-	t.Run("ignore: copy archive without extract", func(t *testing.T) {
-		dockerfile := `COPY packaged-app.tar /usr/src/app
+	t.Run(
+		"ignore: copy archive without extract",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY packaged-app.tar /usr/src/app
 FROM debian:11 as newstage`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3010")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3010")
+		},
+	)
 
-	t.Run("ignore: copy from previous stage", func(t *testing.T) {
-		dockerfile := `COPY --from=builder /usr/local/share/some.tar /opt/some.tar`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ignore: copy from previous stage",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3010")
-	})
+			dockerfile := `COPY --from=builder /usr/local/share/some.tar /opt/some.tar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ignore: non archive", func(t *testing.T) {
-		dockerfile := `COPY package.json /usr/src/app`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3010")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3010")
-	})
+	t.Run(
+		"ignore: non archive",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY package.json /usr/src/app`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3010")
+		},
+	)
 }

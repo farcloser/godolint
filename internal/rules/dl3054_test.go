@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3054 ported from hadolint test suite.
@@ -13,31 +15,50 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3054(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"spdxlabel": config.LabelTypeSPDX,
 		},
 	}
-	allRules := []rule.Rule{DL3054WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3054WithConfig(cfg),
+	}
 
-	t.Run("not ok with label not containing SPDX identifier", func(t *testing.T) {
-		dockerfile := `LABEL spdxlabel="not-spdx"`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok with label not containing SPDX identifier",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3054")
-	})
+			dockerfile := `LABEL spdxlabel="not-spdx"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with label containing SPDX identifier", func(t *testing.T) {
-		dockerfile := `LABEL spdxlabel="BSD-3-Clause"`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertContainsViolation(t, violations, "DL3054")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3054")
-	})
+	t.Run(
+		"ok with label containing SPDX identifier",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with other label not containing SPDX identifier", func(t *testing.T) {
-		dockerfile := `LABEL other="fooo"`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `LABEL spdxlabel="BSD-3-Clause"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3054")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3054")
+		},
+	)
+
+	t.Run(
+		"ok with other label not containing SPDX identifier",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other="fooo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3054")
+		},
+	)
 }

@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3034 ported from hadolint test suite.
@@ -12,40 +14,69 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3034(t *testing.T) {
-	allRules := []rule.Rule{DL3034()}
+	t.Parallel()
 
-	t.Run("not ok without non-interactive switch", func(t *testing.T) {
-		dockerfile := `RUN zypper install httpd=2.4.24 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3034(),
+	}
 
-		AssertContainsViolation(t, violations, "DL3034")
-	})
+	t.Run(
+		"not ok without non-interactive switch",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with non-interactive switch present", func(t *testing.T) {
-		dockerfile := `RUN zypper install -n httpd=2.4.24 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN zypper install httpd=2.4.24 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3034")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3034")
+		},
+	)
 
-	t.Run("ok with non-interactive switch present (2)", func(t *testing.T) {
-		dockerfile := `RUN zypper install --non-interactive httpd=2.4.24 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"ok with non-interactive switch present",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3034")
-	})
+			dockerfile := `RUN zypper install -n httpd=2.4.24 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("ok with non-interactive switch present (3)", func(t *testing.T) {
-		dockerfile := `RUN zypper install -y httpd=2.4.24 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3034")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3034")
-	})
+	t.Run(
+		"ok with non-interactive switch present (2)",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("ok with non-interactive switch present (4)", func(t *testing.T) {
-		dockerfile := `RUN zypper install --no-confirm httpd=2.4.24 && zypper clean`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `RUN zypper install --non-interactive httpd=2.4.24 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3034")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3034")
+		},
+	)
+
+	t.Run(
+		"ok with non-interactive switch present (3)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN zypper install -y httpd=2.4.24 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3034")
+		},
+	)
+
+	t.Run(
+		"ok with non-interactive switch present (4)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN zypper install --no-confirm httpd=2.4.24 && zypper clean`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3034")
+		},
+	)
 }

@@ -1,10 +1,12 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/config"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3049 ported from hadolint test suite.
@@ -13,33 +15,52 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3049(t *testing.T) {
+	t.Parallel()
+
 	cfg := &config.Config{
 		LabelSchema: map[string]config.LabelType{
 			"foo": config.LabelTypeRawText,
 		},
 	}
-	allRules := []rule.Rule{DL3049WithConfig(cfg)}
+	allRules := []rule.Rule{
+		rules.DL3049WithConfig(cfg),
+	}
 
-	t.Run("not ok: single stage, no label", func(t *testing.T) {
-		dockerfile := `FROM baseimage`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"not ok: single stage, no label",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3049")
-	})
+			dockerfile := `FROM baseimage`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("not ok: single stage, wrong label", func(t *testing.T) {
-		dockerfile := `FROM baseimage
+			testutils.AssertContainsViolation(t, violations, "DL3049")
+		},
+	)
+
+	t.Run(
+		"not ok: single stage, wrong label",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM baseimage
 LABEL bar="baz"`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3049")
-	})
+			testutils.AssertContainsViolation(t, violations, "DL3049")
+		},
+	)
 
-	t.Run("ok: single stage, label present", func(t *testing.T) {
-		dockerfile := `FROM baseimage
+	t.Run(
+		"ok: single stage, label present",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM baseimage
 LABEL foo="bar"`
-		violations := LintDockerfile(dockerfile, allRules)
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3049")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3049")
+		},
+	)
 }

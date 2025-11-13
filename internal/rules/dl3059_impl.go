@@ -21,22 +21,27 @@ type dl3059State struct {
 	Count int      // Number of commands in previous RUN
 }
 
-func (r *DL3059Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3059Rule) Code() rule.RuleCode {
 	return DL3059Meta.Code
 }
 
-func (r *DL3059Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3059Rule) Severity() rule.Severity {
 	return DL3059Meta.Severity
 }
 
-func (r *DL3059Rule) Message() string {
+// Message returns the rule message.
+func (*DL3059Rule) Message() string {
 	return DL3059Meta.Message
 }
 
-func (r *DL3059Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3059Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3059State{})
 }
 
+// Check detects multiple consecutive RUN instructions.
 func (r *DL3059Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	var prevState dl3059State
 	if state.Data != nil {
@@ -92,19 +97,20 @@ func (r *DL3059Rule) Check(line int, state rule.State, instruction syntax.Instru
 	}
 }
 
-func (r *DL3059Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3059Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }
 
 // flagsEqual compares two flag slices for equality.
-func flagsEqual(a, b []string) bool {
-	if len(a) != len(b) {
+func flagsEqual(flags1, flags2 []string) bool {
+	if len(flags1) != len(flags2) {
 		return false
 	}
 
 	// Simple comparison - flags should be in same order
-	for i := range a {
-		if a[i] != b[i] {
+	for i := range flags1 {
+		if flags1[i] != flags2[i] {
 			return false
 		}
 	}

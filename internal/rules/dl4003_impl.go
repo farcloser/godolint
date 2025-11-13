@@ -21,25 +21,29 @@ func DL4003() rule.Rule {
 	return &DL4003Rule{}
 }
 
-func (r *DL4003Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL4003Rule) Code() rule.RuleCode {
 	return DL4003Meta.Code
 }
 
-func (r *DL4003Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL4003Rule) Severity() rule.Severity {
 	return DL4003Meta.Severity
 }
 
-func (r *DL4003Rule) Message() string {
+// Message returns the rule message.
+func (*DL4003Rule) Message() string {
 	return DL4003Meta.Message
 }
 
-func (r *DL4003Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL4003Rule) InitialState() rule.State {
 	return rule.EmptyState(noCmd)
 }
 
 // Check implements the stateful check for multiple CMD instructions.
 // Ported from the check function in DL4003.hs.
-func (r *DL4003Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL4003Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	// Reset state on each FROM (new stage)
 	if _, ok := instruction.(*syntax.From); ok {
 		return state.ReplaceData(noCmd)
@@ -66,6 +70,7 @@ func (r *DL4003Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL4003Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL4003Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

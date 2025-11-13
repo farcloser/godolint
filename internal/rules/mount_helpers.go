@@ -17,13 +17,13 @@ func hasCacheOrTmpfsMount(flags []string, path string) bool {
 		target := ""
 
 		for _, part := range parts {
-			kv := strings.SplitN(part, "=", 2)
-			if len(kv) != 2 {
+			keyVal := strings.SplitN(part, "=", 2)
+			if len(keyVal) != 2 {
 				continue
 			}
 
-			key := strings.TrimSpace(kv[0])
-			value := strings.TrimSpace(kv[1])
+			key := strings.TrimSpace(keyVal[0])
+			value := strings.TrimSpace(keyVal[1])
 
 			switch key {
 			case "type":

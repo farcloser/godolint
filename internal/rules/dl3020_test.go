@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3020 ported from hadolint test suite.
@@ -12,82 +14,141 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3020(t *testing.T) {
-	allRules := []rule.Rule{DL3020()}
+	t.Parallel()
 
-	t.Run("add for bz2", func(t *testing.T) {
-		dockerfile := `ADD file.bz2 /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3020(),
+	}
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+	t.Run(
+		"add for bz2",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("add for gzip", func(t *testing.T) {
-		dockerfile := `ADD file.gz /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ADD file.bz2 /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
 
-	t.Run("add for tar", func(t *testing.T) {
-		dockerfile := `ADD file.tar /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"add for gzip",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+			dockerfile := `ADD file.gz /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("add for tgz", func(t *testing.T) {
-		dockerfile := `ADD file.tgz /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+	t.Run(
+		"add for tar",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("add for tgz with quotes", func(t *testing.T) {
-		dockerfile := `ADD "file.tgz" /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ADD file.tar /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
 
-	t.Run("add for url", func(t *testing.T) {
-		dockerfile := `ADD http://file.com /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"add for tgz",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+			dockerfile := `ADD file.tgz /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("add for url with quotes", func(t *testing.T) {
-		dockerfile := `ADD "http://file.com" /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+	t.Run(
+		"add for tgz with quotes",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("add for xz", func(t *testing.T) {
-		dockerfile := `ADD file.xz /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ADD "file.tgz" /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3020")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
 
-	t.Run("using add", func(t *testing.T) {
-		dockerfile := `ADD file /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"add for url",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertContainsViolation(t, violations, "DL3020")
-	})
+			dockerfile := `ADD http://file.com /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("warn for zip", func(t *testing.T) {
-		dockerfile := `ADD file.zip /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
 
-		AssertContainsViolation(t, violations, "DL3020")
-	})
+	t.Run(
+		"add for url with quotes",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("warn for zip with quotes", func(t *testing.T) {
-		dockerfile := `ADD "file.zip" /usr/src/app/`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `ADD "http://file.com" /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3020")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
+
+	t.Run(
+		"add for xz",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ADD file.xz /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3020")
+		},
+	)
+
+	t.Run(
+		"using add",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ADD file /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3020")
+		},
+	)
+
+	t.Run(
+		"warn for zip",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ADD file.zip /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3020")
+		},
+	)
+
+	t.Run(
+		"warn for zip with quotes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ADD "file.zip" /usr/src/app/`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3020")
+		},
+	)
 }

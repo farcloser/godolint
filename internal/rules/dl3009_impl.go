@@ -22,19 +22,23 @@ func DL3009() rule.Rule {
 	return &DL3009Rule{}
 }
 
-func (r *DL3009Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3009Rule) Code() rule.RuleCode {
 	return DL3009Meta.Code
 }
 
-func (r *DL3009Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3009Rule) Severity() rule.Severity {
 	return DL3009Meta.Severity
 }
 
-func (r *DL3009Rule) Message() string {
+// Message returns the rule message.
+func (*DL3009Rule) Message() string {
 	return DL3009Meta.Message
 }
 
-func (r *DL3009Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3009Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3009State{
 		dockerClean: true,
 		stages:      make(map[string]int),
@@ -92,7 +96,8 @@ func (r *DL3009Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3009Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3009Rule) Finalize(state rule.State) rule.State {
 	s := state.Data.(dl3009State)
 
 	finalState := state

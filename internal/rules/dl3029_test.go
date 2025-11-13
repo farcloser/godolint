@@ -1,9 +1,11 @@
-package rules
+package rules_test
 
 import (
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL3029 ported from hadolint test suite.
@@ -12,47 +14,81 @@ import (
 // To regenerate: go generate ./internal/rules
 
 func TestDL3029(t *testing.T) {
-	allRules := []rule.Rule{DL3029()}
+	t.Parallel()
 
-	t.Run("allows platform $BUILDPLATFORM flag", func(t *testing.T) {
-		dockerfile := `FROM --platform=$BUILDPLATFORM debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+	allRules := []rule.Rule{
+		rules.DL3029(),
+	}
 
-		AssertNoViolation(t, violations, "DL3029")
-	})
+	t.Run(
+		"allows platform $BUILDPLATFORM flag",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("allows platform $TARGETPLATFORM flag", func(t *testing.T) {
-		dockerfile := `FROM --platform=$TARGETPLATFORM debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM --platform=$BUILDPLATFORM debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertNoViolation(t, violations, "DL3029")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3029")
+		},
+	)
 
-	t.Run("allows platform ${BUILDPLATFORM:-} flag", func(t *testing.T) {
-		dockerfile := `FROM --platform=${BUILDPLATFORM:-} debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"allows platform $TARGETPLATFORM flag",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3029")
-	})
+			dockerfile := `FROM --platform=$TARGETPLATFORM debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-	t.Run("allows platform ${BUILDPLATFORM} flag", func(t *testing.T) {
-		dockerfile := `FROM --platform=${BUILDPLATFORM} debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+			testutils.AssertNoViolation(t, violations, "DL3029")
+		},
+	)
 
-		AssertNoViolation(t, violations, "DL3029")
-	})
+	t.Run(
+		"allows platform ${BUILDPLATFORM:-} flag",
+		func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("explicit platform flag", func(t *testing.T) {
-		dockerfile := `FROM --platform=linux debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+			dockerfile := `FROM --platform=${BUILDPLATFORM:-} debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
 
-		AssertContainsViolation(t, violations, "DL3029")
-	})
+			testutils.AssertNoViolation(t, violations, "DL3029")
+		},
+	)
 
-	t.Run("no platform flag", func(t *testing.T) {
-		dockerfile := `FROM debian:jessie`
-		violations := LintDockerfile(dockerfile, allRules)
+	t.Run(
+		"allows platform ${BUILDPLATFORM} flag",
+		func(t *testing.T) {
+			t.Parallel()
 
-		AssertNoViolation(t, violations, "DL3029")
-	})
+			dockerfile := `FROM --platform=${BUILDPLATFORM} debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3029")
+		},
+	)
+
+	t.Run(
+		"explicit platform flag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM --platform=linux debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3029")
+		},
+	)
+
+	t.Run(
+		"no platform flag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM debian:jessie`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3029")
+		},
+	)
 }
