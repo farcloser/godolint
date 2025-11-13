@@ -1,5 +1,7 @@
 // Package syntax defines the AST (Abstract Syntax Tree) for Dockerfiles.
 // Ported from Language.Docker.Syntax
+//
+//revive:disable:max-public-structs
 package syntax
 
 // Instruction is ported from Instruction in Language.Docker.Syntax.
@@ -28,7 +30,8 @@ type From struct {
 	Image BaseImage
 }
 
-func (f *From) Name() string {
+// Name returns the instruction name.
+func (*From) Name() string {
 	return "FROM"
 }
 
@@ -38,7 +41,8 @@ type Run struct {
 	Flags   []string // RUN instruction flags (e.g., --mount)
 }
 
-func (r *Run) Name() string {
+// Name returns the instruction name.
+func (*Run) Name() string {
 	return "RUN"
 }
 
@@ -49,7 +53,8 @@ type Copy struct {
 	From        *string  // Optional --from flag for multi-stage
 }
 
-func (c *Copy) Name() string {
+// Name returns the instruction name.
+func (*Copy) Name() string {
 	return "COPY"
 }
 
@@ -59,7 +64,8 @@ type Add struct {
 	Destination string   // Destination path
 }
 
-func (a *Add) Name() string {
+// Name returns the instruction name.
+func (*Add) Name() string {
 	return "ADD"
 }
 
@@ -68,12 +74,14 @@ type Env struct {
 	Pairs []EnvPair // Environment variable key-value pairs
 }
 
+// EnvPair represents a key-value pair for ENV instruction.
 type EnvPair struct {
 	Key   string
 	Value string
 }
 
-func (e *Env) Name() string {
+// Name returns the instruction name.
+func (*Env) Name() string {
 	return "ENV"
 }
 
@@ -82,12 +90,14 @@ type Label struct {
 	Pairs []LabelPair // Label key-value pairs
 }
 
+// LabelPair represents a key-value pair for LABEL instruction.
 type LabelPair struct {
 	Key   string
 	Value string
 }
 
-func (l *Label) Name() string {
+// Name returns the instruction name.
+func (*Label) Name() string {
 	return "LABEL"
 }
 
@@ -96,7 +106,8 @@ type Workdir struct {
 	Directory string
 }
 
-func (w *Workdir) Name() string {
+// Name returns the instruction name.
+func (*Workdir) Name() string {
 	return "WORKDIR"
 }
 
@@ -105,7 +116,8 @@ type User struct {
 	User string
 }
 
-func (u *User) Name() string {
+// Name returns the instruction name.
+func (*User) Name() string {
 	return "USER"
 }
 
@@ -114,7 +126,8 @@ type Expose struct {
 	Ports []string // Port specifications
 }
 
-func (e *Expose) Name() string {
+// Name returns the instruction name.
+func (*Expose) Name() string {
 	return "EXPOSE"
 }
 
@@ -123,7 +136,8 @@ type Volume struct {
 	Volumes []string // Volume mount points
 }
 
-func (v *Volume) Name() string {
+// Name returns the instruction name.
+func (*Volume) Name() string {
 	return "VOLUME"
 }
 
@@ -133,7 +147,8 @@ type Cmd struct {
 	IsJSON    bool     // true if using JSON/exec form, false if shell form
 }
 
-func (c *Cmd) Name() string {
+// Name returns the instruction name.
+func (*Cmd) Name() string {
 	return "CMD"
 }
 
@@ -143,7 +158,8 @@ type Entrypoint struct {
 	IsJSON    bool     // true if using JSON/exec form, false if shell form
 }
 
-func (e *Entrypoint) Name() string {
+// Name returns the instruction name.
+func (*Entrypoint) Name() string {
 	return "ENTRYPOINT"
 }
 
@@ -152,7 +168,8 @@ type Healthcheck struct {
 	Command string // Health check command
 }
 
-func (h *Healthcheck) Name() string {
+// Name returns the instruction name.
+func (*Healthcheck) Name() string {
 	return "HEALTHCHECK"
 }
 
@@ -162,7 +179,8 @@ type Maintainer struct {
 	MaintainerName string // Maintainer name/email
 }
 
-func (m *Maintainer) Name() string {
+// Name returns the instruction name.
+func (*Maintainer) Name() string {
 	return "MAINTAINER"
 }
 
@@ -173,7 +191,8 @@ type Arg struct {
 	Value   *string // Optional default value
 }
 
-func (a *Arg) Name() string {
+// Name returns the instruction name.
+func (*Arg) Name() string {
 	return "ARG"
 }
 
@@ -182,7 +201,8 @@ type StopSignal struct {
 	Signal string
 }
 
-func (s *StopSignal) Name() string {
+// Name returns the instruction name.
+func (*StopSignal) Name() string {
 	return "STOPSIGNAL"
 }
 
@@ -191,7 +211,8 @@ type Shell struct {
 	Arguments []string
 }
 
-func (s *Shell) Name() string {
+// Name returns the instruction name.
+func (*Shell) Name() string {
 	return "SHELL"
 }
 
@@ -200,7 +221,8 @@ type OnBuild struct {
 	Inner Instruction // The wrapped instruction
 }
 
-func (o *OnBuild) Name() string {
+// Name returns the instruction name.
+func (*OnBuild) Name() string {
 	return "ONBUILD"
 }
 
@@ -209,6 +231,7 @@ type Comment struct {
 	Text string // Comment text (without # prefix)
 }
 
-func (c *Comment) Name() string {
+// Name returns the instruction name.
+func (*Comment) Name() string {
 	return "COMMENT"
 }

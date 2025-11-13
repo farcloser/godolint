@@ -26,22 +26,27 @@ func DL3050WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3050Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3050Rule) Code() rule.RuleCode {
 	return DL3050Meta.Code
 }
 
-func (r *DL3050Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3050Rule) Severity() rule.Severity {
 	return DL3050Meta.Severity
 }
 
-func (r *DL3050Rule) Message() string {
+// Message returns the rule message.
+func (*DL3050Rule) Message() string {
 	return DL3050Meta.Message
 }
 
-func (r *DL3050Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3050Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that LABEL instructions only use labels defined in schema.
 func (r *DL3050Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -69,6 +74,7 @@ func (r *DL3050Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3050Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3050Rule) Finalize(state rule.State) rule.State {
 	return state
 }

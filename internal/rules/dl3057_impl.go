@@ -26,19 +26,23 @@ func DL3057() rule.Rule {
 	return &DL3057Rule{}
 }
 
-func (r *DL3057Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3057Rule) Code() rule.RuleCode {
 	return DL3057Meta.Code
 }
 
-func (r *DL3057Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3057Rule) Severity() rule.Severity {
 	return DL3057Meta.Severity
 }
 
-func (r *DL3057Rule) Message() string {
+// Message returns the rule message.
+func (*DL3057Rule) Message() string {
 	return DL3057Meta.Message
 }
 
-func (r *DL3057Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3057Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3057State{
 		currentStage: nil,
 		goodStages:   make(map[stageID]bool),
@@ -101,31 +105,31 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 }
 
 // markGood marks a stage and all its ancestors as good.
-func markGood(s dl3057State, stage stageID) dl3057State {
+func markGood(state dl3057State, stage stageID) dl3057State {
 	// Mark this stage as good
-	s.goodStages[stage] = true
-	delete(s.badStages, stage)
+	state.goodStages[stage] = true
+	delete(state.badStages, stage)
 
 	// Find and mark ancestors recursively
-	ancestors := findAncestors(s, stage)
+	ancestors := findAncestors(state, stage)
 	for ancestor := range ancestors {
-		s.goodStages[ancestor] = true
-		delete(s.badStages, ancestor)
+		state.goodStages[ancestor] = true
+		delete(state.badStages, ancestor)
 	}
 
-	return s
+	return state
 }
 
 // findAncestors finds all ancestor stages recursively.
-func findAncestors(s dl3057State, stage stageID) map[stageID]bool {
+func findAncestors(state dl3057State, stage stageID) map[stageID]bool {
 	ancestors := make(map[stageID]bool)
 
 	// Find stages in badStages that this stage inherits from
-	for badStage := range s.badStages {
+	for badStage := range state.badStages {
 		if badStage.name == stage.src {
 			ancestors[badStage] = true
 			// Recursively find ancestors of this ancestor
-			for ancestorOfAncestor := range findAncestors(s, badStage) {
+			for ancestorOfAncestor := range findAncestors(state, badStage) {
 				ancestors[ancestorOfAncestor] = true
 			}
 		}
@@ -134,7 +138,8 @@ func findAncestors(s dl3057State, stage stageID) map[stageID]bool {
 	return ancestors
 }
 
-func (r *DL3057Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3057Rule) Finalize(state rule.State) rule.State {
 	s := state.Data.(dl3057State)
 
 	// Report failures for all bad stages

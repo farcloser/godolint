@@ -83,7 +83,7 @@ linters:
         - name: add-constant
           arguments:
             - allowInts: "0,1,2,3,4,-1"
-              allowStrs: '"op://","","%w: %q","%w: %w","%w: %s"," ","-"'
+              allowStrs: '"op://","","%w: %q","%w: %w","%w: %s"," ","-","`","\n"'
         - name: cognitive-complexity
           arguments: [30]
         - name: cyclomatic
@@ -113,6 +113,8 @@ linters:
             - github.com/rs/zerolog
             - github.com/urfave/cli
             - github.com/farcloser/godolint
+            - mvdan.cc/sh/v3/syntax
+            - github.com/moby/buildkit
 
     staticcheck:
       checks:

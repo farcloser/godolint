@@ -28,22 +28,27 @@ func DL3052WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3052Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3052Rule) Code() rule.RuleCode {
 	return DL3052Meta.Code
 }
 
-func (r *DL3052Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3052Rule) Severity() rule.Severity {
 	return DL3052Meta.Severity
 }
 
-func (r *DL3052Rule) Message() string {
+// Message returns the rule message.
+func (*DL3052Rule) Message() string {
 	return DL3052Meta.Message
 }
 
-func (r *DL3052Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3052Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that URL label values are valid URLs.
 func (r *DL3052Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -71,17 +76,18 @@ func (r *DL3052Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3052Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3052Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 
 // isValidURL checks if a string is a valid URL.
 func isValidURL(urlStr string) bool {
-	u, err := url.ParseRequestURI(urlStr)
+	parsedURL, err := url.ParseRequestURI(urlStr)
 	if err != nil {
 		return false
 	}
 
 	// Must have a scheme (http, https, etc.)
-	return u.Scheme != ""
+	return parsedURL.Scheme != ""
 }

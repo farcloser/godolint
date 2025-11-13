@@ -20,7 +20,7 @@ func NewBuildkitParser() *BuildkitParser {
 }
 
 // Parse parses a Dockerfile using moby/buildkit and converts to our AST format.
-func (p *BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, error) {
+func (*BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, error) {
 	// Parse using buildkit
 	result, err := parser.Parse(bytes.NewReader(dockerfile))
 	if err != nil {
@@ -288,23 +288,23 @@ func convertEnv(node *parser.Node) (*syntax.Env, error) {
 	// ENV has two syntaxes:
 	// 1. "ENV key=value key2=value2" - buildkit tokenizes as: key, value, =, key2, value2, =
 	// 2. "ENV key value" - buildkit tokenizes as: key, value
-	for i := 0; i < len(values); {
-		if i+2 < len(values) && values[i+2] == "=" {
+	for idx := 0; idx < len(values); {
+		if idx+2 < len(values) && values[idx+2] == "=" {
 			// Pattern: key value = (key=value syntax)
 			pairs = append(pairs, syntax.EnvPair{
-				Key:   values[i],
-				Value: unquote(values[i+1]),
+				Key:   values[idx],
+				Value: unquote(values[idx+1]),
 			})
-			i += 3 // Skip key, value, =
-		} else if i+1 < len(values) {
+			idx += 3 // Skip key, value, =
+		} else if idx+1 < len(values) {
 			// Whitespace syntax: key value
 			pairs = append(pairs, syntax.EnvPair{
-				Key:   values[i],
-				Value: unquote(values[i+1]),
+				Key:   values[idx],
+				Value: unquote(values[idx+1]),
 			})
-			i += 2
+			idx += 2
 		} else {
-			i++
+			idx++
 		}
 	}
 

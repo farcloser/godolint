@@ -381,7 +381,7 @@ func TestFilterRules(t *testing.T) {
 }
 
 // Helper function to check error types (simple version of errors.As for testing).
-func AsError(err error, target interface{}) bool {
+func AsError(err error, target any) bool {
 	if err == nil {
 		return false
 	}

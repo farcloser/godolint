@@ -19,19 +19,23 @@ func DL3024() rule.Rule {
 	return &DL3024Rule{}
 }
 
-func (r *DL3024Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3024Rule) Code() rule.RuleCode {
 	return DL3024Meta.Code
 }
 
-func (r *DL3024Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3024Rule) Severity() rule.Severity {
 	return DL3024Meta.Severity
 }
 
-func (r *DL3024Rule) Message() string {
+// Message returns the rule message.
+func (*DL3024Rule) Message() string {
 	return DL3024Meta.Message
 }
 
-func (r *DL3024Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3024Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3024State{
 		aliases: make(map[string]int),
 	})
@@ -39,7 +43,7 @@ func (r *DL3024Rule) InitialState() rule.State {
 
 // Check tracks FROM aliases and reports duplicates.
 // Ported from the check function in DL3024.hs.
-func (r *DL3024Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3024Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	from, ok := instruction.(*syntax.From)
 	if !ok {
 		return state
@@ -76,6 +80,7 @@ func (r *DL3024Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state.ReplaceData(s)
 }
 
-func (r *DL3024Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3024Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

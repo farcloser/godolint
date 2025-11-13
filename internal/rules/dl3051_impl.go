@@ -27,22 +27,27 @@ func DL3051WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3051Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3051Rule) Code() rule.RuleCode {
 	return DL3051Meta.Code
 }
 
-func (r *DL3051Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3051Rule) Severity() rule.Severity {
 	return DL3051Meta.Severity
 }
 
-func (r *DL3051Rule) Message() string {
+// Message returns the rule message.
+func (*DL3051Rule) Message() string {
 	return DL3051Meta.Message
 }
 
-func (r *DL3051Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3051Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that label values are not empty.
 func (r *DL3051Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -70,6 +75,7 @@ func (r *DL3051Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3051Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3051Rule) Finalize(state rule.State) rule.State {
 	return state
 }

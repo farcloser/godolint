@@ -14,25 +14,29 @@ func DL3061() rule.Rule {
 	return &DL3061Rule{}
 }
 
-func (r *DL3061Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3061Rule) Code() rule.RuleCode {
 	return DL3061Meta.Code
 }
 
-func (r *DL3061Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3061Rule) Severity() rule.Severity {
 	return DL3061Meta.Severity
 }
 
-func (r *DL3061Rule) Message() string {
+// Message returns the rule message.
+func (*DL3061Rule) Message() string {
 	return DL3061Meta.Message
 }
 
-func (r *DL3061Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3061Rule) InitialState() rule.State {
 	return rule.EmptyState(false) // false = haven't seen FROM yet
 }
 
 // Check ensures Dockerfile starts with FROM, ARG, or comment.
 // Ported from the check function in DL3061.hs.
-func (r *DL3061Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3061Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	seenFrom := state.Data.(bool)
 
 	// Once we've seen FROM, everything is OK
@@ -64,6 +68,7 @@ func (r *DL3061Rule) Check(line int, state rule.State, instruction syntax.Instru
 	})
 }
 
-func (r *DL3061Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3061Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

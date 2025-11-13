@@ -12,8 +12,10 @@ import (
 	"text/template"
 )
 
+// ErrRuleGeneration is the base error for rule generation failures.
 var ErrRuleGeneration = errors.New("rule metadata generation error")
 
+// RuleMetadata contains extracted metadata from hadolint rules.
 type RuleMetadata struct {
 	Code         string
 	Severity     string
@@ -145,6 +147,7 @@ func main() {
 }
 
 func parseRuleFile(path string) (RuleMetadata, error) {
+	//nolint:gosec
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return RuleMetadata{}, fmt.Errorf("%w: %w", ErrRuleGeneration, err)
@@ -157,30 +160,33 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 	}
 
 	// Extract code
-	if match := codePattern.FindStringSubmatch(text); len(match) > 1 {
-		rule.Code = match[1]
-	} else {
+	match := codePattern.FindStringSubmatch(text)
+	if len(match) <= 1 {
 		return rule, errors.New("could not find rule code")
 	}
 
+	rule.Code = match[1]
+
 	// Extract severity
-	if match := severityPattern.FindStringSubmatch(text); len(match) > 1 {
-		rule.Severity = mapSeverity(match[1])
-	} else {
+	match = severityPattern.FindStringSubmatch(text)
+	if len(match) <= 1 {
 		return rule, errors.New("could not find severity")
 	}
 
+	rule.Severity = mapSeverity(match[1])
+
 	// Extract message (handle multiline with \)
-	if match := messagePattern.FindStringSubmatch(text); len(match) > 1 {
-		msg := match[1]
-		// Remove Haskell line continuation
-		msg = strings.ReplaceAll(msg, "\\\n", "")
-		msg = strings.ReplaceAll(msg, "\\", "")
-		msg = strings.TrimSpace(msg)
-		rule.Message = msg
-	} else {
+	match = messagePattern.FindStringSubmatch(text)
+	if len(match) <= 1 {
 		return rule, errors.New("could not find message")
 	}
+
+	msg := match[1]
+	// Remove Haskell line continuation
+	msg = strings.ReplaceAll(msg, "\\\n", "")
+	msg = strings.ReplaceAll(msg, "\\", "")
+	msg = strings.TrimSpace(msg)
+	rule.Message = msg
 
 	// Extract check function patterns
 	// Match patterns like: check (Maintainer _) = False
@@ -281,16 +287,17 @@ var {{.Code}}Meta = rule.RuleMeta{
 
 	filename := strings.ToLower(rule.Code) + ".go"
 
-	f, err := os.Create(filename)
+	//nolint:gosec
+	outputFile, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
 	defer func() {
-		_ = f.Close()
+		_ = outputFile.Close()
 	}()
 
-	err = tpl.Execute(f, rule)
+	err = tpl.Execute(outputFile, rule)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
@@ -336,13 +343,14 @@ func {{.Code}}() rule.Rule {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
-	f, err := os.Create(filename)
+	//nolint:gosec
+	outputFile, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
 	defer func() {
-		_ = f.Close()
+		_ = outputFile.Close()
 	}()
 
 	data := struct {
@@ -353,7 +361,7 @@ func {{.Code}}() rule.Rule {
 		ImplCode: implCode,
 	}
 
-	err = tpl.Execute(f, data)
+	err = tpl.Execute(outputFile, data)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}

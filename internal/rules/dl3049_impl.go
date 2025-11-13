@@ -33,19 +33,23 @@ func DL3049WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3049Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3049Rule) Code() rule.RuleCode {
 	return DL3049Meta.Code
 }
 
-func (r *DL3049Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3049Rule) Severity() rule.Severity {
 	return DL3049Meta.Severity
 }
 
-func (r *DL3049Rule) Message() string {
+// Message returns the rule message.
+func (*DL3049Rule) Message() string {
 	return DL3049Meta.Message
 }
 
-func (r *DL3049Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3049Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3049State{
 		definedLabels: make(map[string]bool),
 	})
@@ -73,6 +77,7 @@ func (r *DL3049Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
+// Finalize checks for missing required labels at end of Dockerfile.
 func (r *DL3049Rule) Finalize(state rule.State) rule.State {
 	s := state.Data.(dl3049State)
 

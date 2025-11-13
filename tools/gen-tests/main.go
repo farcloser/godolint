@@ -12,8 +12,10 @@ import (
 	"text/template"
 )
 
+// ErrTestGeneration is the base error for test generation failures.
 var ErrTestGeneration = errors.New("test generation error")
 
+// TestCase represents a single test case extracted from hadolint.
 type TestCase struct {
 	Name       string
 	RuleCode   string
@@ -21,12 +23,14 @@ type TestCase struct {
 	ShouldFail bool // true if ruleCatches, false if ruleCatchesNot
 }
 
+// RuleTests contains all test cases for a rule.
 type RuleTests struct {
 	RuleCode  string
 	TestCases []TestCase
 	Config    *HadolintConfig
 }
 
+// HadolintConfig represents hadolint configuration for test cases.
 type HadolintConfig struct {
 	LabelSchema  map[string]string // label name -> type (RawText, Email, etc.)
 	StrictLabels bool
@@ -133,6 +137,7 @@ func main() {
 }
 
 func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConfig, error) {
+	//nolint:gosec
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w: %w", ErrTestGeneration, err)
@@ -353,6 +358,7 @@ func parseDoBlockTests(text string) []TestCase {
 	return tests
 }
 
+//revive:disable:max-control-nesting // yolo!
 func parseMultilineTests(text string) []TestCase {
 	var tests []TestCase
 
@@ -762,13 +768,14 @@ func Test{{.RuleCode}}(t *testing.T) {
 
 	filename := strings.ToLower(ruleCode) + "_test.go"
 
-	f, err := os.Create(filename)
+	//nolint:gosec
+	outputFile, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrTestGeneration, err)
 	}
 
 	defer func() {
-		_ = f.Close()
+		_ = outputFile.Close()
 	}()
 
 	data := RuleTests{
@@ -777,7 +784,7 @@ func Test{{.RuleCode}}(t *testing.T) {
 		Config:    config,
 	}
 
-	err = tpl.Execute(f, data)
+	err = tpl.Execute(outputFile, data)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrTestGeneration, err)
 	}

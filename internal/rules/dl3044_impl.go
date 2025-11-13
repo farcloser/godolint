@@ -21,19 +21,23 @@ func DL3044() rule.Rule {
 	return &DL3044Rule{}
 }
 
-func (r *DL3044Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3044Rule) Code() rule.RuleCode {
 	return DL3044Meta.Code
 }
 
-func (r *DL3044Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3044Rule) Severity() rule.Severity {
 	return DL3044Meta.Severity
 }
 
-func (r *DL3044Rule) Message() string {
+// Message returns the rule message.
+func (*DL3044Rule) Message() string {
 	return DL3044Meta.Message
 }
 
-func (r *DL3044Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3044Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3044State{
 		definedVars: make(map[string]bool),
 	})
@@ -92,7 +96,8 @@ func (r *DL3044Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3044Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3044Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 

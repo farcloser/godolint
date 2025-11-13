@@ -1,3 +1,4 @@
+// Package testutils provides common testing utilities for rule validation.
 package testutils
 
 import (

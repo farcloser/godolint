@@ -295,7 +295,17 @@ godolint includes full shellcheck integration for validating shell commands in R
 - **Smart skipping** - Automatically skips non-POSIX shells (PowerShell, cmd)
 - **Complete context** - Constructs scripts with proper shebang and environment exports
 
-ShellCheck violations are reported with SC#### codes alongside DL#### rules.
+For external scripts validation, godolint does shell out to shellcheck.
+
+This is an optional feature, that you have to require explicitly (as it does present the same
+challenges as hadolint).
+
+We also believe this should stay disabled, and that external shell scripts linting should not
+be done at all by godolint (or hadolint). Similarly, neither hadolint nor godolint do lint external
+yaml, or typescript files, so, linting shell feels inconsistent, and can easily be done
+separately entirely.
+
+ShellCheck violations, if enabled, will be reported with SC#### codes alongside DL#### rules.
 
 ### Rule Engine
 

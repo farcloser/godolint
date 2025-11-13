@@ -21,25 +21,29 @@ func DL4004() rule.Rule {
 	return &DL4004Rule{}
 }
 
-func (r *DL4004Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL4004Rule) Code() rule.RuleCode {
 	return DL4004Meta.Code
 }
 
-func (r *DL4004Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL4004Rule) Severity() rule.Severity {
 	return DL4004Meta.Severity
 }
 
-func (r *DL4004Rule) Message() string {
+// Message returns the rule message.
+func (*DL4004Rule) Message() string {
 	return DL4004Meta.Message
 }
 
-func (r *DL4004Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL4004Rule) InitialState() rule.State {
 	return rule.EmptyState(noEntrypoint)
 }
 
 // Check implements the stateful check for multiple ENTRYPOINT instructions.
 // Ported from the check function in DL4004.hs.
-func (r *DL4004Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL4004Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	// Reset state on each FROM (new stage)
 	if _, ok := instruction.(*syntax.From); ok {
 		return state.ReplaceData(noEntrypoint)
@@ -66,6 +70,7 @@ func (r *DL4004Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL4004Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL4004Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

@@ -14,25 +14,29 @@ func DL3023() rule.Rule {
 	return &DL3023Rule{}
 }
 
-func (r *DL3023Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3023Rule) Code() rule.RuleCode {
 	return DL3023Meta.Code
 }
 
-func (r *DL3023Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3023Rule) Severity() rule.Severity {
 	return DL3023Meta.Severity
 }
 
-func (r *DL3023Rule) Message() string {
+// Message returns the rule message.
+func (*DL3023Rule) Message() string {
 	return DL3023Meta.Message
 }
 
-func (r *DL3023Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3023Rule) InitialState() rule.State {
 	return rule.EmptyState("") // Empty string = no current stage alias
 }
 
 // Check tracks current stage alias and validates COPY --from doesn't self-reference.
 // Ported from the check function in DL3023.hs.
-func (r *DL3023Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3023Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	currentAlias := state.Data.(string)
 
 	// Remember current FROM alias
@@ -62,6 +66,7 @@ func (r *DL3023Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3023Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3023Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

@@ -1,3 +1,4 @@
+// Package main implements the godolint CLI for linting Dockerfiles.
 package main
 
 import (

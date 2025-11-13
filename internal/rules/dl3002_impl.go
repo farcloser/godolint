@@ -23,19 +23,23 @@ func DL3002() rule.Rule {
 	return &DL3002Rule{}
 }
 
-func (r *DL3002Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3002Rule) Code() rule.RuleCode {
 	return DL3002Meta.Code
 }
 
-func (r *DL3002Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3002Rule) Severity() rule.Severity {
 	return DL3002Meta.Severity
 }
 
-func (r *DL3002Rule) Message() string {
+// Message returns the rule message.
+func (*DL3002Rule) Message() string {
 	return DL3002Meta.Message
 }
 
-func (r *DL3002Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3002Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3002State{
 		currentStage: -1,
 		rootUsers:    make(map[int]int),
@@ -44,7 +48,7 @@ func (r *DL3002Rule) InitialState() rule.State {
 
 // Check tracks USER instructions and remembers which stages end with root.
 // Ported from the check function in DL3002.hs.
-func (r *DL3002Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3002Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	s := state.Data.(dl3002State)
 
 	// Remember new stage
@@ -88,7 +92,8 @@ func (r *DL3002Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 // Finalize adds failures for all stages that end with a root USER.
 // Ported from markFailures in DL3002.hs.
-func (r *DL3002Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3002Rule) Finalize(state rule.State) rule.State {
 	s := state.Data.(dl3002State)
 
 	// Add failures for all stages with root users

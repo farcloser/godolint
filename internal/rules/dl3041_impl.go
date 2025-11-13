@@ -167,16 +167,16 @@ func isDnfValidVersionPart(part string) bool {
 	return true
 }
 
-func isDnfVersionChar(ch rune) bool {
-	return unicode.IsDigit(ch) ||
-		unicode.IsUpper(ch) ||
-		unicode.IsLower(ch) ||
-		ch == '.' ||
-		ch == '~' ||
-		ch == '^' ||
-		ch == '_' ||
-		ch == ':' ||
-		ch == '+'
+func isDnfVersionChar(char rune) bool {
+	return unicode.IsDigit(char) ||
+		unicode.IsUpper(char) ||
+		unicode.IsLower(char) ||
+		char == '.' ||
+		char == '~' ||
+		char == '^' ||
+		char == '_' ||
+		char == ':' ||
+		char == '+'
 }
 
 func isDnfModuleVersionFixed(mod string) bool {

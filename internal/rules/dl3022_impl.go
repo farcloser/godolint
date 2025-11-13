@@ -23,19 +23,23 @@ func DL3022() rule.Rule {
 	return &DL3022Rule{}
 }
 
-func (r *DL3022Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3022Rule) Code() rule.RuleCode {
 	return DL3022Meta.Code
 }
 
-func (r *DL3022Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3022Rule) Severity() rule.Severity {
 	return DL3022Meta.Severity
 }
 
-func (r *DL3022Rule) Message() string {
+// Message returns the rule message.
+func (*DL3022Rule) Message() string {
 	return DL3022Meta.Message
 }
 
-func (r *DL3022Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3022Rule) InitialState() rule.State {
 	return rule.EmptyState(dl3022State{
 		count:  0,
 		stages: make(map[string]bool),
@@ -44,7 +48,7 @@ func (r *DL3022Rule) InitialState() rule.State {
 
 // Check tracks FROM stages and validates COPY --from references.
 // Ported from the check function in DL3022.hs.
-func (r *DL3022Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+func (*DL3022Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	s := state.Data.(dl3022State)
 
 	// Track FROM stages
@@ -101,6 +105,7 @@ func (r *DL3022Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3022Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3022Rule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
 }

@@ -28,22 +28,27 @@ func DL3053WithConfig(cfg *config.Config) rule.Rule {
 	}
 }
 
-func (r *DL3053Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL3053Rule) Code() rule.RuleCode {
 	return DL3053Meta.Code
 }
 
-func (r *DL3053Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL3053Rule) Severity() rule.Severity {
 	return DL3053Meta.Severity
 }
 
-func (r *DL3053Rule) Message() string {
+// Message returns the rule message.
+func (*DL3053Rule) Message() string {
 	return DL3053Meta.Message
 }
 
-func (r *DL3053Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL3053Rule) InitialState() rule.State {
 	return rule.EmptyState(nil)
 }
 
+// Check validates that RFC3339 timestamp labels are valid.
 func (r *DL3053Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	label, ok := instruction.(*syntax.Label)
 	if !ok {
@@ -71,7 +76,8 @@ func (r *DL3053Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state
 }
 
-func (r *DL3053Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL3053Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 

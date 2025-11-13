@@ -11,21 +11,26 @@ func DL4001() rule.Rule {
 	return &DL4001Rule{}
 }
 
+// DL4001Rule implements the rule for detecting mixed usage of wget and curl.
 type DL4001Rule struct{}
 
-func (r *DL4001Rule) Code() rule.RuleCode {
+// Code returns the rule code.
+func (*DL4001Rule) Code() rule.RuleCode {
 	return DL4001Meta.Code
 }
 
-func (r *DL4001Rule) Severity() rule.Severity {
+// Severity returns the rule severity.
+func (*DL4001Rule) Severity() rule.Severity {
 	return DL4001Meta.Severity
 }
 
-func (r *DL4001Rule) Message() string {
+// Message returns the rule message.
+func (*DL4001Rule) Message() string {
 	return DL4001Meta.Message
 }
 
-func (r *DL4001Rule) InitialState() rule.State {
+// InitialState returns the initial state for this rule.
+func (*DL4001Rule) InitialState() rule.State {
 	return rule.EmptyState(dl4001State{})
 }
 
@@ -34,6 +39,7 @@ type dl4001State struct {
 	HasWget bool
 }
 
+// Check detects if both wget and curl are used in the same Dockerfile.
 func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	var currentState dl4001State
 	if state.Data != nil {
@@ -82,6 +88,7 @@ func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instru
 	return state.ReplaceData(currentState)
 }
 
-func (r *DL4001Rule) Finalize(state rule.State) rule.State {
+// Finalize performs final checks after processing all instructions.
+func (*DL4001Rule) Finalize(state rule.State) rule.State {
 	return state
 }

@@ -76,11 +76,11 @@ func isValidLabelKey(key string) bool {
 }
 
 // isValidLabelChar checks if a character is valid in a label key.
-func isValidLabelChar(ch rune) bool {
-	return unicode.IsDigit(ch) ||
-		unicode.IsLower(ch) ||
-		ch == '.' ||
-		ch == '-' ||
-		ch == '_' ||
-		ch == '/'
+func isValidLabelChar(char rune) bool {
+	return unicode.IsDigit(char) ||
+		unicode.IsLower(char) ||
+		char == '.' ||
+		char == '-' ||
+		char == '_' ||
+		char == '/'
 }

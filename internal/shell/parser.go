@@ -114,28 +114,28 @@ func wordToString(word *syntax.Word) string {
 	for _, part := range word.Parts {
 		switch typart := part.(type) {
 		case *syntax.Lit:
-			build.WriteString(typart.Value)
+			_, _ = build.WriteString(typart.Value)
 		case *syntax.SglQuoted:
-			build.WriteString(typart.Value)
+			_, _ = build.WriteString(typart.Value)
 		case *syntax.DblQuoted:
 			// Recursively process quoted parts
 			for _, qp := range typart.Parts {
 				if lit, ok := qp.(*syntax.Lit); ok {
-					build.WriteString(lit.Value)
+					_, _ = build.WriteString(lit.Value)
 				} else {
 					// Variables, expansions, etc. - simplified as ${VAR}
-					build.WriteString("${VAR}")
+					_, _ = build.WriteString("${VAR}")
 				}
 			}
 		case *syntax.ParamExp:
-			build.WriteString("${VAR}")
+			_, _ = build.WriteString("${VAR}")
 		case *syntax.CmdSubst:
-			build.WriteString("${VAR}")
+			_, _ = build.WriteString("${VAR}")
 		case *syntax.ArithmExp:
-			build.WriteString("${VAR}")
+			_, _ = build.WriteString("${VAR}")
 		default:
 			// Other expansions simplified
-			build.WriteString("${VAR}")
+			_, _ = build.WriteString("${VAR}")
 		}
 	}
 
