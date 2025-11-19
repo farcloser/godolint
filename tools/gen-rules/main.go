@@ -258,6 +258,8 @@ func mapSeverity(haskellSeverity string) string {
 		return "rule.Info"
 	case "DLStyleC":
 		return "rule.Style"
+	case "DLIgnoreC":
+		return "rule.Ignore"
 	default:
 		return "rule.Warning" // default
 	}

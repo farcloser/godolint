@@ -52,6 +52,12 @@ func main() {
 	cmd := &cli.Command{
 		Name:  "godolint",
 		Usage: "Dockerfile linter",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "disable-ignore-pragma",
+				Usage: "Disable inline ignore pragmas `# hadolint ignore=DLxxxx`",
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 1 {
 				return errors.New("exactly one argument required: path to Dockerfile")
@@ -75,7 +81,8 @@ func main() {
 			log.Debug().Int("instructions", len(instructions)).Msg("Parsed Dockerfile")
 
 			// Create processor with all rules
-			processor := process.NewProcessor(sdk.AllRules())
+			processor := process.NewProcessor(sdk.AllRules()).
+				WithDisableIgnorePragmas(cmd.Bool("disable-ignore-pragma"))
 
 			// Run rules
 			failures := processor.Run(instructions)
