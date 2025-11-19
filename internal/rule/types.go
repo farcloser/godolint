@@ -51,6 +51,7 @@ type CheckFailure struct {
 	Severity Severity `json:"severity"`
 	Message  string   `json:"message"`
 	Line     int      `json:"line"`
+	File     string   `json:"file,omitempty"` // File path (optional, for multi-file linting)
 }
 
 // State holds failures and custom state for a rule.

@@ -10,14 +10,14 @@ import (
 
 // Processor runs rules against a Dockerfile AST and collects violations.
 type Processor struct {
-	rules                 []rule.Rule
+	rules                []rule.Rule
 	disableIgnorePragmas bool
 }
 
 // NewProcessor creates a new processor with the given rules.
 func NewProcessor(rules []rule.Rule) *Processor {
 	return &Processor{
-		rules:                 rules,
+		rules:                rules,
 		disableIgnorePragmas: false,
 	}
 }
@@ -25,6 +25,7 @@ func NewProcessor(rules []rule.Rule) *Processor {
 // WithDisableIgnorePragmas configures whether to disable inline ignore pragma processing.
 func (p *Processor) WithDisableIgnorePragmas(disable bool) *Processor {
 	p.disableIgnorePragmas = disable
+
 	return p
 }
 
@@ -67,21 +68,25 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 // Matches hadolint's behavior where DLIgnoreC severity rules are filtered out.
 func filterIgnoreSeverity(failures []rule.CheckFailure) []rule.CheckFailure {
 	filtered := []rule.CheckFailure{}
+
 	for _, failure := range failures {
 		if failure.Severity != rule.Ignore {
 			filtered = append(filtered, failure)
 		}
 	}
+
 	return filtered
 }
 
 // filterIgnored removes failures that are suppressed by ignore pragmas.
 func filterIgnored(failures []rule.CheckFailure, directives pragma.IgnoreDirectives) []rule.CheckFailure {
 	filtered := []rule.CheckFailure{}
+
 	for _, failure := range failures {
 		if !directives.ShouldIgnore(failure) {
 			filtered = append(filtered, failure)
 		}
 	}
+
 	return filtered
 }
