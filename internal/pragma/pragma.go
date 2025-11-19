@@ -19,7 +19,7 @@ type IgnoreDirectives struct {
 	GlobalIgnores map[rule.RuleCode]bool
 }
 
-// pragmaRegex matches "hadolint ignore=DL3057,DL3018" or "hadolint global ignore=DL3057"
+// pragmaRegex matches "hadolint ignore=DL3057,DL3018" or "hadolint global ignore=DL3057".
 var (
 	ignorePragmaRegex       = regexp.MustCompile(`^\s*hadolint\s+ignore\s*=\s*(.+)$`)
 	globalIgnorePragmaRegex = regexp.MustCompile(`^\s*hadolint\s+global\s+ignore\s*=\s*(.+)$`)
@@ -44,6 +44,7 @@ func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
 			for _, code := range codes {
 				directives.GlobalIgnores[code] = true
 			}
+
 			continue
 		}
 
@@ -54,6 +55,7 @@ func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
 			if directives.LineIgnores[targetLine] == nil {
 				directives.LineIgnores[targetLine] = make(map[rule.RuleCode]bool)
 			}
+
 			for _, code := range codes {
 				directives.LineIgnores[targetLine][code] = true
 			}
@@ -83,8 +85,7 @@ func parseGlobalIgnorePragma(text string) []rule.RuleCode {
 	return parseRuleList(matches[1])
 }
 
-// parseRuleList splits comma-separated rule codes and validates format.
-// Supports inline comments: "DL3057,DL3018 # some comment"
+// Supports inline comments: "DL3057,DL3018 # some comment".
 func parseRuleList(text string) []rule.RuleCode {
 	// Strip inline comments (anything after #)
 	if idx := strings.Index(text, "#"); idx != -1 {
@@ -92,6 +93,7 @@ func parseRuleList(text string) []rule.RuleCode {
 	}
 
 	parts := strings.Split(text, ",")
+
 	var codes []rule.RuleCode
 
 	for _, part := range parts {
