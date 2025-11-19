@@ -54,10 +54,10 @@ func (*DL3061Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		return state
 	}
 
-	// Comments and pragmas before FROM - OK
-	// Note: Our parser may not preserve comments as instructions
-	// If comments aren't in the instruction stream, this rule will work correctly
-	// because instructions before FROM that aren't ARG will fail
+	// Comment before FROM - OK
+	if _, ok := instruction.(*syntax.Comment); ok {
+		return state
+	}
 
 	// Any other instruction before FROM - fail
 	return state.AddFailure(rule.CheckFailure{

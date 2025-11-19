@@ -8,6 +8,6 @@ import "github.com/farcloser/godolint/internal/rule"
 // Source: hadolint/src/Hadolint/Rule/DL1001.hs
 var DL1001Meta = rule.RuleMeta{
 	Code:     "DL1001",
-	Severity: rule.Warning,
+	Severity: rule.Ignore,
 	Message:  "Please refrain from using inline ignore pragmas                `# hadolint ignore=DLxxxx`.",
 }

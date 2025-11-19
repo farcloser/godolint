@@ -8,6 +8,6 @@ import "github.com/farcloser/godolint/internal/rule"
 // Source: hadolint/src/Hadolint/Rule/DL3057.hs
 var DL3057Meta = rule.RuleMeta{
 	Code:     "DL3057",
-	Severity: rule.Warning,
+	Severity: rule.Ignore,
 	Message:  "`HEALTHCHECK` instruction missing.",
 }

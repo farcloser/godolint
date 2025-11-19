@@ -3,20 +3,29 @@
 package process
 
 import (
+	"github.com/farcloser/godolint/internal/pragma"
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/syntax"
 )
 
 // Processor runs rules against a Dockerfile AST and collects violations.
 type Processor struct {
-	rules []rule.Rule
+	rules                 []rule.Rule
+	disableIgnorePragmas bool
 }
 
 // NewProcessor creates a new processor with the given rules.
 func NewProcessor(rules []rule.Rule) *Processor {
 	return &Processor{
-		rules: rules,
+		rules:                 rules,
+		disableIgnorePragmas: false,
 	}
+}
+
+// WithDisableIgnorePragmas configures whether to disable inline ignore pragma processing.
+func (p *Processor) WithDisableIgnorePragmas(disable bool) *Processor {
+	p.disableIgnorePragmas = disable
+	return p
 }
 
 // Run processes a Dockerfile AST and returns all rule violations found.
@@ -41,5 +50,38 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 		allFailures = append(allFailures, state.Failures...)
 	}
 
+	// Filter out failures with Ignore severity (like hadolint's DLIgnoreC filter)
+	// Ported from Hadolint/Lint.hs:88 - severity /= DLIgnoreC
+	allFailures = filterIgnoreSeverity(allFailures)
+
+	// Filter out ignored failures based on inline pragmas
+	if !p.disableIgnorePragmas {
+		directives := pragma.Parse(instructions)
+		allFailures = filterIgnored(allFailures, directives)
+	}
+
 	return allFailures
+}
+
+// filterIgnoreSeverity removes failures with Ignore severity.
+// Matches hadolint's behavior where DLIgnoreC severity rules are filtered out.
+func filterIgnoreSeverity(failures []rule.CheckFailure) []rule.CheckFailure {
+	var filtered []rule.CheckFailure
+	for _, failure := range failures {
+		if failure.Severity != rule.Ignore {
+			filtered = append(filtered, failure)
+		}
+	}
+	return filtered
+}
+
+// filterIgnored removes failures that are suppressed by ignore pragmas.
+func filterIgnored(failures []rule.CheckFailure, directives pragma.IgnoreDirectives) []rule.CheckFailure {
+	var filtered []rule.CheckFailure
+	for _, failure := range failures {
+		if !directives.ShouldIgnore(failure) {
+			filtered = append(filtered, failure)
+		}
+	}
+	return filtered
 }
