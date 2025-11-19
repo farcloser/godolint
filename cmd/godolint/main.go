@@ -15,8 +15,7 @@ import (
 
 	"github.com/farcloser/godolint/internal/parser"
 	"github.com/farcloser/godolint/internal/process"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/rules"
+	"github.com/farcloser/godolint/sdk"
 )
 
 func configureLogger(ctx context.Context, level ...zerolog.Level) {
@@ -48,7 +47,7 @@ func configureLogger(ctx context.Context, level ...zerolog.Level) {
 
 func main() {
 	ctx := context.Background()
-	configureLogger(ctx, zerolog.DebugLevel)
+	configureLogger(ctx)
 
 	cmd := &cli.Command{
 		Name:  "godolint",
@@ -76,9 +75,7 @@ func main() {
 			log.Debug().Int("instructions", len(instructions)).Msg("Parsed Dockerfile")
 
 			// Create processor with all rules
-			processor := process.NewProcessor([]rule.Rule{
-				rules.DL4000(),
-			})
+			processor := process.NewProcessor(sdk.AllRules())
 
 			// Run rules
 			failures := processor.Run(instructions)
