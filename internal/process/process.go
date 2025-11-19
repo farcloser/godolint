@@ -32,7 +32,7 @@ func (p *Processor) WithDisableIgnorePragmas(disable bool) *Processor {
 // Uses fold-style accumulation with state for each rule.
 // Ported from Hadolint's Rule fold pattern.
 func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailure {
-	var allFailures []rule.CheckFailure
+	allFailures := []rule.CheckFailure{}
 
 	// For each rule, fold over all instructions with state
 	for _, currentRule := range p.rules {
@@ -66,7 +66,7 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 // filterIgnoreSeverity removes failures with Ignore severity.
 // Matches hadolint's behavior where DLIgnoreC severity rules are filtered out.
 func filterIgnoreSeverity(failures []rule.CheckFailure) []rule.CheckFailure {
-	var filtered []rule.CheckFailure
+	filtered := []rule.CheckFailure{}
 	for _, failure := range failures {
 		if failure.Severity != rule.Ignore {
 			filtered = append(filtered, failure)
@@ -77,7 +77,7 @@ func filterIgnoreSeverity(failures []rule.CheckFailure) []rule.CheckFailure {
 
 // filterIgnored removes failures that are suppressed by ignore pragmas.
 func filterIgnored(failures []rule.CheckFailure, directives pragma.IgnoreDirectives) []rule.CheckFailure {
-	var filtered []rule.CheckFailure
+	filtered := []rule.CheckFailure{}
 	for _, failure := range failures {
 		if !directives.ShouldIgnore(failure) {
 			filtered = append(filtered, failure)
