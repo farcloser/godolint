@@ -6,6 +6,10 @@ run:
   allow-parallel-runners: true
   allow-serial-runners: true
 
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
 linters:
   default: all
   enable:
@@ -51,7 +55,6 @@ linters:
     - goconst           # provided by revive
     - godox             # not helpful unless we could downgrade it to warning / info
     - ginkgolinter      # no ginkgo
-    - gomoddirectives   # local replace directives needed for unpublished hadron dependency
     - gomodguard        # we use depguard instead
     - ireturn           # too annoying with not enough value
     - lll               # provided by golines
@@ -68,7 +71,7 @@ linters:
         linters:
           - varnamelen
           - dupl
-          - dupword  # Test Dockerfiles intentionally contain duplicate words (e.g., "ONBUILD ONBUILD")
+          - dupword
       - path: _test.go
         text: "add-constant|cognitive-complexity|confusing-results"
         linters:
@@ -83,7 +86,7 @@ linters:
         - name: add-constant
           arguments:
             - allowInts: "0,1,2,3,4,-1"
-              allowStrs: '"op://","","%w: %q","%w: %w","%w: %s"," ","-","`","\n"'
+              allowStrs: '"","%w: %q","%w: %w","%w: %s"," ","-","`","\n",":","@"'
         - name: cognitive-complexity
           arguments: [30]
         - name: cyclomatic
@@ -119,10 +122,6 @@ linters:
     staticcheck:
       checks:
         - all
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
 
 formatters:
   settings:
