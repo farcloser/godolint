@@ -97,6 +97,7 @@ func (*DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		Severity: DL3006Meta.Severity,
 		Message:  DL3006Meta.Message,
 		Line:     line,
+		Column:   1, // Hardcoded to 1 (matches hadolint)
 	})
 }
 

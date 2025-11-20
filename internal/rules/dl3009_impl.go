@@ -116,6 +116,7 @@ func (*DL3009Rule) Finalize(state rule.State) rule.State {
 				Severity: DL3009Meta.Severity,
 				Message:  DL3009Meta.Message,
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 
 			continue
@@ -129,6 +130,7 @@ func (*DL3009Rule) Finalize(state rule.State) rule.State {
 					Severity: DL3009Meta.Severity,
 					Message:  DL3009Meta.Message,
 					Line:     line,
+					Column:   1, // Hardcoded to 1 (matches hadolint)
 				})
 			}
 		}

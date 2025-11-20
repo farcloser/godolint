@@ -2,7 +2,11 @@
 // Ported from Hadolint/Rule.hs
 package rule
 
-import "github.com/farcloser/godolint/internal/syntax"
+import (
+	"encoding/json"
+
+	"github.com/farcloser/godolint/internal/syntax"
+)
 
 // Severity is ported from DLSeverity in Hadolint/Rule.hs.
 type Severity int
@@ -34,6 +38,12 @@ func (s Severity) String() string {
 	}
 }
 
+// MarshalJSON implements json.Marshaler to output severity as string.
+// Matches hadolint's severityText function in Hadolint/Formatter/Format.hs.
+func (s Severity) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
 // RuleCode is ported from RuleCode in Hadolint/Rule.hs.
 type RuleCode string
 
@@ -46,12 +56,14 @@ type RuleMeta struct {
 }
 
 // CheckFailure is ported from CheckFailure in Hadolint/Rule.hs.
+// JSON field order and names match hadolint's Json.hs formatter.
 type CheckFailure struct {
-	Code     RuleCode `json:"code"`
-	Severity Severity `json:"severity"`
-	Message  string   `json:"message"`
-	Line     int      `json:"line"`
 	File     string   `json:"file,omitempty"` // File path (optional, for multi-file linting)
+	Line     int      `json:"line"`
+	Column   int      `json:"column"` // Always 1 for lint violations (matches hadolint)
+	Severity Severity `json:"level"`  // Outputs as string: "error", "warning", "info", "style"
+	Code     RuleCode `json:"code"`
+	Message  string   `json:"message"`
 }
 
 // State holds failures and custom state for a rule.
@@ -163,6 +175,7 @@ func (r *SimpleRule) Check(line int, state State, instruction syntax.Instruction
 			Severity: r.severity,
 			Message:  r.message,
 			Line:     line,
+			Column:   1, // Hardcoded to 1 (matches hadolint)
 		})
 	}
 

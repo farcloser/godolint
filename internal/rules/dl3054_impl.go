@@ -69,6 +69,7 @@ func (r *DL3054Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Severity: DL3054Meta.Severity,
 				Message:  fmt.Sprintf("Label `%s` is not a valid SPDX identifier.", pair.Key),
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

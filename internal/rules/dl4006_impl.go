@@ -79,6 +79,7 @@ func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Severity: DL4006Meta.Severity,
 				Message:  DL4006Meta.Message,
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 
@@ -117,9 +118,15 @@ func isNonPosixShell(shellCmd string) bool {
 
 // hasPipes checks if a command contains pipes.
 func hasPipes(command string) bool {
-	// Simple check: does the command contain | outside of quotes?
-	// For now, just check if | is present
-	return strings.Contains(command, "|")
+	// Parse the shell script to check for actual pipe operators
+	parsed, err := shell.ParseShell(command)
+	if err != nil {
+		// Can't parse = can't reliably detect pipes
+		return false
+	}
+
+	// Use shell package to detect pipes properly
+	return shell.HasPipes(parsed)
 }
 
 // hasPipefailOption checks if a shell command sets pipefail.

@@ -342,6 +342,38 @@ func GetFlagArg(flag string, cmd Command) []string {
 	return values
 }
 
+// HasPipes checks if a parsed shell script contains pipe operators.
+// Ported from Hadolint.Shell.hasPipes / findPipes.
+func HasPipes(ps *ParsedShell) bool {
+	// Re-parse to access the full AST (not just extracted commands)
+	fullScript := "#!/bin/bash\n" + ps.Original
+	r := strings.NewReader(fullScript)
+
+	file, err := syntax.NewParser().Parse(r, "")
+	if err != nil {
+		return false
+	}
+
+	// Walk the AST looking for pipe nodes
+	hasPipe := false
+
+	syntax.Walk(file, func(node syntax.Node) bool {
+		// Check for BinaryCmd with pipe operator
+		if bin, ok := node.(*syntax.BinaryCmd); ok {
+			// Op_Pipe is |, Op_PipeAll is |&
+			if bin.Op == syntax.Pipe || bin.Op == syntax.PipeAll {
+				hasPipe = true
+
+				return false // Stop walking
+			}
+		}
+
+		return true
+	})
+
+	return hasPipe
+}
+
 // IsPipInstall checks if a command is a pip install command.
 // Ported from Hadolint.Shell.isPipInstall.
 func IsPipInstall(cmd Command) bool {

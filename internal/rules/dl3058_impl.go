@@ -69,6 +69,7 @@ func (r *DL3058Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Severity: DL3058Meta.Severity,
 				Message:  fmt.Sprintf("Label `%s` is not a valid email format - must conform to RFC5322.", pair.Key),
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

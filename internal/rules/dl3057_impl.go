@@ -149,6 +149,7 @@ func (*DL3057Rule) Finalize(state rule.State) rule.State {
 			Severity: DL3057Meta.Severity,
 			Message:  DL3057Meta.Message,
 			Line:     badStage.line,
+			Column:   1, // Hardcoded to 1 (matches hadolint)
 		})
 	}
 

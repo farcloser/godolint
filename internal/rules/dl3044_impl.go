@@ -79,6 +79,7 @@ func (r *DL3044Rule) Check(line int, state rule.State, instruction syntax.Instru
 							Severity: DL3044Meta.Severity,
 							Message:  DL3044Meta.Message,
 							Line:     line,
+							Column:   1, // Hardcoded to 1 (matches hadolint)
 						})
 					}
 				}

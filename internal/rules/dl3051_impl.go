@@ -68,6 +68,7 @@ func (r *DL3051Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Severity: DL3051Meta.Severity,
 				Message:  fmt.Sprintf("label `%s` is empty.", pair.Key),
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

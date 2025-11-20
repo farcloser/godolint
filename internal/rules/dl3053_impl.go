@@ -69,6 +69,7 @@ func (r *DL3053Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Severity: DL3053Meta.Severity,
 				Message:  fmt.Sprintf("Label `%s` is not a valid time format - must conform to RFC3339.", pair.Key),
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}
