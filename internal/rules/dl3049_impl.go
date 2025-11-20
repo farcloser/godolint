@@ -90,6 +90,7 @@ func (r *DL3049Rule) Finalize(state rule.State) rule.State {
 				Severity: DL3049Meta.Severity,
 				Message:  fmt.Sprintf("Label `%s` is missing.", requiredLabel),
 				Line:     0,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

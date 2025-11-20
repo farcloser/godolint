@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -16,6 +17,7 @@ import (
 	"github.com/farcloser/godolint/internal/parser"
 	"github.com/farcloser/godolint/internal/process"
 	"github.com/farcloser/godolint/internal/rule"
+	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/sdk"
 )
 
@@ -58,14 +60,39 @@ func main() {
 				Name:  "disable-ignore-pragma",
 				Usage: "Disable inline ignore pragmas `# hadolint ignore=DLxxxx`",
 			},
+			&cli.BoolFlag{
+				Name:  "without-shellcheck",
+				Usage: "Disable shellcheck integration for RUN instruction validation",
+			},
+			&cli.StringSliceFlag{
+				Name:  "ignore",
+				Usage: "Rule code to ignore (can be specified multiple times, e.g., --ignore DL3006 --ignore SC2050)",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() == 0 {
 				return errors.New("at least one argument required: path to Dockerfile(s)")
 			}
 
+			// Build rule set
+			rules := sdk.AllRules()
+
+			// Add shellcheck by default unless disabled or binary is missing
+			if !cmd.Bool("without-shellcheck") {
+				// Check if shellcheck binary exists
+				if _, err := exec.LookPath("shellcheck"); err != nil {
+					// Shellcheck binary not found, print warning
+					log.Warn().Msg("shellcheck binary not found in PATH, shellcheck integration disabled")
+				} else {
+					// Shellcheck available, use it
+					checker := shell.NewBinaryShellchecker()
+					scRule := shell.NewShellcheckRule(checker)
+					rules = append(rules, scRule)
+				}
+			}
+
 			// Create processor with all rules (reuse for all files)
-			processor := process.NewProcessor(sdk.AllRules()).
+			processor := process.NewProcessor(rules).
 				WithDisableIgnorePragmas(cmd.Bool("disable-ignore-pragma"))
 
 			// Collect all failures from all files
@@ -98,6 +125,26 @@ func main() {
 
 				// Collect failures
 				allFailures = append(allFailures, failures...)
+			}
+
+			// Filter out ignored rules
+			ignoredRules := cmd.StringSlice("ignore")
+			if len(ignoredRules) > 0 {
+				filtered := []rule.CheckFailure{}
+				for _, failure := range allFailures {
+					ignored := false
+					for _, ignoreCode := range ignoredRules {
+						if string(failure.Code) == ignoreCode {
+							ignored = true
+
+							break
+						}
+					}
+					if !ignored {
+						filtered = append(filtered, failure)
+					}
+				}
+				allFailures = filtered
 			}
 
 			// Output failures as JSON

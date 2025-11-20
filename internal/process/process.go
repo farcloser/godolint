@@ -42,6 +42,12 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 		// Thread state through each instruction check
 		for _, instrPos := range instructions {
 			state = currentRule.Check(instrPos.LineNumber, state, instrPos.Instruction)
+
+			// If instruction is ONBUILD, also check the unwrapped inner instruction
+			// Ported from hadolint's onbuild combinator pattern
+			if onbuild, ok := instrPos.Instruction.(*syntax.OnBuild); ok {
+				state = currentRule.Check(instrPos.LineNumber, state, onbuild.Inner)
+			}
 		}
 
 		// Finalize the state (some rules add failures only at the end)

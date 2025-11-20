@@ -69,6 +69,7 @@ func (r *DL3055Rule) Check(line int, state rule.State, instruction syntax.Instru
 				Severity: DL3055Meta.Severity,
 				Message:  fmt.Sprintf("Label `%s` is not a valid git hash.", pair.Key),
 				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

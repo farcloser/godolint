@@ -136,6 +136,7 @@ func (*BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckFai
 			Severity: convertSeverity(sc.Level),
 			Message:  sc.Message,
 			Line:     0, // Will be set by the rule when it adds the failure
+			Column:   1, // Hardcoded to 1 (matches hadolint)
 		})
 	}
 
