@@ -44,7 +44,7 @@ help:
 # Tasks
 lint: lint-go-all lint-commits lint-mod lint-licenses-all lint-headers lint-yaml lint-shell ## Lint project
 
-fix: fix-mod fix-go-all ## Automatically fix some issues
+fix: fix-go-all fix-mod ## Automatically fix some issues
 
 test: unit ## Run all tests
 
