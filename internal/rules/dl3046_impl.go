@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
@@ -28,13 +30,7 @@ func checkDL3046(instruction syntax.Instruction) bool {
 	}
 
 	// Check all useradd commands
-	for _, cmd := range parsed.PresentCommands {
-		if forgotUseraddFlagL(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotUseraddFlagL)
 }
 
 func forgotUseraddFlagL(cmd shell.Command) bool {

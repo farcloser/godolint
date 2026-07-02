@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -92,16 +93,14 @@ func (r *DL3042Rule) Check(line int, state rule.State, instruction syntax.Instru
 		}
 
 		// Check all pip install commands
-		for _, cmd := range parsed.PresentCommands {
-			if forgotPipNoCacheDir(cmd) {
-				return state.AddFailure(rule.CheckFailure{
-					Code:     DL3042Meta.Code,
-					Severity: DL3042Meta.Severity,
-					Message:  DL3042Meta.Message,
-					Line:     line,
-					Column:   1, // Hardcoded to 1 (matches hadolint)
-				})
-			}
+		if slices.ContainsFunc(parsed.PresentCommands, forgotPipNoCacheDir) {
+			return state.AddFailure(rule.CheckFailure{
+				Code:     DL3042Meta.Code,
+				Severity: DL3042Meta.Severity,
+				Message:  DL3042Meta.Message,
+				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
+			})
 		}
 
 		return state
@@ -128,14 +127,8 @@ func forgotPipNoCacheDir(cmd shell.Command) bool {
 
 	// Check if has --no-cache-dir flag
 	args := shell.GetArgs(cmd)
-	for _, arg := range args {
-		if arg == "--no-cache-dir" {
-			return false
-		}
-	}
 
-	// Forgot --no-cache-dir
-	return true
+	return !slices.Contains(args, "--no-cache-dir")
 }
 
 func isPipInstall(cmd shell.Command) bool {
@@ -185,13 +178,13 @@ func isTruthy(value string) bool {
 
 func pipNoCacheDirSetInCommand(command string) bool {
 	// Check if PIP_NO_CACHE_DIR=<value> appears in the command
-	idx := strings.Index(command, "PIP_NO_CACHE_DIR=")
-	if idx == -1 {
+	_, after, ok := strings.Cut(command, "PIP_NO_CACHE_DIR=")
+	if !ok {
 		return false
 	}
 
 	// Extract the value after PIP_NO_CACHE_DIR=
-	rest := command[idx+len("PIP_NO_CACHE_DIR="):]
+	rest := after
 
 	// Get the value (up to space or end of string)
 	value := ""

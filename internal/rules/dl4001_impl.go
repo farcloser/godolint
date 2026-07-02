@@ -67,6 +67,8 @@ func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instru
 				newCurl = true
 			case "wget":
 				newWget = true
+			default:
+				// Other commands are irrelevant to this rule.
 			}
 		}
 

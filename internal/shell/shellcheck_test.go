@@ -1,6 +1,8 @@
 package shell_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -59,6 +61,87 @@ func TestBinaryShellchecker_Check(t *testing.T) {
 	}
 }
 
+func TestBinaryShellchecker_RCFile(t *testing.T) {
+	t.Parallel()
+
+	// SC2086 (unquoted variable) fires without configuration…
+	script := "echo $FOO"
+
+	plain, err := shell.NewBinaryShellchecker().Check(script, shell.DefaultShellOpts())
+	if err != nil {
+		t.Fatalf("Check() error = %v", err)
+	}
+
+	if !hasCode(plain, "SC2086") {
+		t.Fatalf("expected SC2086 without rcfile, got %v", plain)
+	}
+
+	// …and is silenced by an rcfile that disables it.
+	rcfile := filepath.Join(t.TempDir(), "shellcheckrc")
+	if err := os.WriteFile(rcfile, []byte("disable=SC2086\n"), 0o600); err != nil {
+		t.Fatalf("writing rcfile: %v", err)
+	}
+
+	checker := shell.NewBinaryShellchecker()
+	checker.RCFile = rcfile
+
+	configured, err := checker.Check(script, shell.DefaultShellOpts())
+	if err != nil {
+		t.Fatalf("Check() with rcfile error = %v", err)
+	}
+
+	if hasCode(configured, "SC2086") {
+		t.Errorf("expected rcfile to silence SC2086, got %v", configured)
+	}
+}
+
+func TestBinaryShellchecker_LineOffsets(t *testing.T) {
+	t.Parallel()
+
+	// A two-line script: SC2164 (cd without || exit) fires on the second
+	// line, so its failure must carry offset 1; SC2086 on the first line
+	// must carry offset 0. The column is exact beyond the first line (the
+	// script lines are verbatim there), pinned to 1 on the first.
+	script := "echo $FOO\n  cd /app"
+
+	failures, err := shell.NewBinaryShellchecker().Check(script, shell.DefaultShellOpts())
+	if err != nil {
+		t.Fatalf("Check() error = %v", err)
+	}
+
+	checkedLine := func(code string, wantLine, wantColumn int) {
+		t.Helper()
+
+		for _, f := range failures {
+			if string(f.Code) != code {
+				continue
+			}
+
+			if f.Line != wantLine || f.Column != wantColumn {
+				t.Errorf("%s at line %d column %d, want line %d column %d",
+					code, f.Line, f.Column, wantLine, wantColumn)
+			}
+
+			return
+		}
+
+		t.Errorf("expected %s, got %v", code, failures)
+	}
+
+	checkedLine("SC2086", 0, 1)
+	checkedLine("SC2164", 1, 3)
+}
+
+func hasCode(failures []rule.CheckFailure, code string) bool {
+	for _, f := range failures {
+		if string(f.Code) == code {
+			return true
+		}
+	}
+
+	return false
+}
+
 func TestShellcheckRule_StatefulTracking(t *testing.T) {
 	t.Parallel()
 
@@ -106,6 +189,30 @@ func TestShellcheckRule_StatefulTracking(t *testing.T) {
 			t.Errorf("Expected SC code, got %s", code)
 		}
 	}
+}
+
+func TestShellcheckRule_MultiLineRunAnchoring(t *testing.T) {
+	t.Parallel()
+
+	scRule := shell.NewShellcheckRule(shell.NewBinaryShellchecker())
+
+	// A RUN at line 5 whose command's second line triggers SC2164: the
+	// failure must land on Dockerfile line 6 (instruction line + offset).
+	state := scRule.InitialState()
+	state = scRule.Check(1, state, &syntax.From{Image: syntax.BaseImage{Image: "debian"}})
+	state = scRule.Check(5, state, &syntax.Run{Command: "true\ncd /app"})
+
+	for _, f := range state.Failures {
+		if string(f.Code) == "SC2164" {
+			if f.Line != 6 {
+				t.Errorf("SC2164 anchored to line %d, want 6", f.Line)
+			}
+
+			return
+		}
+	}
+
+	t.Errorf("expected SC2164, got %v", state.Failures)
 }
 
 func TestShellcheckRule_ResetOnFrom(t *testing.T) {

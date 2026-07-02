@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -63,9 +64,7 @@ func (*DL3002Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		if isRoot(user.User) {
 			// Root user - remember this line for current stage
 			newRootUsers := make(map[int]int)
-			for k, v := range s.rootUsers {
-				newRootUsers[k] = v
-			}
+			maps.Copy(newRootUsers, s.rootUsers)
 
 			newRootUsers[s.currentStage] = line
 			s.rootUsers = newRootUsers

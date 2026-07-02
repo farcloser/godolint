@@ -15,6 +15,7 @@ type dl3026State struct {
 // DL3026Rule checks for allowed registries.
 type DL3026Rule struct {
 	rule.StatefulRuleBase
+
 	allowedRegistries []string // Empty means all registries allowed
 }
 
@@ -85,8 +86,8 @@ func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instru
 // If no registry is specified, defaults to docker.io.
 func extractRegistry(imageName string) string {
 	// If image contains /, check if first part is a registry
-	if idx := strings.Index(imageName, "/"); idx != -1 {
-		firstPart := imageName[:idx]
+	if before, _, ok := strings.Cut(imageName, "/"); ok {
+		firstPart := before
 		// If first part contains a . or :, it's likely a registry
 		if strings.Contains(firstPart, ".") || strings.Contains(firstPart, ":") {
 			return firstPart
@@ -123,8 +124,8 @@ func matchRegistry(allowed, registry string) bool {
 	}
 
 	// Wildcard prefix: example.*
-	if strings.HasSuffix(allowed, ".*") {
-		prefix := strings.TrimSuffix(allowed, ".*")
+	if before, ok := strings.CutSuffix(allowed, ".*"); ok {
+		prefix := before
 
 		return strings.HasPrefix(registry, prefix)
 	}

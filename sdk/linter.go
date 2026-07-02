@@ -49,13 +49,37 @@ func WithDisabledRules(codes ...string) Option {
 	}
 }
 
+// shellcheckConfig collects the shellcheck integration settings.
+type shellcheckConfig struct {
+	rcFile string
+}
+
+// ShellcheckOption configures the shellcheck integration enabled by WithShellcheck.
+type ShellcheckOption func(*shellcheckConfig)
+
+// WithShellcheckRCFile makes shellcheck use the given configuration file
+// (forwarded as --rcfile, requires shellcheck >= 0.10.0). Without it,
+// shellcheck never sees a repository's .shellcheckrc: the checked script runs
+// from a temp dir, outside the rcfile search path.
+func WithShellcheckRCFile(path string) ShellcheckOption {
+	return func(c *shellcheckConfig) {
+		c.rcFile = path
+	}
+}
+
 // WithShellcheck enables shellcheck integration for RUN instruction validation.
 // Requires the shellcheck binary to be available in PATH.
-func WithShellcheck() Option {
-	return func(l *Linter) {
+func WithShellcheck(scOpts ...ShellcheckOption) Option {
+	return func(linter *Linter) {
+		cfg := shellcheckConfig{}
+		for _, opt := range scOpts {
+			opt(&cfg)
+		}
+
 		checker := shell.NewBinaryShellchecker()
+		checker.RCFile = cfg.rcFile
 		scRule := shell.NewShellcheckRule(checker)
-		l.rules = append(l.rules, scRule)
+		linter.rules = append(linter.rules, scRule)
 	}
 }
 

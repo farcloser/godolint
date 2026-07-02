@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -38,7 +39,8 @@ func main() {
 	result, err := linter.Lint(ctx, content)
 	if err != nil {
 		// Check for parse errors
-		if parseErr, ok := err.(*sdk.ParseError); ok {
+		parseErr := &sdk.ParseError{}
+		if errors.As(err, &parseErr) {
 			fmt.Fprintf(os.Stderr, "Failed to parse Dockerfile: %v\n", parseErr)
 			os.Exit(1)
 		}

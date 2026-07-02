@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
@@ -28,13 +30,7 @@ func checkDL3030(instruction syntax.Instruction) bool {
 	}
 
 	// Check all yum install commands
-	for _, cmd := range parsed.PresentCommands {
-		if forgotYumYesOption(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotYumYesOption)
 }
 
 func forgotYumYesOption(cmd shell.Command) bool {

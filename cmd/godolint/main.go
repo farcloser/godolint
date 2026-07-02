@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -68,6 +69,10 @@ func main() {
 				Name:  "ignore",
 				Usage: "Rule code to ignore (can be specified multiple times, e.g., --ignore DL3006 --ignore SC2050)",
 			},
+			&cli.StringFlag{
+				Name:  "shellcheck-rcfile",
+				Usage: "Shellcheckrc `FILE` forwarded to shellcheck (--rcfile) when validating RUN instructions (requires shellcheck >= 0.10.0)",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() == 0 {
@@ -86,6 +91,17 @@ func main() {
 				} else {
 					// Shellcheck available, use it
 					checker := shell.NewBinaryShellchecker()
+					// Fail fast on an unreadable rcfile: shellcheck errors are
+					// non-fatal per rule (matching hadolint), so a bad path
+					// would otherwise silently disable every SC check.
+					if rcfile := cmd.String("shellcheck-rcfile"); rcfile != "" {
+						if _, err := os.Stat(rcfile); err != nil {
+							return fmt.Errorf("cannot read shellcheck rcfile: %w", err)
+						}
+
+						checker.RCFile = rcfile
+					}
+
 					scRule := shell.NewShellcheckRule(checker)
 					rules = append(rules, scRule)
 				}
@@ -108,6 +124,7 @@ func main() {
 
 				// Parse Dockerfile using buildkit parser
 				p := parser.NewBuildkitParser()
+
 				instructions, err := p.Parse(dockerfileContent)
 				if err != nil {
 					return fmt.Errorf("failed to parse %s: %w", dockerfilePath, err)
@@ -131,24 +148,21 @@ func main() {
 			ignoredRules := cmd.StringSlice("ignore")
 			if len(ignoredRules) > 0 {
 				filtered := []rule.CheckFailure{}
-				for _, failure := range allFailures {
-					ignored := false
-					for _, ignoreCode := range ignoredRules {
-						if string(failure.Code) == ignoreCode {
-							ignored = true
 
-							break
-						}
-					}
+				for _, failure := range allFailures {
+					ignored := slices.Contains(ignoredRules, string(failure.Code))
+
 					if !ignored {
 						filtered = append(filtered, failure)
 					}
 				}
+
 				allFailures = filtered
 			}
 
 			// Output failures as JSON
-			if err := json.NewEncoder(os.Stdout).Encode(allFailures); err != nil {
+			err := json.NewEncoder(os.Stdout).Encode(allFailures)
+			if err != nil {
 				return fmt.Errorf("failed to encode failures: %w", err)
 			}
 
@@ -161,7 +175,8 @@ func main() {
 		},
 	}
 
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
+	err := cmd.Run(context.Background(), os.Args)
+	if err != nil {
 		log.Error().Err(err).Msg("failed to run godolint")
 		os.Exit(1)
 	}

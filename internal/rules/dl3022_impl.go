@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"maps"
 	"strconv"
 	"strings"
 
@@ -54,9 +55,7 @@ func (*DL3022Rule) Check(line int, state rule.State, instruction syntax.Instruct
 	// Track FROM stages
 	if from, ok := instruction.(*syntax.From); ok {
 		newStages := make(map[string]bool)
-		for k, v := range s.stages {
-			newStages[k] = v
-		}
+		maps.Copy(newStages, s.stages)
 
 		if from.Image.Alias != nil {
 			newStages[*from.Image.Alias] = true

@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
@@ -28,13 +30,7 @@ func checkDL3014(instruction syntax.Instruction) bool {
 	}
 
 	// Check if any command is apt-get install without -y flag
-	for _, cmd := range parsed.PresentCommands {
-		if forgotAptYesOption(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotAptYesOption)
 }
 
 func forgotAptYesOption(cmd shell.Command) bool {

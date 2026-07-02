@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -107,8 +108,8 @@ func isNonPosixShell(shellCmd string) bool {
 		"cmd.exe",
 	}
 
-	for _, shell := range nonPosixShells {
-		if strings.Contains(shellCmd, shell) {
+	for _, shellName := range nonPosixShells {
+		if strings.Contains(shellCmd, shellName) {
 			return true
 		}
 	}
@@ -148,15 +149,7 @@ func hasPipefailOption(shellCmd string) bool {
 
 	for _, cmd := range parsed.PresentCommands {
 		// Check if it's a valid shell
-		isValidShell := false
-
-		for _, validShell := range validShells {
-			if cmd.Name == validShell {
-				isValidShell = true
-
-				break
-			}
-		}
+		isValidShell := slices.Contains(validShells, cmd.Name)
 
 		if !isValidShell {
 			continue
@@ -169,10 +162,8 @@ func hasPipefailOption(shellCmd string) bool {
 
 		// Check if pipefail is in arguments
 		args := shell.GetArgs(cmd)
-		for _, arg := range args {
-			if arg == "pipefail" {
-				return true
-			}
+		if slices.Contains(args, "pipefail") {
+			return true
 		}
 	}
 

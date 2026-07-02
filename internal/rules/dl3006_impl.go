@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -56,9 +57,7 @@ func (*DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruct
 	// Add alias to set if present
 	if from.Image.Alias != nil {
 		newAliases := make(map[string]bool)
-		for k, v := range s.aliases {
-			newAliases[k] = v
-		}
+		maps.Copy(newAliases, s.aliases)
 
 		newAliases[*from.Image.Alias] = true
 		s.aliases = newAliases

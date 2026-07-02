@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -30,13 +31,7 @@ func checkDL3013(instruction syntax.Instruction) bool {
 	}
 
 	// Check all commands for pip install without version pinning
-	for _, cmd := range parsed.PresentCommands {
-		if forgotToPinPipVersion(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotToPinPipVersion)
 }
 
 func forgotToPinPipVersion(cmd shell.Command) bool {

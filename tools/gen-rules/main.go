@@ -36,6 +36,7 @@ var (
 func main() {
 	if len(os.Args) != 2 {
 		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s <hadolint-rule-dir>\n", os.Args[0])
+
 		os.Exit(1)
 	}
 
@@ -47,11 +48,13 @@ func main() {
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to glob rules: %v\n", err)
+
 		os.Exit(1)
 	}
 
 	if len(files) == 0 {
 		_, _ = fmt.Fprintf(os.Stderr, "No rule files found in %s\n", hadolintRuleDir)
+
 		os.Exit(1)
 	}
 
@@ -102,7 +105,8 @@ func main() {
 	metadataGenerated := 0
 
 	for _, rule := range rules {
-		if err := generateMetadata(rule); err != nil {
+		err := generateMetadata(rule)
+		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Warning: failed to generate metadata for %s: %v\n", rule.Code, err)
 		} else {
 			metadataGenerated++
@@ -116,7 +120,8 @@ func main() {
 
 	for _, rule := range rules {
 		if !rule.Implemented && rule.CanGenerate {
-			if err := generateImplementation(rule); err != nil {
+			err := generateImplementation(rule)
+			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Warning: failed to generate implementation for %s: %v\n", rule.Code, err)
 			} else {
 				implGenerated++

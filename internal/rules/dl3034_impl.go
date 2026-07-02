@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
@@ -28,13 +30,7 @@ func checkDL3034(instruction syntax.Instruction) bool {
 	}
 
 	// Check all zypper commands
-	for _, cmd := range parsed.PresentCommands {
-		if forgotZypperYesOption(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotZypperYesOption)
 }
 
 func forgotZypperYesOption(cmd shell.Command) bool {

@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"maps"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/syntax"
 )
@@ -71,9 +73,7 @@ func (*DL3024Rule) Check(line int, state rule.State, instruction syntax.Instruct
 
 	// Remember this alias
 	newAliases := make(map[string]int)
-	for k, v := range s.aliases {
-		newAliases[k] = v
-	}
+	maps.Copy(newAliases, s.aliases)
 
 	newAliases[alias] = line
 	s.aliases = newAliases

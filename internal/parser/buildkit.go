@@ -173,8 +173,8 @@ func convertFrom(node *parser.Node) (*syntax.From, error) {
 
 	// Extract --platform flag if present
 	for _, flag := range node.Flags {
-		if strings.HasPrefix(flag, "--platform=") {
-			platform := strings.TrimPrefix(flag, "--platform=")
+		if after, ok := strings.CutPrefix(flag, "--platform="); ok {
+			platform := after
 			baseImage.Platform = &platform
 		}
 	}
@@ -258,8 +258,8 @@ func convertCopy(node *parser.Node) (*syntax.Copy, error) {
 	// Check for --from flag
 	// Buildkit parser includes flags in node.Flags
 	for _, flag := range node.Flags {
-		if strings.HasPrefix(flag, "--from=") {
-			fromValue := strings.TrimPrefix(flag, "--from=")
+		if after, ok := strings.CutPrefix(flag, "--from="); ok {
+			fromValue := after
 			copy.From = &fromValue
 		}
 	}

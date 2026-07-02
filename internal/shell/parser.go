@@ -154,8 +154,8 @@ func extractFlags(args []CmdPart) []CmdPart {
 		}
 
 		// Long flags: --flag or --flag=value
-		if strings.HasPrefix(arg.Arg, "--") {
-			flagName := strings.TrimPrefix(arg.Arg, "--")
+		if after, ok := strings.CutPrefix(arg.Arg, "--"); ok {
+			flagName := after
 			// Remove =value part if present
 			if idx := strings.IndexByte(flagName, '='); idx != -1 {
 				flagName = flagName[:idx]
@@ -170,8 +170,8 @@ func extractFlags(args []CmdPart) []CmdPart {
 		}
 
 		// Short flags: -abc becomes three flags: a, b, c
-		if strings.HasPrefix(arg.Arg, "-") {
-			flagChars := strings.TrimPrefix(arg.Arg, "-")
+		if after, ok := strings.CutPrefix(arg.Arg, "-"); ok {
+			flagChars := after
 			for _, ch := range flagChars {
 				flags = append(flags, CmdPart{
 					Arg: string(ch),
@@ -333,8 +333,8 @@ func GetFlagArg(flag string, cmd Command) []string {
 		}
 
 		// Check for --flag=value
-		if strings.HasPrefix(arg.Arg, "--"+flag+"=") {
-			value := strings.TrimPrefix(arg.Arg, "--"+flag+"=")
+		if after, ok := strings.CutPrefix(arg.Arg, "--"+flag+"="); ok {
+			value := after
 			values = append(values, value)
 		}
 	}
