@@ -18,25 +18,25 @@ func TestBinaryShellchecker_Check(t *testing.T) {
 	tests := []struct {
 		name          string
 		script        string
-		opts          shell.ShellOpts
+		opts          shell.Opts
 		expectFailure bool
 	}{
 		{
 			name:          "valid script",
 			script:        "apt-get install -y package",
-			opts:          shell.DefaultShellOpts(),
+			opts:          shell.DefaultOpts(),
 			expectFailure: false,
 		},
 		{
 			name:          "unquoted variable",
 			script:        "echo $FOO",
-			opts:          shell.DefaultShellOpts(),
+			opts:          shell.DefaultOpts(),
 			expectFailure: true, // SC2086: quote to prevent word splitting
 		},
 		{
 			name:   "powershell script skipped",
 			script: "Write-Host 'test'",
-			opts: shell.ShellOpts{
+			opts: shell.Opts{
 				ShellName: "pwsh -c",
 				EnvVars:   make(map[string]string),
 			},
@@ -67,7 +67,7 @@ func TestBinaryShellchecker_RCFile(t *testing.T) {
 	// SC2086 (unquoted variable) fires without configuration…
 	script := "echo $FOO"
 
-	plain, err := shell.NewBinaryShellchecker().Check(script, shell.DefaultShellOpts())
+	plain, err := shell.NewBinaryShellchecker().Check(script, shell.DefaultOpts())
 	if err != nil {
 		t.Fatalf("Check() error = %v", err)
 	}
@@ -85,7 +85,7 @@ func TestBinaryShellchecker_RCFile(t *testing.T) {
 	checker := shell.NewBinaryShellchecker()
 	checker.RCFile = rcfile
 
-	configured, err := checker.Check(script, shell.DefaultShellOpts())
+	configured, err := checker.Check(script, shell.DefaultOpts())
 	if err != nil {
 		t.Fatalf("Check() with rcfile error = %v", err)
 	}
@@ -104,7 +104,7 @@ func TestBinaryShellchecker_LineOffsets(t *testing.T) {
 	// script lines are verbatim there), pinned to 1 on the first.
 	script := "echo $FOO\n  cd /app"
 
-	failures, err := shell.NewBinaryShellchecker().Check(script, shell.DefaultShellOpts())
+	failures, err := shell.NewBinaryShellchecker().Check(script, shell.DefaultOpts())
 	if err != nil {
 		t.Fatalf("Check() error = %v", err)
 	}
@@ -252,7 +252,7 @@ func TestNoopShellchecker(t *testing.T) {
 
 	checker := shell.NewNoopShellchecker()
 
-	failures, err := checker.Check("any script", shell.DefaultShellOpts())
+	failures, err := checker.Check("any script", shell.DefaultOpts())
 	if err != nil {
 		t.Errorf("NoopShellchecker.Check() error = %v, want nil", err)
 	}

@@ -23,7 +23,7 @@ func DL4006() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL4006Rule) Code() rule.RuleCode {
+func (*DL4006Rule) Code() rule.Code {
 	return DL4006Meta.Code
 }
 
@@ -44,15 +44,17 @@ func (*DL4006Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl4006State)
+// Check flags RUN instructions that pipe without `-o pipefail` set by a
+// preceding SHELL instruction.
+func (*DL4006Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl4006State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:
 		// Reset state on new FROM
-		s.pipefailSet = false
+		currentState.pipefailSet = false
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Shell:
 		// Check if SHELL sets pipefail
@@ -61,20 +63,20 @@ func (r *DL4006Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 			// Check if it's a non-POSIX shell (fish, powershell, etc)
 			if isNonPosixShell(shellCmd) {
-				s.pipefailSet = true // Skip checks for non-POSIX shells
+				currentState.pipefailSet = true // Skip checks for non-POSIX shells
 
-				return state.ReplaceData(s)
+				return state.ReplaceData(currentState)
 			}
 
 			// Check if pipefail is set
-			s.pipefailSet = hasPipefailOption(shellCmd)
+			currentState.pipefailSet = hasPipefailOption(shellCmd)
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Run:
 		// If pipefail is not set and command has pipes, fail
-		if !s.pipefailSet && hasPipes(inst.Command) {
+		if !currentState.pipefailSet && hasPipes(inst.Command) {
 			return state.AddFailure(rule.CheckFailure{
 				Code:     DL4006Meta.Code,
 				Severity: DL4006Meta.Severity,

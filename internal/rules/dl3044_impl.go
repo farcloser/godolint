@@ -22,7 +22,7 @@ func DL3044() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3044Rule) Code() rule.RuleCode {
+func (*DL3044Rule) Code() rule.Code {
 	return DL3044Meta.Code
 }
 
@@ -43,15 +43,17 @@ func (*DL3044Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL3044Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3044State)
+// Check flags ENV statements that reference a variable defined in the same
+// statement.
+func (*DL3044Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl3044State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.Arg:
 		// Track ARG variables
-		s.definedVars[inst.ArgName] = true
+		currentState.definedVars[inst.ArgName] = true
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Env:
 		// Check if any variable in this ENV references another variable
@@ -73,7 +75,7 @@ func (r *DL3044Rule) Check(line int, state rule.State, instruction syntax.Instru
 				// Check if value references the other variable
 				if referencesVar(pair.Value, otherPair.Key) {
 					// Only fail if the referenced variable is NOT already defined
-					if !s.definedVars[otherPair.Key] {
+					if !currentState.definedVars[otherPair.Key] {
 						return state.AddFailure(rule.CheckFailure{
 							Code:     DL3044Meta.Code,
 							Severity: DL3044Meta.Severity,
@@ -88,10 +90,10 @@ func (r *DL3044Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 		// Add all new variables to defined set
 		for _, varName := range newVars {
-			s.definedVars[varName] = true
+			currentState.definedVars[varName] = true
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	return state

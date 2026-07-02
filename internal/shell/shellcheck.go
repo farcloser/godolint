@@ -1,7 +1,10 @@
-// Package shell provides shellcheck integration for validating shell commands in RUN instructions.
+// This file provides the shellcheck integration for validating shell commands
+// in RUN instructions. The package godoc lives in parser.go.
+
 package shell
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,22 +12,27 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/syntax"
 )
 
-// ShellOpts contains options for running shellcheck.
+// shellcheckTimeout bounds a single shellcheck invocation: one RUN
+// instruction's script is tiny, so this is far beyond any legitimate run.
+const shellcheckTimeout = 30 * time.Second
+
+// Opts contains options for running shellcheck.
 // Ported from Hadolint.Shell.ShellOpts.
-type ShellOpts struct {
+type Opts struct {
 	ShellName string            // Shell command (e.g., "/bin/sh -c")
 	EnvVars   map[string]string // Environment variables to export
 }
 
-// DefaultShellOpts returns the default shell options.
+// DefaultOpts returns the default shell options.
 // Matches hadolint's defaultShellOpts with common proxy variables.
-func DefaultShellOpts() ShellOpts {
-	return ShellOpts{
+func DefaultOpts() Opts {
+	return Opts{
 		ShellName: "/bin/sh -c",
 		EnvVars: map[string]string{
 			"HTTP_PROXY":  "1",
@@ -45,7 +53,7 @@ type Shellchecker interface {
 	// Returns violations found by shellcheck. Each failure's Line is the
 	// 0-based line offset within the script (0 for its first line); the
 	// caller anchors it to the Dockerfile line of the instruction.
-	Check(script string, opts ShellOpts) ([]rule.CheckFailure, error)
+	Check(script string, opts Opts) ([]rule.CheckFailure, error)
 }
 
 // BinaryShellchecker shells out to the shellcheck binary.
@@ -75,7 +83,7 @@ type shellcheckOutput struct {
 
 // Check runs shellcheck on the given script.
 // Ported from Hadolint.Shell.shellcheck.
-func (c *BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckFailure, error) {
+func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailure, error) {
 	// Skip non-POSIX shells (pwsh, powershell, cmd)
 	shellLower := strings.ToLower(opts.ShellName)
 	if strings.Contains(shellLower, "pwsh") ||
@@ -125,7 +133,14 @@ func (c *BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckF
 
 	args = append(args, tmpFile.Name())
 
-	cmd := exec.Command("shellcheck", args...)
+	// No caller context reaches this point (the rule fold carries none), but
+	// a wedged shellcheck must not hang the whole lint run: bound it. A kill
+	// flows through the non-fatal error path below, like any shellcheck
+	// failure (matching hadolint).
+	ctx, cancel := context.WithTimeout(context.Background(), shellcheckTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "shellcheck", args...)
 
 	output, err := cmd.CombinedOutput()
 	// shellcheck returns non-zero if violations found, which is expected
@@ -172,7 +187,7 @@ func (c *BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckF
 		}
 
 		failures = append(failures, rule.CheckFailure{
-			Code:     rule.RuleCode(fmt.Sprintf("SC%d", finding.Code)),
+			Code:     rule.Code(fmt.Sprintf("SC%d", finding.Code)),
 			Severity: convertSeverity(finding.Level),
 			Message:  finding.Message,
 			Line:     offset, // Anchored to the instruction line by the rule
@@ -185,7 +200,7 @@ func (c *BinaryShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckF
 
 // buildScript constructs the complete script to pass to shellcheck.
 // Ported from the script construction in Hadolint.Shell.shellcheck.
-func buildScript(runCommand string, opts ShellOpts) string {
+func buildScript(runCommand string, opts Opts) string {
 	var build strings.Builder
 
 	// Add shebang from shell option
@@ -273,8 +288,8 @@ type ShellcheckRule struct {
 // shellState tracks shell options across instructions.
 // Ported from Acc in Hadolint.Rule.Shellcheck.
 type shellState struct {
-	opts        ShellOpts
-	defaultOpts ShellOpts
+	opts        Opts
+	defaultOpts Opts
 }
 
 // NewShellcheckRule creates a new shellcheck rule.
@@ -285,7 +300,7 @@ func NewShellcheckRule(checker Shellchecker) *ShellcheckRule {
 }
 
 // Code returns the rule code.
-func (*ShellcheckRule) Code() rule.RuleCode {
+func (*ShellcheckRule) Code() rule.Code {
 	return "SHELLCHECK"
 }
 
@@ -302,7 +317,7 @@ func (*ShellcheckRule) Message() string {
 
 // InitialState returns the initial state for this rule.
 func (*ShellcheckRule) InitialState() rule.State {
-	defaultOpts := DefaultShellOpts()
+	defaultOpts := DefaultOpts()
 
 	return rule.EmptyState(shellState{
 		opts:        defaultOpts,
@@ -313,17 +328,9 @@ func (*ShellcheckRule) InitialState() rule.State {
 // Check processes each instruction and updates shell state.
 // Ported from scrule in Hadolint.Rule.Shellcheck.
 func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	// Extract current shell state
-	var shState shellState
-	if state.Data != nil {
-		shState = state.Data.(shellState)
-	} else {
-		defaultOpts := DefaultShellOpts()
-		shState = shellState{
-			opts:        defaultOpts,
-			defaultOpts: defaultOpts,
-		}
-	}
+	// Extract current shell state (InitialState always seeds it; a type
+	// mismatch would be an invariant violation and panics in rule.Data).
+	shState := rule.Data[shellState](state)
 
 	switch instr := instruction.(type) {
 	case *syntax.From:
@@ -404,6 +411,9 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 		}
 
 		return newState
+
+	default:
+		// Other instructions do not affect the shell state.
 	}
 
 	return state
@@ -423,6 +433,6 @@ func NewNoopShellchecker() *NoopShellchecker {
 }
 
 // Check always returns nil.
-func (*NoopShellchecker) Check(script string, opts ShellOpts) ([]rule.CheckFailure, error) {
+func (*NoopShellchecker) Check(_ string, _ Opts) ([]rule.CheckFailure, error) {
 	return nil, nil
 }

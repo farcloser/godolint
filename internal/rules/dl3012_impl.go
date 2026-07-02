@@ -1,4 +1,4 @@
-package rules
+package rules //nolint:dupl // intentional near-copy of DL4003/DL4004: the port keeps one file per hadolint rule
 
 import (
 	"github.com/farcloser/godolint/internal/rule"
@@ -22,7 +22,7 @@ func DL3012() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3012Rule) Code() rule.RuleCode {
+func (*DL3012Rule) Code() rule.Code {
 	return DL3012Meta.Code
 }
 
@@ -51,7 +51,7 @@ func (*DL3012Rule) Check(line int, state rule.State, instruction syntax.Instruct
 
 	// Check for HEALTHCHECK instruction
 	if _, ok := instruction.(*syntax.Healthcheck); ok {
-		currentState := state.Data.(healthcheckState)
+		currentState := rule.Data[healthcheckState](state)
 
 		if currentState == noHealthcheck {
 			// First HEALTHCHECK in this stage - remember it

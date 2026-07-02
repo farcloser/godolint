@@ -4,6 +4,7 @@ package rule
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/farcloser/godolint/internal/syntax"
 )
@@ -41,16 +42,19 @@ func (s Severity) String() string {
 // MarshalJSON implements json.Marshaler to output severity as string.
 // Matches hadolint's severityText function in Hadolint/Formatter/Format.hs.
 func (s Severity) MarshalJSON() ([]byte, error) {
+	// Marshaling a plain string cannot fail, and encoding/json wraps
+	// json.Marshaler errors in *json.MarshalerError itself.
+	//nolint:wrapcheck // unreachable error path, and the caller wraps.
 	return json.Marshal(s.String())
 }
 
-// RuleCode is ported from RuleCode in Hadolint/Rule.hs.
-type RuleCode string
+// Code is ported from RuleCode in Hadolint/Rule.hs.
+type Code string
 
-// RuleMeta contains metadata extracted from hadolint rule definitions.
+// Meta contains metadata extracted from hadolint rule definitions.
 // Used by generated code to separate metadata from implementation.
-type RuleMeta struct {
-	Code     RuleCode
+type Meta struct {
+	Code     Code
 	Severity Severity
 	Message  string
 }
@@ -62,7 +66,7 @@ type CheckFailure struct {
 	Line     int      `json:"line"`
 	Column   int      `json:"column"` // Always 1 for lint violations (matches hadolint)
 	Severity Severity `json:"level"`  // Outputs as string: "error", "warning", "info", "style"
-	Code     RuleCode `json:"code"`
+	Code     Code     `json:"code"`
 	Message  string   `json:"message"`
 }
 
@@ -97,11 +101,25 @@ func (s State) ReplaceData(data any) State {
 	}
 }
 
+// Data returns the custom state data as T. The processor threads each rule's
+// state only through that same rule's Check/Finalize, so Data always holds
+// what the rule's own InitialState/ReplaceData put there — a mismatch is an
+// invariant violation (a bug in the rule itself) and panics loudly rather
+// than silently degrading into wrong lint results.
+func Data[T any](s State) T {
+	data, ok := s.Data.(T)
+	if !ok {
+		panic(fmt.Sprintf("rule state corrupted: %T is not the expected state type", s.Data))
+	}
+
+	return data
+}
+
 // Rule is ported from the concept of Rule in Hadolint/Rule.hs.
 // All rules are stateful - simple rules just use empty state.
 type Rule interface {
 	// Code returns the unique rule identifier
-	Code() RuleCode
+	Code() Code
 
 	// Severity returns the severity level of violations
 	Severity() Severity
@@ -125,7 +143,7 @@ type Rule interface {
 
 // SimpleRule is ported from simpleRule in Hadolint/Rule.hs.
 type SimpleRule struct {
-	code     RuleCode
+	code     Code
 	severity Severity
 	message  string
 	checker  func(syntax.Instruction) bool
@@ -133,7 +151,7 @@ type SimpleRule struct {
 
 // NewSimpleRule creates a new simple rule.
 func NewSimpleRule(
-	code RuleCode,
+	code Code,
 	severity Severity,
 	message string,
 	checker func(syntax.Instruction) bool,
@@ -147,7 +165,7 @@ func NewSimpleRule(
 }
 
 // Code returns the rule code.
-func (r *SimpleRule) Code() RuleCode {
+func (r *SimpleRule) Code() Code {
 	return r.code
 }
 
@@ -190,16 +208,16 @@ func (*SimpleRule) Finalize(state State) State {
 // StatefulRuleBase provides default implementations for stateful rules.
 // Embed this in stateful rule structs to avoid boilerplate.
 type StatefulRuleBase struct {
-	meta RuleMeta
+	meta Meta
 }
 
 // NewStatefulRuleBase creates a base for stateful rules.
-func NewStatefulRuleBase(meta RuleMeta) StatefulRuleBase {
+func NewStatefulRuleBase(meta Meta) StatefulRuleBase {
 	return StatefulRuleBase{meta: meta}
 }
 
 // Code returns the rule code.
-func (b *StatefulRuleBase) Code() RuleCode {
+func (b *StatefulRuleBase) Code() Code {
 	return b.meta.Code
 }
 

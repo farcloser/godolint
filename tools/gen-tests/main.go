@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 	"text/template"
 )
@@ -94,7 +94,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("# Hadolint Test Generation\n\n")
+	fmt.Print("# Hadolint Test Generation\n\n")
 	fmt.Printf("Total test files parsed: %d\n", len(files))
 	fmt.Printf("Total test cases extracted: %d\n", totalTests)
 	fmt.Printf("Rules with tests: %d\n\n", len(allTests))
@@ -110,7 +110,7 @@ func main() {
 	}
 
 	// Sort for consistent output
-	sort.Strings(implementedRules)
+	slices.Sort(implementedRules)
 
 	fmt.Printf("Detected %d implemented rules\n\n", len(implementedRules))
 
@@ -524,8 +524,8 @@ func parseMultilineTests(text string) []TestCase {
 		foundInDo := false
 		inDoLineIndex := -1
 
-		for j := idx + 1; j < len(lines) && j < idx+50; j++ {
-			currentLine := lines[j]
+		for scanIndex := idx + 1; scanIndex < len(lines) && scanIndex < idx+50; scanIndex++ {
+			currentLine := lines[scanIndex]
 
 			// Check for terminating patterns FIRST (before extracting quotes)
 			// to avoid including rule codes in Dockerfile content
@@ -533,7 +533,7 @@ func parseMultilineTests(text string) []TestCase {
 			// Look for "in do" pattern (standalone)
 			if inDoPattern.MatchString(currentLine) {
 				foundInDo = true
-				inDoLineIndex = j
+				inDoLineIndex = scanIndex
 
 				break
 			}
@@ -542,7 +542,7 @@ func parseMultilineTests(text string) []TestCase {
 			inlineMatch := inDoInlinePattern.FindStringSubmatch(currentLine)
 			if inlineMatch != nil {
 				foundInDo = true
-				inDoLineIndex = j
+				inDoLineIndex = scanIndex
 
 				break
 			}
@@ -562,7 +562,7 @@ func parseMultilineTests(text string) []TestCase {
 					})
 				}
 
-				idx = j
+				idx = scanIndex
 
 				break
 			}
@@ -709,8 +709,8 @@ func goLabelType(haskellType string) string {
 
 func generateTestFile(ruleCode string, cases []TestCase, config *HadolintConfig) error {
 	// Sort test cases by name for consistent output
-	sort.Slice(cases, func(i, j int) bool {
-		return cases[i].Name < cases[j].Name
+	slices.SortFunc(cases, func(left, right TestCase) int {
+		return strings.Compare(left.Name, right.Name)
 	})
 
 	tmpl := `package rules_test

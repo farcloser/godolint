@@ -23,7 +23,7 @@ func DL3006() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3006Rule) Code() rule.RuleCode {
+func (*DL3006Rule) Code() rule.Code {
 	return DL3006Meta.Code
 }
 
@@ -52,16 +52,16 @@ func (*DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		return state
 	}
 
-	s := state.Data.(dl3006State)
+	currentState := rule.Data[dl3006State](state)
 
 	// Add alias to set if present
 	if from.Image.Alias != nil {
 		newAliases := make(map[string]bool)
-		maps.Copy(newAliases, s.aliases)
+		maps.Copy(newAliases, currentState.aliases)
 
 		newAliases[*from.Image.Alias] = true
-		s.aliases = newAliases
-		state = state.ReplaceData(s)
+		currentState.aliases = newAliases
+		state = state.ReplaceData(currentState)
 	}
 
 	// Check if image needs explicit tag
@@ -86,7 +86,7 @@ func (*DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruct
 	}
 
 	// FROM alias reference - OK
-	if s.aliases[from.Image.Image] {
+	if currentState.aliases[from.Image.Image] {
 		return state
 	}
 

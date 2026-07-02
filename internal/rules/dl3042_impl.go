@@ -24,7 +24,7 @@ func DL3042() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3042Rule) Code() rule.RuleCode {
+func (*DL3042Rule) Code() rule.Code {
 	return DL3042Meta.Code
 }
 
@@ -46,33 +46,34 @@ func (*DL3042Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL3042Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3042State)
+// Check flags pip install runs that do not disable the pip cache.
+func (*DL3042Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl3042State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:
 		// Update current stage
 		if inst.Image.Alias != nil {
-			s.currentStage = *inst.Image.Alias
+			currentState.currentStage = *inst.Image.Alias
 		} else {
-			s.currentStage = inst.Image.Image
+			currentState.currentStage = inst.Image.Image
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Env:
 		// Check if PIP_NO_CACHE_DIR is set to truthy value
 		for _, pair := range inst.Pairs {
 			if pair.Key == "PIP_NO_CACHE_DIR" && isTruthy(pair.Value) {
-				s.noCacheSet[s.currentStage] = true
+				currentState.noCacheSet[currentState.currentStage] = true
 			}
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Run:
 		// Skip if PIP_NO_CACHE_DIR is already set for this stage
-		if s.noCacheSet[s.currentStage] {
+		if currentState.noCacheSet[currentState.currentStage] {
 			return state
 		}
 

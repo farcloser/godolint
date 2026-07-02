@@ -22,7 +22,7 @@ func DL3024() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3024Rule) Code() rule.RuleCode {
+func (*DL3024Rule) Code() rule.Code {
 	return DL3024Meta.Code
 }
 
@@ -56,11 +56,11 @@ func (*DL3024Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		return state
 	}
 
-	s := state.Data.(dl3024State)
+	currentState := rule.Data[dl3024State](state)
 	alias := *from.Image.Alias
 
 	// Check if alias already seen
-	if _, exists := s.aliases[alias]; exists {
+	if _, exists := currentState.aliases[alias]; exists {
 		// Duplicate alias - fail
 		return state.AddFailure(rule.CheckFailure{
 			Code:     DL3024Meta.Code,
@@ -73,12 +73,12 @@ func (*DL3024Rule) Check(line int, state rule.State, instruction syntax.Instruct
 
 	// Remember this alias
 	newAliases := make(map[string]int)
-	maps.Copy(newAliases, s.aliases)
+	maps.Copy(newAliases, currentState.aliases)
 
 	newAliases[alias] = line
-	s.aliases = newAliases
+	currentState.aliases = newAliases
 
-	return state.ReplaceData(s)
+	return state.ReplaceData(currentState)
 }
 
 // Finalize performs final checks after processing all instructions.

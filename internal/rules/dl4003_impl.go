@@ -1,4 +1,4 @@
-package rules
+package rules //nolint:dupl // intentional near-copy of DL3012/DL4004: the port keeps one file per hadolint rule
 
 import (
 	"github.com/farcloser/godolint/internal/rule"
@@ -22,7 +22,7 @@ func DL4003() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL4003Rule) Code() rule.RuleCode {
+func (*DL4003Rule) Code() rule.Code {
 	return DL4003Meta.Code
 }
 
@@ -51,7 +51,7 @@ func (*DL4003Rule) Check(line int, state rule.State, instruction syntax.Instruct
 
 	// Check for CMD instruction
 	if _, ok := instruction.(*syntax.Cmd); ok {
-		currentState := state.Data.(cmdState)
+		currentState := rule.Data[cmdState](state)
 
 		if currentState == noCmd {
 			// First CMD in this stage - remember it

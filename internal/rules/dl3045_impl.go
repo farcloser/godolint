@@ -16,7 +16,7 @@ func DL3045() rule.Rule {
 type DL3045Rule struct{}
 
 // Code returns the rule code.
-func (*DL3045Rule) Code() rule.RuleCode {
+func (*DL3045Rule) Code() rule.Code {
 	return DL3045Meta.Code
 }
 
@@ -45,14 +45,7 @@ type dl3045State struct {
 
 // Check validates COPY instructions use absolute paths or have WORKDIR set.
 func (r *DL3045Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	var currentState dl3045State
-	if state.Data != nil {
-		currentState = state.Data.(dl3045State)
-	} else {
-		currentState = dl3045State{
-			WorkdirSet: make(map[string]bool),
-		}
-	}
+	currentState := rule.Data[dl3045State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:

@@ -25,7 +25,7 @@ func DL3022() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3022Rule) Code() rule.RuleCode {
+func (*DL3022Rule) Code() rule.Code {
 	return DL3022Meta.Code
 }
 
@@ -50,30 +50,30 @@ func (*DL3022Rule) InitialState() rule.State {
 // Check tracks FROM stages and validates COPY --from references.
 // Ported from the check function in DL3022.hs.
 func (*DL3022Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3022State)
+	currentState := rule.Data[dl3022State](state)
 
 	// Track FROM stages
 	if from, ok := instruction.(*syntax.From); ok {
 		newStages := make(map[string]bool)
-		maps.Copy(newStages, s.stages)
+		maps.Copy(newStages, currentState.stages)
 
 		if from.Image.Alias != nil {
 			newStages[*from.Image.Alias] = true
 		}
 
-		s.count++
-		s.stages = newStages
+		currentState.count++
+		currentState.stages = newStages
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	// Check COPY --from references
-	if copy, ok := instruction.(*syntax.Copy); ok {
-		if copy.From == nil {
+	if copyInstr, ok := instruction.(*syntax.Copy); ok {
+		if copyInstr.From == nil {
 			return state
 		}
 
-		fromRef := *copy.From
+		fromRef := *copyInstr.From
 
 		// Image reference (contains :) - OK (external image)
 		if strings.Contains(fromRef, ":") {
@@ -81,13 +81,13 @@ func (*DL3022Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		}
 
 		// Named stage - OK if exists
-		if s.stages[fromRef] {
+		if currentState.stages[fromRef] {
 			return state
 		}
 
 		// Numeric stage reference - OK if valid
 		if idx, err := strconv.Atoi(fromRef); err == nil {
-			if idx < s.count {
+			if idx < currentState.count {
 				return state
 			}
 		}

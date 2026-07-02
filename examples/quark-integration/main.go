@@ -24,6 +24,7 @@ func main() {
 	dockerfilePath := os.Args[1]
 
 	// Read Dockerfile
+	//nolint:gosec // G304: reading the user-supplied Dockerfile path is this example's purpose.
 	content, err := os.ReadFile(dockerfilePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read Dockerfile: %v\n", err)

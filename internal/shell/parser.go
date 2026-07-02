@@ -1,4 +1,5 @@
-// Package shell provides shell script parsing for analyzing RUN instructions.
+// Package shell provides shell script parsing and shellcheck integration for
+// analyzing and validating the commands of RUN instructions.
 package shell
 
 import (
@@ -106,6 +107,10 @@ func extractCommand(call *syntax.CallExpr) *Command {
 	}
 }
 
+// maskedExpansion stands in for any dynamic word part (variables, command
+// substitutions, arithmetic) that oversimplification cannot resolve.
+const maskedExpansion = "${VAR}"
+
 // wordToString converts a Word node to a string.
 // Similar to ShellCheck.ASTLib.oversimplify.
 func wordToString(word *syntax.Word) string {
@@ -124,18 +129,18 @@ func wordToString(word *syntax.Word) string {
 					_, _ = build.WriteString(lit.Value)
 				} else {
 					// Variables, expansions, etc. - simplified as ${VAR}
-					_, _ = build.WriteString("${VAR}")
+					_, _ = build.WriteString(maskedExpansion)
 				}
 			}
 		case *syntax.ParamExp:
-			_, _ = build.WriteString("${VAR}")
+			_, _ = build.WriteString(maskedExpansion)
 		case *syntax.CmdSubst:
-			_, _ = build.WriteString("${VAR}")
+			_, _ = build.WriteString(maskedExpansion)
 		case *syntax.ArithmExp:
-			_, _ = build.WriteString("${VAR}")
+			_, _ = build.WriteString(maskedExpansion)
 		default:
 			// Other expansions simplified
-			_, _ = build.WriteString("${VAR}")
+			_, _ = build.WriteString(maskedExpansion)
 		}
 	}
 

@@ -34,7 +34,7 @@ func DL3049WithConfig(cfg *config.Config) rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3049Rule) Code() rule.RuleCode {
+func (*DL3049Rule) Code() rule.Code {
 	return DL3049Meta.Code
 }
 
@@ -55,23 +55,25 @@ func (*DL3049Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL3049Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3049State)
+// Check records the labels seen on each stage; Finalize reports the ones the
+// configured label schema requires but no stage carries.
+func (*DL3049Rule) Check(_ int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl3049State](state)
 
 	// Track labels as they're defined
 	if label, ok := instruction.(*syntax.Label); ok {
 		for _, pair := range label.Pairs {
-			s.definedLabels[pair.Key] = true
+			currentState.definedLabels[pair.Key] = true
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	// Reset on new FROM (simplified - full version would track inheritance)
 	if _, ok := instruction.(*syntax.From); ok {
-		s.definedLabels = make(map[string]bool)
+		currentState.definedLabels = make(map[string]bool)
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	return state
@@ -79,11 +81,11 @@ func (r *DL3049Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 // Finalize checks for missing required labels at end of Dockerfile.
 func (r *DL3049Rule) Finalize(state rule.State) rule.State {
-	s := state.Data.(dl3049State)
+	currentState := rule.Data[dl3049State](state)
 
 	// Check for missing required labels
 	for requiredLabel := range r.cfg.LabelSchema {
-		if !s.definedLabels[requiredLabel] {
+		if !currentState.definedLabels[requiredLabel] {
 			// Report as missing (line 0 = end of file)
 			state = state.AddFailure(rule.CheckFailure{
 				Code:     DL3049Meta.Code,

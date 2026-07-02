@@ -14,9 +14,9 @@ import (
 type IgnoreDirectives struct {
 	// LineIgnores maps line numbers to sets of ignored rule codes
 	// Key is the line number where the ignore applies (comment line + 1)
-	LineIgnores map[int]map[rule.RuleCode]bool
+	LineIgnores map[int]map[rule.Code]bool
 	// GlobalIgnores contains rule codes ignored for the entire file
-	GlobalIgnores map[rule.RuleCode]bool
+	GlobalIgnores map[rule.Code]bool
 }
 
 // pragmaRegex matches "hadolint ignore=DL3057,DL3018" or "hadolint global ignore=DL3057".
@@ -29,8 +29,8 @@ var (
 // Ported from Hadolint.Pragma module.
 func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
 	directives := IgnoreDirectives{
-		LineIgnores:   make(map[int]map[rule.RuleCode]bool),
-		GlobalIgnores: make(map[rule.RuleCode]bool),
+		LineIgnores:   make(map[int]map[rule.Code]bool),
+		GlobalIgnores: make(map[rule.Code]bool),
 	}
 
 	for _, instr := range instructions {
@@ -53,7 +53,7 @@ func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
 			// Applies to the next line (comment line + 1)
 			targetLine := instr.LineNumber + 1
 			if directives.LineIgnores[targetLine] == nil {
-				directives.LineIgnores[targetLine] = make(map[rule.RuleCode]bool)
+				directives.LineIgnores[targetLine] = make(map[rule.Code]bool)
 			}
 
 			for _, code := range codes {
@@ -66,7 +66,7 @@ func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
 }
 
 // parseIgnorePragma extracts rule codes from "hadolint ignore=DL3057,DL3018" format.
-func parseIgnorePragma(text string) []rule.RuleCode {
+func parseIgnorePragma(text string) []rule.Code {
 	matches := ignorePragmaRegex.FindStringSubmatch(text)
 	if len(matches) < 2 {
 		return nil
@@ -76,7 +76,7 @@ func parseIgnorePragma(text string) []rule.RuleCode {
 }
 
 // parseGlobalIgnorePragma extracts rule codes from "hadolint global ignore=DL3057" format.
-func parseGlobalIgnorePragma(text string) []rule.RuleCode {
+func parseGlobalIgnorePragma(text string) []rule.Code {
 	matches := globalIgnorePragmaRegex.FindStringSubmatch(text)
 	if len(matches) < 2 {
 		return nil
@@ -86,7 +86,7 @@ func parseGlobalIgnorePragma(text string) []rule.RuleCode {
 }
 
 // Supports inline comments: "DL3057,DL3018 # some comment".
-func parseRuleList(text string) []rule.RuleCode {
+func parseRuleList(text string) []rule.Code {
 	// Strip inline comments (anything after #)
 	if idx := strings.Index(text, "#"); idx != -1 {
 		text = text[:idx]
@@ -94,7 +94,7 @@ func parseRuleList(text string) []rule.RuleCode {
 
 	parts := strings.Split(text, ",")
 
-	var codes []rule.RuleCode
+	var codes []rule.Code
 
 	for _, part := range parts {
 		code := strings.TrimSpace(part)
@@ -104,7 +104,7 @@ func parseRuleList(text string) []rule.RuleCode {
 
 		// Validate format: DL followed by 4 digits (DL3057, SC1234, etc)
 		if len(code) >= 6 && (code[:2] == "DL" || code[:2] == "SC") {
-			codes = append(codes, rule.RuleCode(code))
+			codes = append(codes, rule.Code(code))
 		}
 	}
 

@@ -11,6 +11,27 @@ import (
 	"github.com/farcloser/godolint/internal/syntax"
 )
 
+// Static sentinel errors for instruction conversion failures, so callers can
+// match them with errors.Is; detail is attached by wrapping where needed.
+var (
+	// ErrUnknownInstruction reports an instruction the converter does not know about.
+	ErrUnknownInstruction = errors.New("unknown instruction")
+	// ErrFromMissingImage reports a FROM without an image reference.
+	ErrFromMissingImage = errors.New("FROM missing image")
+	// ErrCopyMissingArgs reports a COPY without both a source and a destination.
+	ErrCopyMissingArgs = errors.New("COPY requires at least source and destination")
+	// ErrAddMissingArgs reports an ADD without both a source and a destination.
+	ErrAddMissingArgs = errors.New("ADD requires at least source and destination")
+	// ErrArgMissingName reports an ARG without a name.
+	ErrArgMissingName = errors.New("ARG missing name")
+	// ErrInvalidOnBuild reports an ONBUILD line that does not start with the keyword.
+	ErrInvalidOnBuild = errors.New("invalid ONBUILD instruction")
+	// ErrOnBuildMissingInstruction reports an ONBUILD without a wrapped instruction.
+	ErrOnBuildMissingInstruction = errors.New("ONBUILD missing instruction")
+	// ErrOnBuildNoInnerInstruction reports an ONBUILD whose body parses to nothing.
+	ErrOnBuildNoInnerInstruction = errors.New("ONBUILD has no inner instruction")
+)
+
 // BuildkitParser implements Parser using moby/buildkit's Dockerfile parser.
 type BuildkitParser struct{}
 
@@ -105,7 +126,7 @@ func convertNode(node *parser.Node) (syntax.Instruction, error) {
 	case "onbuild":
 		return convertOnBuild(node)
 	default:
-		return nil, fmt.Errorf("unknown instruction: %s", node.Value)
+		return nil, fmt.Errorf("%w: %s", ErrUnknownInstruction, node.Value)
 	}
 }
 
@@ -129,7 +150,8 @@ func collectValues(node *parser.Node) []string {
 	for n := node.Next; n != nil; n = n.Next {
 		val := n.Value
 
-		if inQuote {
+		switch {
+		case inQuote:
 			// We're in the middle of a quoted string
 			current += " " + val
 			if strings.HasSuffix(val, "\"") {
@@ -138,11 +160,11 @@ func collectValues(node *parser.Node) []string {
 				current = ""
 				inQuote = false
 			}
-		} else if strings.HasPrefix(val, "\"") && !strings.HasSuffix(val, "\"") {
+		case strings.HasPrefix(val, "\"") && !strings.HasSuffix(val, "\""):
 			// Start of a quoted string that spans multiple nodes
 			current = val
 			inQuote = true
-		} else {
+		default:
 			// Normal value
 			values = append(values, val)
 		}
@@ -158,13 +180,13 @@ func collectValues(node *parser.Node) []string {
 
 func convertFrom(node *parser.Node) (*syntax.From, error) {
 	if node.Next == nil {
-		return nil, errors.New("FROM missing image")
+		return nil, ErrFromMissingImage
 	}
 
 	// Collect all values to handle: image:tag@digest AS alias
 	values := collectValues(node)
 	if len(values) == 0 {
-		return nil, errors.New("FROM missing image")
+		return nil, ErrFromMissingImage
 	}
 
 	baseImage := syntax.BaseImage{
@@ -247,10 +269,10 @@ func convertRun(node *parser.Node) (*syntax.Run, error) {
 func convertCopy(node *parser.Node) (*syntax.Copy, error) {
 	values := collectValues(node)
 	if len(values) < 2 {
-		return nil, errors.New("COPY requires at least source and destination")
+		return nil, ErrCopyMissingArgs
 	}
 
-	copy := &syntax.Copy{
+	copyInstr := &syntax.Copy{
 		Source:      values[:len(values)-1],
 		Destination: values[len(values)-1],
 	}
@@ -260,17 +282,17 @@ func convertCopy(node *parser.Node) (*syntax.Copy, error) {
 	for _, flag := range node.Flags {
 		if after, ok := strings.CutPrefix(flag, "--from="); ok {
 			fromValue := after
-			copy.From = &fromValue
+			copyInstr.From = &fromValue
 		}
 	}
 
-	return copy, nil
+	return copyInstr, nil
 }
 
 func convertAdd(node *parser.Node) (*syntax.Add, error) {
 	values := collectValues(node)
 	if len(values) < 2 {
-		return nil, errors.New("ADD requires at least source and destination")
+		return nil, ErrAddMissingArgs
 	}
 
 	return &syntax.Add{
@@ -289,21 +311,22 @@ func convertEnv(node *parser.Node) (*syntax.Env, error) {
 	// 1. "ENV key=value key2=value2" - buildkit tokenizes as: key, value, =, key2, value2, =
 	// 2. "ENV key value" - buildkit tokenizes as: key, value
 	for idx := 0; idx < len(values); {
-		if idx+2 < len(values) && values[idx+2] == "=" {
+		switch {
+		case idx+2 < len(values) && values[idx+2] == "=":
 			// Pattern: key value = (key=value syntax)
 			pairs = append(pairs, syntax.EnvPair{
 				Key:   values[idx],
 				Value: unquote(values[idx+1]),
 			})
 			idx += 3 // Skip key, value, =
-		} else if idx+1 < len(values) {
+		case idx+1 < len(values):
 			// Whitespace syntax: key value
 			pairs = append(pairs, syntax.EnvPair{
 				Key:   values[idx],
 				Value: unquote(values[idx+1]),
 			})
 			idx += 2
-		} else {
+		default:
 			idx++
 		}
 	}
@@ -431,7 +454,7 @@ func convertMaintainer(node *parser.Node) (*syntax.Maintainer, error) {
 func convertArg(node *parser.Node) (*syntax.Arg, error) {
 	value := nextValue(node)
 	if value == "" {
-		return nil, errors.New("ARG missing name")
+		return nil, ErrArgMissingName
 	}
 
 	// Parse ARG name or ARG name=value
@@ -471,12 +494,12 @@ func convertOnBuild(node *parser.Node) (*syntax.OnBuild, error) {
 
 	// Remove "ONBUILD " prefix
 	if !strings.HasPrefix(strings.ToUpper(original), "ONBUILD ") {
-		return nil, errors.New("invalid ONBUILD instruction")
+		return nil, ErrInvalidOnBuild
 	}
 
 	innerText := strings.TrimSpace(original[8:]) // len("ONBUILD ") = 8
 	if innerText == "" {
-		return nil, errors.New("ONBUILD missing instruction")
+		return nil, ErrOnBuildMissingInstruction
 	}
 
 	// Parse the inner instruction as a complete Dockerfile
@@ -486,7 +509,7 @@ func convertOnBuild(node *parser.Node) (*syntax.OnBuild, error) {
 	}
 
 	if len(innerResult.AST.Children) == 0 {
-		return nil, errors.New("ONBUILD has no inner instruction")
+		return nil, ErrOnBuildNoInnerInstruction
 	}
 
 	// Convert the first (and only) child instruction

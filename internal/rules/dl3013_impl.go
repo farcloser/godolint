@@ -169,6 +169,7 @@ func isPipVersionFixed(pkg string) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var pipVersionSymbols = []string{"==", ">=", "<=", ">", "<", "!=", "~=", "==="}
 
 func hasVersionSymbol(pkg string) bool {
@@ -181,6 +182,7 @@ func hasVersionSymbol(pkg string) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var pipVcsSchemes = []string{
 	"git+file", "git+https", "git+ssh", "git+http", "git+git", "git",
 	"hg+file", "hg+http", "hg+https", "hg+ssh", "hg+static-http",
@@ -202,6 +204,7 @@ func isVersionedVcs(pkg string) bool {
 	return isVcs(pkg) && strings.Contains(pkg, "@")
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var pipLocalPackageExtensions = []string{".whl", ".tar.gz"}
 
 func isLocalPackage(pkg string) bool {

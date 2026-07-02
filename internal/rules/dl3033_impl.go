@@ -54,7 +54,7 @@ func getYumPackages(parsed *shell.ParsedShell) []string {
 
 	for _, cmd := range parsed.PresentCommands {
 		// Skip yum module commands
-		if shell.CmdHasArgs("yum", []string{"module"}, cmd) {
+		if shell.CmdHasArgs(yumCommand, []string{"module"}, cmd) {
 			continue
 		}
 
@@ -70,7 +70,7 @@ func getYumModules(parsed *shell.ParsedShell) []string {
 
 	for _, cmd := range parsed.PresentCommands {
 		// Only yum module commands
-		if !shell.CmdHasArgs("yum", []string{"module"}, cmd) {
+		if !shell.CmdHasArgs(yumCommand, []string{"module"}, cmd) {
 			continue
 		}
 
@@ -83,7 +83,7 @@ func getYumModules(parsed *shell.ParsedShell) []string {
 
 func yumInstallFilter(cmd shell.Command) []string {
 	// Must be yum install
-	if !shell.CmdHasArgs("yum", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs(yumCommand, []string{"install"}, cmd) {
 		return nil
 	}
 

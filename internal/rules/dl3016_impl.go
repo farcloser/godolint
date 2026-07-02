@@ -139,6 +139,7 @@ func isNpmVersionFixed(pkg string) bool {
 	return hasNpmVersionSymbol(pkg)
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var npmGitPrefixes = []string{"git://", "git+ssh://", "git+http://", "git+https://"}
 
 func hasNpmGitPrefix(pkg string) bool {
@@ -151,6 +152,7 @@ func hasNpmGitPrefix(pkg string) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var npmTarballSuffixes = []string{".tar", ".tar.gz", ".tgz"}
 
 func hasNpmTarballSuffix(pkg string) bool {
@@ -163,6 +165,7 @@ func hasNpmTarballSuffix(pkg string) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var npmPathPrefixes = []string{"/", "./", "../", "~/"}
 
 func isNpmFolder(pkg string) bool {
