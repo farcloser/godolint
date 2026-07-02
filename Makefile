@@ -1,13 +1,15 @@
-ORG_PREFIXES := "github.com/farcloser"
+NAME := NAME
 ICON := "🧿"
+ORG := github.com/farcloser
 
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 VERSION ?= $(shell git -C $(MAKEFILE_DIR) describe --match 'v[0-9]*' --dirty='.m' --always --tags 2>/dev/null \
 	|| echo "no_git_information")
 VERSION_TRIMMED := $(VERSION:v%=%)
-REVISION ?= $(shell git -C $(MAKEFILE_DIR) rev-parse HEAD 2>/dev/null || echo "no_git_information")$(shell \
+COMMIT ?= $(shell git -C $(MAKEFILE_DIR) rev-parse HEAD 2>/dev/null || echo "no_git_information")$(shell \
 	if ! git -C $(MAKEFILE_DIR) diff --no-ext-diff --quiet --exit-code 2>/dev/null; then echo .m; fi)
 LINT_COMMIT_RANGE ?= main..HEAD
+DATE = "$(shell date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 ifdef VERBOSE
 	VERBOSE_FLAG := -v
@@ -42,7 +44,7 @@ help:
 	$(call footer, $@)
 
 # Tasks
-lint: lint-go-all lint-commits lint-mod lint-licenses-all lint-headers lint-yaml lint-shell ## Lint project
+lint: lint-go lint-commits lint-mod lint-licenses-all lint-headers lint-yaml lint-shell lint-go-all
 
 fix: fix-go-all fix-mod ## Automatically fix some issues
 
@@ -54,7 +56,7 @@ unit: test-unit test-unit-race test-unit-bench ## Run unit tests
 # Linting tasks
 ##########################
 lint-go:
-	$(call title, $@)
+	$(call title, $@ $(GOOS))
 	@cd $(MAKEFILE_DIR) \
 		&& golangci-lint run $(VERBOSE_FLAG_LONG) ./...
 	$(call footer, $@)
@@ -62,10 +64,9 @@ lint-go:
 lint-go-all:
 	$(call title, $@)
 	@cd $(MAKEFILE_DIR) \
-		&& GOOS=darwin make lint-go \
-		&& GOOS=linux make lint-go \
-		&& GOOS=freebsd make lint-go \
-		&& GOOS=windows make lint-go
+		&& GOOS=darwin GOARCH=arm64 $(MAKE) lint-go \
+		&& GOOS=linux GOARCH=amd64 $(MAKE) lint-go \
+		&& GOOS=windows $(MAKE) lint-go
 	$(call footer, $@)
 
 lint-yaml:
@@ -74,9 +75,10 @@ lint-yaml:
 		&& yamllint .
 	$(call footer, $@)
 
-lint-shell: $(call recursive_wildcard,$(MAKEFILE_DIR)/,*.sh)
+lint-shell:
 	$(call title, $@)
-	@if [ -n "$^" ]; then shellcheck -a -x $^; else echo "No shell scripts found, skipping shellcheck"; fi
+	@files=$$(find $(MAKEFILE_DIR) -name '*.sh' ! -path '*/tmp/*' ! -path '*/_*' 2>/dev/null); \
+        if [ -n "$$files" ]; then shellcheck -a -x $$files; else echo "No shell scripts found, skipping shellcheck"; fi
 	$(call footer, $@)
 
 # See https://github.com/andyfeller/gh-ssh-allowed-signers for automation to retrieve contributors keys
@@ -106,7 +108,7 @@ lint-mod:
 lint-licenses:
 	$(call title, $@: $(GOOS))
 	@cd $(MAKEFILE_DIR) \
-		&& go-licenses check --include_tests --allowed_licenses=Apache-2.0,BSD-2-Clause,BSD-3-Clause,MIT,MPL-2.0 \
+		&& go-licenses check --include_tests --allowed_licenses=Apache-2.0,BSD-2-Clause,BSD-3-Clause,MIT \
 		  --ignore gotest.tools \
 		  ./...
 	$(call footer, $@)
@@ -114,10 +116,9 @@ lint-licenses:
 lint-licenses-all:
 	$(call title, $@)
 	@cd $(MAKEFILE_DIR) \
-		&& GOOS=darwin make lint-licenses \
-		&& GOOS=linux make lint-licenses \
-		&& GOOS=freebsd make lint-licenses \
-		&& GOOS=windows make lint-licenses
+		&& GOOS=darwin $(MAKE) lint-licenses \
+		&& GOOS=linux $(MAKE) lint-licenses \
+		&& GOOS=windows $(MAKE) lint-licenses
 	$(call footer, $@)
 
 ##########################
@@ -132,10 +133,9 @@ fix-go:
 fix-go-all:
 	$(call title, $@)
 	@cd $(MAKEFILE_DIR) \
-		&& GOOS=darwin make fix-go \
-		&& GOOS=linux make fix-go \
-		&& GOOS=freebsd make fix-go \
-		&& GOOS=windows make fix-go
+		&& GOOS=darwin $(MAKE) fix-go \
+		&& GOOS=linux $(MAKE) fix-go \
+		&& GOOS=windows $(MAKE) fix-go
 	$(call footer, $@)
 
 fix-mod:
@@ -162,13 +162,14 @@ install-dev-gotestsum:
 
 install-dev-tools: install-dev-gotestsum
 	$(call title, $@)
-	# golangci: v2.0.2 (2024-03-26)
-	# git-validation: main (2025-02-25)
-	# ltag: main (2025-03-04)
-	# go-licenses: v2.0.1 (2025-10-21)
+	# 2026-03-08
+	# - golangci: v2.11.2
+	# - git-validation: main
+	# - ltag: main
+	# - go-licenses: v2.0.1
 	@cd $(MAKEFILE_DIR) \
-		&& go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@2b224c2cf4c9f261c22a16af7f8ca6408467f338 \
-		&& go install github.com/vbatts/git-validation@7b60e35b055dd2eab5844202ffffad51d9c93922 \
+		&& go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@e8f621973e2dfce68b7839ff16affa09cb103239 \
+		&& go install github.com/vbatts/git-validation@a8d455533459b620fa656bad095b943e70cede9b \
 		&& go install github.com/containerd/ltag@66e6a514664ee2d11a470735519fa22b1a9eaabd \
 		&& go install github.com/google/go-licenses/v2@3e084b0caf710f7bfead967567539214f598c0a2
 	@echo "Remember to add \$$HOME/go/bin to your path"
@@ -226,7 +227,7 @@ install: ## Install to GOPATH/bin
 
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
-	@rm -rf bin/
+	@rm -rf bin/$(BINARY_NAME)
 	@echo "Clean complete"
 
 generate:

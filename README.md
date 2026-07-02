@@ -19,7 +19,7 @@ godolint is a pure go port of hadolint, filling an age-old gap in the container 
 the ability to lint dockerfiles in go.
 
 It comes with an example binary that does mimic a small subset of the hadolint binary behavior,
-and can also be used (of course, and primarily) as a library in golang projects.
+and can also be used (of course, and primarily) as a library in Go projects.
 
 (*) see [Why?](#why) section below for more details
 
