@@ -259,7 +259,7 @@ func canGenerateImplementation(haskellCheck string) bool {
 func mapSeverity(haskellSeverity string) string {
 	// The explicit DLWarningC case documents the hadolint mapping; Warning is
 	// also the fallback for unknown severities, so default mirrors it on purpose.
-	//nolint:revive // identical-switch-branches: intentional, see above.
+	//revive:disable:identical-switch-branches intentional, see above.
 	switch haskellSeverity {
 	case "DLErrorC":
 		return "rule.Error"
