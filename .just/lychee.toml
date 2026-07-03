@@ -1,0 +1,14 @@
+# DO NOT EDIT MANUALLY.
+# Canonical lychee (link checker) configuration, identical in every repository.
+# A repository can add its own exclusions in a root lychee.toml — the `lint links`
+# recipe passes both files and lychee merges them, concatenating the exclude
+# lists — so this baseline only carries exclusions that apply everywhere.
+
+exclude = [
+  # fsf.org: verbatim (A)GPL license texts link to it, and its server (TLS 1.2
+  # with DHE-only key exchange) cannot complete a handshake with lychee's
+  # rustls, which implements neither. The links themselves are fine.
+  # gnu.org: rate-limits aggressively, so the license-text links to it fail
+  # intermittently.
+  'https?://(www\.)?(fsf|gnu)\.org(/|$)',
+]

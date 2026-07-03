@@ -199,10 +199,10 @@ linters:
   settings:
     govet:
       enable:
-        # Struct fields ordered to minimize padding waste. Off by default in
-        # vet; reordering is safe for us — nothing relies on field order or
-        # memory layout (JSON marshals by name).
-        # - fieldalignment
+      # Struct fields ordered to minimize padding waste. Off by default in
+      # vet; reordering is safe for us — nothing relies on field order or
+      # memory layout (JSON marshals by name).
+      # - fieldalignment
     # Note: default, no changes
     errorlint:
       # Disable err==target → errors.Is(err, target) auto-rewrite. The fixer
@@ -251,32 +251,32 @@ linters:
         - assign-exclusive # Only allow cuddling new OR existing variables, not both
         - assign-expr # Don't allow assignments cuddled with expressions
 
-#    forbidigo:
-#      forbid:
-#        - pattern: '^fmt\.Print(ln|f)?$'
-#          msg: "use structured logging instead"
-#        - pattern: '^os\.ReadFile$'
-#          msg: "use xos.ReadFile instead"
-#        - pattern: '^os\.ReadDir$'
-#          msg: "use xos.ReadDir instead"
-#        - pattern: '^os\.WriteFile$'
-#          msg: "use filesystem.WriteFile instead"
-#        - pattern: '^os\.Stat$'
-#          msg: "use xos.Stat instead"
-#        - pattern: '^os\.Open$'
-#          msg: "use xos.Open instead"
-#        - pattern: '^os\.OpenFile$'
-#          msg: "use xos.OpenFile instead"
-#        - pattern: '^os\.Create$'
-#          msg: "use xos.OpenFile instead"
-#        - pattern: '^os\.CreateTemp$'
-#          msg: "use xos.CreateTemp instead"
-#        - pattern: '^os\.MkdirTemp$'
-#          msg: "use xos.MkdirTemp instead"
-#        - pattern: '^os\.Truncate$'
-#          msg: "use xos.Truncate instead"
-#        - pattern: '^os\.UserHomeDir$'
-#          msg: "use filesystem.HomeDir instead"
+      #    forbidigo:
+      #      forbid:
+      #        - pattern: '^fmt\.Print(ln|f)?$'
+      #          msg: "use structured logging instead"
+      #        - pattern: '^os\.ReadFile$'
+      #          msg: "use xos.ReadFile instead"
+      #        - pattern: '^os\.ReadDir$'
+      #          msg: "use xos.ReadDir instead"
+      #        - pattern: '^os\.WriteFile$'
+      #          msg: "use filesystem.WriteFile instead"
+      #        - pattern: '^os\.Stat$'
+      #          msg: "use xos.Stat instead"
+      #        - pattern: '^os\.Open$'
+      #          msg: "use xos.Open instead"
+      #        - pattern: '^os\.OpenFile$'
+      #          msg: "use xos.OpenFile instead"
+      #        - pattern: '^os\.Create$'
+      #          msg: "use xos.OpenFile instead"
+      #        - pattern: '^os\.CreateTemp$'
+      #          msg: "use xos.CreateTemp instead"
+      #        - pattern: '^os\.MkdirTemp$'
+      #          msg: "use xos.MkdirTemp instead"
+      #        - pattern: '^os\.Truncate$'
+      #          msg: "use xos.Truncate instead"
+      #        - pattern: '^os\.UserHomeDir$'
+      #          msg: "use filesystem.HomeDir instead"
 
       exclude-godoc-examples: true
       analyze-types: true

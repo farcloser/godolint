@@ -11,7 +11,6 @@ require (
 
 require (
 	github.com/containerd/typeurl/v2 v2.3.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

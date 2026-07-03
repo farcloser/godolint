@@ -159,7 +159,7 @@ func (*Linter) LintFile(_ context.Context, _ string) (*Result, error) {
 func convertSeverity(s rule.Severity) Severity {
 	// Info is also the deliberate fallback for severities this switch does not
 	// know, so the default branch intentionally mirrors the Info case.
-	//nolint:revive // identical-switch-branches: intentional, see above.
+	//revive:disable:identical-switch-branches intentional, see above.
 	switch s {
 	case rule.Error:
 		return SeverityError
