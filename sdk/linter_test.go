@@ -2,6 +2,7 @@ package sdk_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/farcloser/godolint/sdk"
@@ -94,8 +95,8 @@ func TestLinter_Lint_ContextCancellation(t *testing.T) {
 	cancel() // Cancel immediately
 
 	linter := sdk.New()
-	result, err := linter.Lint(ctx, dockerfile)
 
+	result, err := linter.Lint(ctx, dockerfile)
 	if err == nil {
 		t.Error("Lint() with canceled context returned nil error, want context.Canceled")
 	}
@@ -387,7 +388,8 @@ func AsError(err error, target any) bool {
 	}
 	// Simple type assertion for *sdk.ParseError
 	if parseErr, ok := target.(**sdk.ParseError); ok {
-		if pe, ok := err.(*sdk.ParseError); ok {
+		pe := &sdk.ParseError{}
+		if errors.As(err, &pe) {
 			*parseErr = pe
 
 			return true

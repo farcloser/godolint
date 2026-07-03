@@ -15,7 +15,7 @@ func DL4001() rule.Rule {
 type DL4001Rule struct{}
 
 // Code returns the rule code.
-func (*DL4001Rule) Code() rule.RuleCode {
+func (*DL4001Rule) Code() rule.Code {
 	return DL4001Meta.Code
 }
 
@@ -41,10 +41,7 @@ type dl4001State struct {
 
 // Check detects if both wget and curl are used in the same Dockerfile.
 func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	var currentState dl4001State
-	if state.Data != nil {
-		currentState = state.Data.(dl4001State)
-	}
+	currentState := rule.Data[dl4001State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:
@@ -67,6 +64,8 @@ func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instru
 				newCurl = true
 			case "wget":
 				newWget = true
+			default:
+				// Other commands are irrelevant to this rule.
 			}
 		}
 

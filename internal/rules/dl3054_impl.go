@@ -29,7 +29,7 @@ func DL3054WithConfig(cfg *config.Config) rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3054Rule) Code() rule.RuleCode {
+func (*DL3054Rule) Code() rule.Code {
 	return DL3054Meta.Code
 }
 

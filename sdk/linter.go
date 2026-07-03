@@ -49,13 +49,37 @@ func WithDisabledRules(codes ...string) Option {
 	}
 }
 
+// shellcheckConfig collects the shellcheck integration settings.
+type shellcheckConfig struct {
+	rcFile string
+}
+
+// ShellcheckOption configures the shellcheck integration enabled by WithShellcheck.
+type ShellcheckOption func(*shellcheckConfig)
+
+// WithShellcheckRCFile makes shellcheck use the given configuration file
+// (forwarded as --rcfile, requires shellcheck >= 0.10.0). Without it,
+// shellcheck never sees a repository's .shellcheckrc: the checked script runs
+// from a temp dir, outside the rcfile search path.
+func WithShellcheckRCFile(path string) ShellcheckOption {
+	return func(c *shellcheckConfig) {
+		c.rcFile = path
+	}
+}
+
 // WithShellcheck enables shellcheck integration for RUN instruction validation.
 // Requires the shellcheck binary to be available in PATH.
-func WithShellcheck() Option {
-	return func(l *Linter) {
+func WithShellcheck(scOpts ...ShellcheckOption) Option {
+	return func(linter *Linter) {
+		cfg := shellcheckConfig{}
+		for _, opt := range scOpts {
+			opt(&cfg)
+		}
+
 		checker := shell.NewBinaryShellchecker()
+		checker.RCFile = cfg.rcFile
 		scRule := shell.NewShellcheckRule(checker)
-		l.rules = append(l.rules, scRule)
+		linter.rules = append(linter.rules, scRule)
 	}
 }
 
@@ -80,6 +104,9 @@ func (l *Linter) Lint(ctx context.Context, dockerfile []byte) (*Result, error) {
 	// Check context cancellation before parsing
 	select {
 	case <-ctx.Done():
+		// context.Canceled/DeadlineExceeded are already the canonical
+		// sentinels: callers match them with errors.Is, like the stdlib.
+		//nolint:wrapcheck // bare ctx.Err() is the idiomatic cancellation contract.
 		return nil, ctx.Err()
 	default:
 	}
@@ -93,6 +120,7 @@ func (l *Linter) Lint(ctx context.Context, dockerfile []byte) (*Result, error) {
 	// Check context cancellation before processing
 	select {
 	case <-ctx.Done():
+		//nolint:wrapcheck // bare ctx.Err(), see the pre-parse check above.
 		return nil, ctx.Err()
 	default:
 	}
@@ -121,7 +149,7 @@ func (l *Linter) Lint(ctx context.Context, dockerfile []byte) (*Result, error) {
 }
 
 // LintFile is a convenience method that reads and lints a Dockerfile from a file path.
-func (*Linter) LintFile(ctx context.Context, path string) (*Result, error) {
+func (*Linter) LintFile(_ context.Context, _ string) (*Result, error) {
 	// Note: This would require os.ReadFile, but for now we keep the API surface simple
 	// and let users read files themselves. This avoids adding file I/O concerns to the linter.
 	// If we add this, we should also handle context cancellation properly.
@@ -129,6 +157,9 @@ func (*Linter) LintFile(ctx context.Context, path string) (*Result, error) {
 }
 
 func convertSeverity(s rule.Severity) Severity {
+	// Info is also the deliberate fallback for severities this switch does not
+	// know, so the default branch intentionally mirrors the Info case.
+	//nolint:revive // identical-switch-branches: intentional, see above.
 	switch s {
 	case rule.Error:
 		return SeverityError
@@ -138,6 +169,10 @@ func convertSeverity(s rule.Severity) Severity {
 		return SeverityInfo
 	case rule.Style:
 		return SeverityStyle
+	case rule.Ignore:
+		// Unreachable in practice: the processor filters Ignore-severity
+		// failures before they reach the SDK conversion.
+		return SeverityInfo
 	default:
 		return SeverityInfo
 	}

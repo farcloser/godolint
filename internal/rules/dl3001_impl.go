@@ -16,6 +16,7 @@ func DL3001() rule.Rule {
 	)
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var invalidCommands = map[string]bool{
 	"free":     true,
 	"kill":     true,

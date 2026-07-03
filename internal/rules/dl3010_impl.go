@@ -23,7 +23,7 @@ func DL3010() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3010Rule) Code() rule.RuleCode {
+func (*DL3010Rule) Code() rule.Code {
 	return DL3010Meta.Code
 }
 
@@ -45,8 +45,10 @@ func (*DL3010Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL3010Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3010State)
+// Check tracks COPYed archives and flags those later extracted by RUN
+// instead of being extracted directly by ADD.
+func (*DL3010Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl3010State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:
@@ -62,18 +64,18 @@ func (r *DL3010Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 		// If destination looks like an archive file, track its basename
 		if isArchive(destBase) {
-			s.archives[destBase] = line
+			currentState.archives[destBase] = line
 		} else {
 			// If destination is a directory, track source basenames
 			for _, src := range inst.Source {
 				srcBase := basename(src)
 				if isArchive(srcBase) {
-					s.archives[srcBase] = line
+					currentState.archives[srcBase] = line
 				}
 			}
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Run:
 		parsed, err := shell.ParseShell(inst.Command)
@@ -87,14 +89,14 @@ func (r *DL3010Rule) Check(line int, state rule.State, instruction syntax.Instru
 				args := shell.GetArgsNoFlags(cmd)
 				for _, arg := range args {
 					base := basename(arg)
-					if _, tracked := s.archives[base]; tracked {
-						s.extracted[base] = s.archives[base] // Store original COPY line
+					if _, tracked := currentState.archives[base]; tracked {
+						currentState.extracted[base] = currentState.archives[base] // Store original COPY line
 					}
 				}
 			}
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	return state
@@ -102,12 +104,12 @@ func (r *DL3010Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 // Finalize performs final checks after processing all instructions.
 func (*DL3010Rule) Finalize(state rule.State) rule.State {
-	s := state.Data.(dl3010State)
+	currentState := rule.Data[dl3010State](state)
 
 	finalState := state
 
 	// Add failures for all extracted archives
-	for _, line := range s.extracted {
+	for _, line := range currentState.extracted {
 		finalState = finalState.AddFailure(rule.CheckFailure{
 			Code:     DL3010Meta.Code,
 			Severity: DL3010Meta.Severity,
@@ -159,6 +161,7 @@ func isTarExtractCommand(cmd shell.Command) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var unzipCommands = map[string]bool{
 	"unzip":      true,
 	"gunzip":     true,

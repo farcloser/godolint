@@ -23,7 +23,7 @@ func DL3009() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3009Rule) Code() rule.RuleCode {
+func (*DL3009Rule) Code() rule.Code {
 	return DL3009Meta.Code
 }
 
@@ -46,19 +46,21 @@ func (*DL3009Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL3009Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3009State)
+// Check tracks apt-get/apk usage and flags stages that install packages
+// without cleaning the package lists afterwards.
+func (*DL3009Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl3009State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:
 		// Remember new stage
-		s.lastFrom = &inst.Image
-		s.dockerClean = true
+		currentState.lastFrom = &inst.Image
+		currentState.dockerClean = true
 		// Track which image names are referenced by FROM instructions
 		// This is used to detect if a stage (by its alias) is used later
-		s.stages[inst.Image.Image] = line
+		currentState.stages[inst.Image.Image] = line
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Run:
 		parsed, err := shell.ParseShell(inst.Command)
@@ -81,16 +83,16 @@ func (r *DL3009Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 			// Record this line as forgetting cleanup
 			alias := ""
-			if s.lastFrom != nil && s.lastFrom.Alias != nil {
-				alias = *s.lastFrom.Alias
+			if currentState.lastFrom != nil && currentState.lastFrom.Alias != nil {
+				alias = *currentState.lastFrom.Alias
 			}
 
-			s.forgets[line] = alias
+			currentState.forgets[line] = alias
 		} else if disabledDockerClean(parsed) {
-			s.dockerClean = false
+			currentState.dockerClean = false
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	return state
@@ -98,17 +100,17 @@ func (r *DL3009Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 // Finalize performs final checks after processing all instructions.
 func (*DL3009Rule) Finalize(state rule.State) rule.State {
-	s := state.Data.(dl3009State)
+	currentState := rule.Data[dl3009State](state)
 
 	finalState := state
 
 	lastAlias := ""
-	if s.lastFrom != nil && s.lastFrom.Alias != nil {
-		lastAlias = *s.lastFrom.Alias
+	if currentState.lastFrom != nil && currentState.lastFrom.Alias != nil {
+		lastAlias = *currentState.lastFrom.Alias
 	}
 
 	// Add failures for forgets that matter
-	for line, alias := range s.forgets {
+	for line, alias := range currentState.forgets {
 		// Fail if this is the last stage
 		if alias == lastAlias {
 			finalState = finalState.AddFailure(rule.CheckFailure{
@@ -124,7 +126,7 @@ func (*DL3009Rule) Finalize(state rule.State) rule.State {
 
 		// Fail if this stage is used later (alias appears in stages)
 		if alias != "" {
-			if _, used := s.stages[alias]; used {
+			if _, used := currentState.stages[alias]; used {
 				finalState = finalState.AddFailure(rule.CheckFailure{
 					Code:     DL3009Meta.Code,
 					Severity: DL3009Meta.Severity,

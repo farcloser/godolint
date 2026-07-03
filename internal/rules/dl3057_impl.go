@@ -27,7 +27,7 @@ func DL3057() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3057Rule) Code() rule.RuleCode {
+func (*DL3057Rule) Code() rule.Code {
 	return DL3057Meta.Code
 }
 
@@ -50,8 +50,9 @@ func (*DL3057Rule) InitialState() rule.State {
 	})
 }
 
-func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3057State)
+// Check tracks stages and flags images that never declare a HEALTHCHECK.
+func (*DL3057Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	currentState := rule.Data[dl3057State](state)
 
 	switch inst := instruction.(type) {
 	case *syntax.From:
@@ -72,7 +73,7 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 		// Check if this stage inherits from a good stage
 		inherited := false
 
-		for goodStage := range s.goodStages {
+		for goodStage := range currentState.goodStages {
 			if goodStage.name == imageName {
 				inherited = true
 
@@ -82,23 +83,23 @@ func (r *DL3057Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 		if inherited {
 			// Mark as good since it inherits from a good stage
-			s.goodStages[newStage] = true
+			currentState.goodStages[newStage] = true
 		} else {
 			// Mark as bad for now (can be updated if HEALTHCHECK found)
-			s.badStages[newStage] = true
+			currentState.badStages[newStage] = true
 		}
 
-		s.currentStage = &newStage
+		currentState.currentStage = &newStage
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 
 	case *syntax.Healthcheck:
 		// Mark current stage and all its ancestors as good
-		if s.currentStage != nil {
-			s = markGood(s, *s.currentStage)
+		if currentState.currentStage != nil {
+			currentState = markGood(currentState, *currentState.currentStage)
 		}
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	return state
@@ -140,10 +141,10 @@ func findAncestors(state dl3057State, stage stageID) map[stageID]bool {
 
 // Finalize performs final checks after processing all instructions.
 func (*DL3057Rule) Finalize(state rule.State) rule.State {
-	s := state.Data.(dl3057State)
+	currentState := rule.Data[dl3057State](state)
 
 	// Report failures for all bad stages
-	for badStage := range s.badStages {
+	for badStage := range currentState.badStages {
 		state = state.AddFailure(rule.CheckFailure{
 			Code:     DL3057Meta.Code,
 			Severity: DL3057Meta.Severity,

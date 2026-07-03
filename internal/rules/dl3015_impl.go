@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
@@ -28,13 +30,7 @@ func checkDL3015(instruction syntax.Instruction) bool {
 	}
 
 	// Check if any command is apt-get install without --no-install-recommends
-	for _, cmd := range parsed.PresentCommands {
-		if forgotNoInstallRecommends(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotNoInstallRecommends)
 }
 
 func forgotNoInstallRecommends(cmd shell.Command) bool {

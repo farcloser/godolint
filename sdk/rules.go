@@ -97,6 +97,9 @@ const (
 func GetRuleSet(set RuleSet) []rule.Rule {
 	all := AllRules()
 
+	// The explicit Strict/All cases document the mapping; every other (invalid)
+	// value also falls back to the full set, so default mirrors them on purpose.
+	//nolint:revive // identical-switch-branches: intentional, see above.
 	switch set {
 	case RuleSetRecommended:
 		// Filter to Error and Warning severity only

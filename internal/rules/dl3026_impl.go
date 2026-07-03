@@ -15,6 +15,7 @@ type dl3026State struct {
 // DL3026Rule checks for allowed registries.
 type DL3026Rule struct {
 	rule.StatefulRuleBase
+
 	allowedRegistries []string // Empty means all registries allowed
 }
 
@@ -36,7 +37,7 @@ func (*DL3026Rule) InitialState() rule.State {
 
 // Check validates that FROM uses unique stage aliases.
 func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3026State)
+	currentState := rule.Data[dl3026State](state)
 
 	from, ok := instruction.(*syntax.From)
 	if !ok {
@@ -45,7 +46,7 @@ func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instru
 
 	// Track alias
 	if from.Image.Alias != nil {
-		s.aliases[*from.Image.Alias] = true
+		currentState.aliases[*from.Image.Alias] = true
 	}
 
 	// Check if image is allowed
@@ -53,18 +54,18 @@ func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instru
 	registry := extractRegistry(imageName)
 
 	// Check if this is a reference to a previous stage
-	if s.aliases[imageName] {
-		return state.ReplaceData(s)
+	if currentState.aliases[imageName] {
+		return state.ReplaceData(currentState)
 	}
 
 	// If no registries are configured, all are allowed
 	if len(r.allowedRegistries) == 0 {
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	// Special case: scratch is always allowed
 	if imageName == "scratch" {
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	// Check if registry is in allowlist
@@ -78,15 +79,15 @@ func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instru
 		})
 	}
 
-	return state.ReplaceData(s)
+	return state.ReplaceData(currentState)
 }
 
 // extractRegistry extracts the registry from an image name.
 // If no registry is specified, defaults to docker.io.
 func extractRegistry(imageName string) string {
 	// If image contains /, check if first part is a registry
-	if idx := strings.Index(imageName, "/"); idx != -1 {
-		firstPart := imageName[:idx]
+	if before, _, ok := strings.Cut(imageName, "/"); ok {
+		firstPart := before
 		// If first part contains a . or :, it's likely a registry
 		if strings.Contains(firstPart, ".") || strings.Contains(firstPart, ":") {
 			return firstPart
@@ -123,8 +124,8 @@ func matchRegistry(allowed, registry string) bool {
 	}
 
 	// Wildcard prefix: example.*
-	if strings.HasSuffix(allowed, ".*") {
-		prefix := strings.TrimSuffix(allowed, ".*")
+	if before, ok := strings.CutSuffix(allowed, ".*"); ok {
+		prefix := before
 
 		return strings.HasPrefix(registry, prefix)
 	}

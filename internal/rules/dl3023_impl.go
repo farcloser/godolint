@@ -15,7 +15,7 @@ func DL3023() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3023Rule) Code() rule.RuleCode {
+func (*DL3023Rule) Code() rule.Code {
 	return DL3023Meta.Code
 }
 
@@ -37,7 +37,7 @@ func (*DL3023Rule) InitialState() rule.State {
 // Check tracks current stage alias and validates COPY --from doesn't self-reference.
 // Ported from the check function in DL3023.hs.
 func (*DL3023Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	currentAlias := state.Data.(string)
+	currentAlias := rule.Data[string](state)
 
 	// Remember current FROM alias
 	if from, ok := instruction.(*syntax.From); ok {
@@ -49,9 +49,9 @@ func (*DL3023Rule) Check(line int, state rule.State, instruction syntax.Instruct
 	}
 
 	// Check COPY --from doesn't reference current stage
-	if copy, ok := instruction.(*syntax.Copy); ok {
-		if copy.From != nil && currentAlias != "" {
-			if *copy.From == currentAlias {
+	if copyInstr, ok := instruction.(*syntax.Copy); ok {
+		if copyInstr.From != nil && currentAlias != "" {
+			if *copyInstr.From == currentAlias {
 				// Self-reference - fail
 				return state.AddFailure(rule.CheckFailure{
 					Code:     DL3023Meta.Code,

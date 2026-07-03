@@ -40,6 +40,7 @@ func checkDL3062(instruction syntax.Instruction) bool {
 	return true
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var goCommands = []string{"install", "get", "run"}
 
 func getGoPackages(parsed *shell.ParsedShell) []string {

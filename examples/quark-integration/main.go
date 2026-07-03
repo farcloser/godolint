@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -23,6 +24,7 @@ func main() {
 	dockerfilePath := os.Args[1]
 
 	// Read Dockerfile
+	//nolint:gosec // G304: reading the user-supplied Dockerfile path is this example's purpose.
 	content, err := os.ReadFile(dockerfilePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to read Dockerfile: %v\n", err)
@@ -38,7 +40,8 @@ func main() {
 	result, err := linter.Lint(ctx, content)
 	if err != nil {
 		// Check for parse errors
-		if parseErr, ok := err.(*sdk.ParseError); ok {
+		parseErr := &sdk.ParseError{}
+		if errors.As(err, &parseErr) {
 			fmt.Fprintf(os.Stderr, "Failed to parse Dockerfile: %v\n", parseErr)
 			os.Exit(1)
 		}

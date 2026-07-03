@@ -15,7 +15,7 @@ func DL3061() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3061Rule) Code() rule.RuleCode {
+func (*DL3061Rule) Code() rule.Code {
 	return DL3061Meta.Code
 }
 
@@ -37,7 +37,7 @@ func (*DL3061Rule) InitialState() rule.State {
 // Check ensures Dockerfile starts with FROM, ARG, or comment.
 // Ported from the check function in DL3061.hs.
 func (*DL3061Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	seenFrom := state.Data.(bool)
+	seenFrom := rule.Data[bool](state)
 
 	// Once we've seen FROM, everything is OK
 	if seenFrom {

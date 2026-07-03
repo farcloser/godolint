@@ -29,7 +29,7 @@ func DL3055WithConfig(cfg *config.Config) rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3055Rule) Code() rule.RuleCode {
+func (*DL3055Rule) Code() rule.Code {
 	return DL3055Meta.Code
 }
 
@@ -82,10 +82,16 @@ func (*DL3055Rule) Finalize(state rule.State) rule.State {
 	return state
 }
 
+// Git hash lengths: abbreviated (short) and full SHA-1.
+const (
+	shortGitHashLength = 7
+	fullGitHashLength  = 40
+)
+
 // isValidGitHash checks if a string is a valid git hash.
 // Valid git hash: 7 or 40 hexadecimal characters.
 func isValidGitHash(hash string) bool {
-	if len(hash) != 7 && len(hash) != 40 {
+	if len(hash) != shortGitHashLength && len(hash) != fullGitHashLength {
 		return false
 	}
 

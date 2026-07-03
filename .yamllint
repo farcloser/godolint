@@ -11,3 +11,7 @@ rules:
   comments-indentation: disable
   document-start: disable
   line-length: disable
+
+ignore: |
+  tmp
+  _

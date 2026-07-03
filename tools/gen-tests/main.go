@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 	"text/template"
 )
@@ -49,6 +49,7 @@ var (
 func main() {
 	if len(os.Args) != 2 {
 		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s <hadolint-test-dir>\n", os.Args[0])
+
 		os.Exit(1)
 	}
 
@@ -60,11 +61,13 @@ func main() {
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to glob tests: %v\n", err)
+
 		os.Exit(1)
 	}
 
 	if len(files) == 0 {
 		_, _ = fmt.Fprintf(os.Stderr, "No test files found in %s\n", hadolintTestDir)
+
 		os.Exit(1)
 	}
 
@@ -91,7 +94,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("# Hadolint Test Generation\n\n")
+	fmt.Print("# Hadolint Test Generation\n\n")
 	fmt.Printf("Total test files parsed: %d\n", len(files))
 	fmt.Printf("Total test cases extracted: %d\n", totalTests)
 	fmt.Printf("Rules with tests: %d\n\n", len(allTests))
@@ -107,7 +110,7 @@ func main() {
 	}
 
 	// Sort for consistent output
-	sort.Strings(implementedRules)
+	slices.Sort(implementedRules)
 
 	fmt.Printf("Detected %d implemented rules\n\n", len(implementedRules))
 
@@ -124,7 +127,8 @@ func main() {
 
 		config := allConfigs[ruleCode] // May be nil if no config found
 
-		if err := generateTestFile(ruleCode, cases, config); err != nil {
+		err := generateTestFile(ruleCode, cases, config)
+		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Error generating tests for %s: %v\n", ruleCode, err)
 		} else {
 			fmt.Printf("Generated tests for %s (%d cases)\n", ruleCode, len(cases))
@@ -430,13 +434,13 @@ func parseMultilineTests(text string) []TestCase {
 			foundInDo := false
 			inDoLineIndex := -1
 
-			for j := idx + 2; j < len(lines) && j < idx+20; j++ {
-				currentLine := lines[j]
+			for lineIndex := idx + 2; lineIndex < len(lines) && lineIndex < idx+20; lineIndex++ {
+				currentLine := lines[lineIndex]
 
 				// Look for "in do" pattern (standalone or inline)
 				if inDoPattern.MatchString(currentLine) {
 					foundInDo = true
-					inDoLineIndex = j
+					inDoLineIndex = lineIndex
 
 					break
 				}
@@ -445,7 +449,7 @@ func parseMultilineTests(text string) []TestCase {
 				inlineMatch := inDoInlinePattern.FindStringSubmatch(currentLine)
 				if inlineMatch != nil {
 					foundInDo = true
-					inDoLineIndex = j
+					inDoLineIndex = lineIndex
 
 					// Parse the inline assertion immediately
 					shouldFail := inlineMatch[2] == "ruleCatches"
@@ -467,8 +471,8 @@ func parseMultilineTests(text string) []TestCase {
 				baseIndent := len(lines[inDoLineIndex]) - len(strings.TrimLeft(lines[inDoLineIndex], " "))
 				assertionCount := 0
 
-				for j := inDoLineIndex + 1; j < len(lines) && j < inDoLineIndex+20; j++ {
-					currentLine := lines[j]
+				for lineIndex := inDoLineIndex + 1; lineIndex < len(lines) && lineIndex < inDoLineIndex+20; lineIndex++ {
+					currentLine := lines[lineIndex]
 
 					if strings.TrimSpace(currentLine) == "" {
 						continue
@@ -476,7 +480,7 @@ func parseMultilineTests(text string) []TestCase {
 
 					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
 					if currentIndent <= baseIndent {
-						idx = j - 1
+						idx = lineIndex - 1
 
 						break
 					}
@@ -520,8 +524,8 @@ func parseMultilineTests(text string) []TestCase {
 		foundInDo := false
 		inDoLineIndex := -1
 
-		for j := idx + 1; j < len(lines) && j < idx+50; j++ {
-			currentLine := lines[j]
+		for scanIndex := idx + 1; scanIndex < len(lines) && scanIndex < idx+50; scanIndex++ {
+			currentLine := lines[scanIndex]
 
 			// Check for terminating patterns FIRST (before extracting quotes)
 			// to avoid including rule codes in Dockerfile content
@@ -529,7 +533,7 @@ func parseMultilineTests(text string) []TestCase {
 			// Look for "in do" pattern (standalone)
 			if inDoPattern.MatchString(currentLine) {
 				foundInDo = true
-				inDoLineIndex = j
+				inDoLineIndex = scanIndex
 
 				break
 			}
@@ -538,7 +542,7 @@ func parseMultilineTests(text string) []TestCase {
 			inlineMatch := inDoInlinePattern.FindStringSubmatch(currentLine)
 			if inlineMatch != nil {
 				foundInDo = true
-				inDoLineIndex = j
+				inDoLineIndex = scanIndex
 
 				break
 			}
@@ -558,7 +562,7 @@ func parseMultilineTests(text string) []TestCase {
 					})
 				}
 
-				idx = j
+				idx = scanIndex
 
 				break
 			}
@@ -599,8 +603,8 @@ func parseMultilineTests(text string) []TestCase {
 				baseIndent := len(lines[inDoLineIndex]) - len(strings.TrimLeft(lines[inDoLineIndex], " "))
 				assertionCount := 1
 
-				for j := inDoLineIndex + 1; j < len(lines) && j < inDoLineIndex+20; j++ {
-					currentLine := lines[j]
+				for lineIndex := inDoLineIndex + 1; lineIndex < len(lines) && lineIndex < inDoLineIndex+20; lineIndex++ {
+					currentLine := lines[lineIndex]
 
 					if strings.TrimSpace(currentLine) == "" {
 						continue
@@ -608,7 +612,7 @@ func parseMultilineTests(text string) []TestCase {
 
 					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
 					if currentIndent <= baseIndent {
-						idx = j - 1
+						idx = lineIndex - 1
 
 						break
 					}
@@ -634,8 +638,8 @@ func parseMultilineTests(text string) []TestCase {
 				baseIndent := len(lines[inDoLineIndex]) - len(strings.TrimLeft(lines[inDoLineIndex], " "))
 				assertionCount := 0
 
-				for j := inDoLineIndex + 1; j < len(lines) && j < inDoLineIndex+20; j++ {
-					currentLine := lines[j]
+				for lineIndex := inDoLineIndex + 1; lineIndex < len(lines) && lineIndex < inDoLineIndex+20; lineIndex++ {
+					currentLine := lines[lineIndex]
 
 					// Empty lines are ok
 					if strings.TrimSpace(currentLine) == "" {
@@ -645,7 +649,7 @@ func parseMultilineTests(text string) []TestCase {
 					// Check if we've exited the do block (decreased indentation to base level or less)
 					currentIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " "))
 					if currentIndent <= baseIndent {
-						idx = j - 1
+						idx = lineIndex - 1
 
 						break
 					}
@@ -705,8 +709,8 @@ func goLabelType(haskellType string) string {
 
 func generateTestFile(ruleCode string, cases []TestCase, config *HadolintConfig) error {
 	// Sort test cases by name for consistent output
-	sort.Slice(cases, func(i, j int) bool {
-		return cases[i].Name < cases[j].Name
+	slices.SortFunc(cases, func(left, right TestCase) int {
+		return strings.Compare(left.Name, right.Name)
 	})
 
 	tmpl := `package rules_test

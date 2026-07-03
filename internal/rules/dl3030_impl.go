@@ -1,10 +1,15 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
 )
+
+// yumCommand is the yum package-manager binary, matched by the DL303x rules.
+const yumCommand = "yum"
 
 // DL3030 checks for yum install without -y flag.
 func DL3030() rule.Rule {
@@ -28,13 +33,7 @@ func checkDL3030(instruction syntax.Instruction) bool {
 	}
 
 	// Check all yum install commands
-	for _, cmd := range parsed.PresentCommands {
-		if forgotYumYesOption(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotYumYesOption)
 }
 
 func forgotYumYesOption(cmd shell.Command) bool {
@@ -48,9 +47,9 @@ func forgotYumYesOption(cmd shell.Command) bool {
 }
 
 func isYumInstall(cmd shell.Command) bool {
-	return shell.CmdHasArgs("yum", []string{"install"}, cmd) ||
-		shell.CmdHasArgs("yum", []string{"groupinstall"}, cmd) ||
-		shell.CmdHasArgs("yum", []string{"localinstall"}, cmd)
+	return shell.CmdHasArgs(yumCommand, []string{"install"}, cmd) ||
+		shell.CmdHasArgs(yumCommand, []string{"groupinstall"}, cmd) ||
+		shell.CmdHasArgs(yumCommand, []string{"localinstall"}, cmd)
 }
 
 func hasYumYesOption(cmd shell.Command) bool {

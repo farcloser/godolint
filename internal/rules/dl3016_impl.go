@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -30,13 +31,7 @@ func checkDL3016(instruction syntax.Instruction) bool {
 	}
 
 	// Check all commands for npm install without version pinning
-	for _, cmd := range parsed.PresentCommands {
-		if forgotToPinNpmVersion(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotToPinNpmVersion)
 }
 
 func forgotToPinNpmVersion(cmd shell.Command) bool {
@@ -144,6 +139,7 @@ func isNpmVersionFixed(pkg string) bool {
 	return hasNpmVersionSymbol(pkg)
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var npmGitPrefixes = []string{"git://", "git+ssh://", "git+http://", "git+https://"}
 
 func hasNpmGitPrefix(pkg string) bool {
@@ -156,6 +152,7 @@ func hasNpmGitPrefix(pkg string) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var npmTarballSuffixes = []string{".tar", ".tar.gz", ".tgz"}
 
 func hasNpmTarballSuffix(pkg string) bool {
@@ -168,6 +165,7 @@ func hasNpmTarballSuffix(pkg string) bool {
 	return false
 }
 
+//nolint:gochecknoglobals // read-only lookup table, effectively constant
 var npmPathPrefixes = []string{"/", "./", "../", "~/"}
 
 func isNpmFolder(pkg string) bool {

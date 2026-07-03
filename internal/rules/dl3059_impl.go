@@ -22,7 +22,7 @@ type dl3059State struct {
 }
 
 // Code returns the rule code.
-func (*DL3059Rule) Code() rule.RuleCode {
+func (*DL3059Rule) Code() rule.Code {
 	return DL3059Meta.Code
 }
 
@@ -43,10 +43,7 @@ func (*DL3059Rule) InitialState() rule.State {
 
 // Check detects multiple consecutive RUN instructions.
 func (r *DL3059Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	var prevState dl3059State
-	if state.Data != nil {
-		prevState = state.Data.(dl3059State)
-	}
+	prevState := rule.Data[dl3059State](state)
 
 	switch instr := instruction.(type) {
 	case *syntax.Run:

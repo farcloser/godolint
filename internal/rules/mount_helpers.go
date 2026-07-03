@@ -30,6 +30,8 @@ func hasCacheOrTmpfsMount(flags []string, path string) bool {
 				mountType = value
 			case "target":
 				target = value
+			default:
+				// Other mount options are irrelevant here.
 			}
 		}
 

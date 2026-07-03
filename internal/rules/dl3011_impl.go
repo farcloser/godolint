@@ -8,6 +8,9 @@ import (
 	"github.com/farcloser/godolint/internal/syntax"
 )
 
+// maxPort is the highest valid TCP/UDP port number.
+const maxPort = 65535
+
 // DL3011 creates a rule for checking port ranges are valid.
 func DL3011() rule.Rule {
 	return rule.NewSimpleRule(
@@ -59,7 +62,7 @@ func isValidPortSpec(portSpec string) bool {
 			return false
 		}
 
-		return low >= 0 && low <= 65535 && high >= 0 && high <= 65535
+		return low >= 0 && low <= maxPort && high >= 0 && high <= maxPort
 	}
 
 	// Single port
@@ -68,5 +71,5 @@ func isValidPortSpec(portSpec string) bool {
 		return false
 	}
 
-	return port >= 0 && port <= 65535
+	return port >= 0 && port <= maxPort
 }

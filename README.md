@@ -19,7 +19,7 @@ godolint is a pure go port of hadolint, filling an age-old gap in the container 
 the ability to lint dockerfiles in go.
 
 It comes with an example binary that does mimic a small subset of the hadolint binary behavior,
-and can also be used (of course, and primarily) as a library in golang projects.
+and can also be used (of course, and primarily) as a library in Go projects.
 
 (*) see [Why?](#why) section below for more details
 
@@ -54,6 +54,17 @@ godolint Dockerfile
 #     "Line": 1
 #   }
 # ]
+
+# Ignore specific rules
+godolint --ignore DL3006 --ignore SC2050 Dockerfile
+
+# Disable the shellcheck integration for RUN instructions
+godolint --without-shellcheck Dockerfile
+
+# Point the shellcheck integration at a configuration file — without this,
+# shellcheck never finds a repository's .shellcheckrc, since the checked
+# scripts run from a temp dir (requires shellcheck >= 0.10.0)
+godolint --shellcheck-rcfile .shellcheckrc Dockerfile
 ```
 
 ### SDK Usage
@@ -107,6 +118,9 @@ linter := sdk.New(sdk.WithDisabledRules("DL3007", "DL3008"))
 
 // Enable shellcheck integration
 linter := sdk.New(sdk.WithShellcheck())
+
+// Enable shellcheck integration with a specific configuration file
+linter := sdk.New(sdk.WithShellcheck(sdk.WithShellcheckRCFile(".shellcheckrc")))
 
 // Check for specific severity levels
 if result.HasErrors() {

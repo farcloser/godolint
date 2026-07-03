@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"slices"
+
 	"github.com/farcloser/godolint/internal/rule"
 	"github.com/farcloser/godolint/internal/shell"
 	"github.com/farcloser/godolint/internal/syntax"
@@ -33,13 +35,7 @@ func checkDL3019(instruction syntax.Instruction) bool {
 	}
 
 	// Check if any command is apk add without --no-cache
-	for _, cmd := range parsed.PresentCommands {
-		if forgotApkNoCacheOption(cmd) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(parsed.PresentCommands, forgotApkNoCacheOption)
 }
 
 func forgotApkNoCacheOption(cmd shell.Command) bool {

@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/farcloser/godolint/internal/rule"
@@ -24,7 +25,7 @@ func DL3002() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL3002Rule) Code() rule.RuleCode {
+func (*DL3002Rule) Code() rule.Code {
 	return DL3002Meta.Code
 }
 
@@ -49,13 +50,13 @@ func (*DL3002Rule) InitialState() rule.State {
 // Check tracks USER instructions and remembers which stages end with root.
 // Ported from the check function in DL3002.hs.
 func (*DL3002Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
-	s := state.Data.(dl3002State)
+	currentState := rule.Data[dl3002State](state)
 
 	// Remember new stage
 	if _, ok := instruction.(*syntax.From); ok {
-		s.currentStage = line
+		currentState.currentStage = line
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	// Track USER instruction
@@ -63,28 +64,26 @@ func (*DL3002Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		if isRoot(user.User) {
 			// Root user - remember this line for current stage
 			newRootUsers := make(map[int]int)
-			for k, v := range s.rootUsers {
-				newRootUsers[k] = v
-			}
+			maps.Copy(newRootUsers, currentState.rootUsers)
 
-			newRootUsers[s.currentStage] = line
-			s.rootUsers = newRootUsers
+			newRootUsers[currentState.currentStage] = line
+			currentState.rootUsers = newRootUsers
 
-			return state.ReplaceData(s)
+			return state.ReplaceData(currentState)
 		}
 
 		// Non-root user - forget stage (clear any previous root USER)
 		newRootUsers := make(map[int]int)
 
-		for k, v := range s.rootUsers {
-			if k != s.currentStage {
+		for k, v := range currentState.rootUsers {
+			if k != currentState.currentStage {
 				newRootUsers[k] = v
 			}
 		}
 
-		s.rootUsers = newRootUsers
+		currentState.rootUsers = newRootUsers
 
-		return state.ReplaceData(s)
+		return state.ReplaceData(currentState)
 	}
 
 	return state
@@ -94,11 +93,11 @@ func (*DL3002Rule) Check(line int, state rule.State, instruction syntax.Instruct
 // Ported from markFailures in DL3002.hs.
 // Finalize performs final checks after processing all instructions.
 func (*DL3002Rule) Finalize(state rule.State) rule.State {
-	s := state.Data.(dl3002State)
+	currentState := rule.Data[dl3002State](state)
 
 	// Add failures for all stages with root users
 	finalState := state
-	for _, userLine := range s.rootUsers {
+	for _, userLine := range currentState.rootUsers {
 		finalState = finalState.AddFailure(rule.CheckFailure{
 			Code:     DL3002Meta.Code,
 			Severity: DL3002Meta.Severity,

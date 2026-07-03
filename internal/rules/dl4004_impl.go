@@ -1,4 +1,4 @@
-package rules
+package rules //nolint:dupl // intentional near-copy of DL3012/DL4003: the port keeps one file per hadolint rule
 
 import (
 	"github.com/farcloser/godolint/internal/rule"
@@ -22,7 +22,7 @@ func DL4004() rule.Rule {
 }
 
 // Code returns the rule code.
-func (*DL4004Rule) Code() rule.RuleCode {
+func (*DL4004Rule) Code() rule.Code {
 	return DL4004Meta.Code
 }
 
@@ -51,7 +51,7 @@ func (*DL4004Rule) Check(line int, state rule.State, instruction syntax.Instruct
 
 	// Check for ENTRYPOINT instruction
 	if _, ok := instruction.(*syntax.Entrypoint); ok {
-		currentState := state.Data.(entrypointState)
+		currentState := rule.Data[entrypointState](state)
 
 		if currentState == noEntrypoint {
 			// First ENTRYPOINT in this stage - remember it
