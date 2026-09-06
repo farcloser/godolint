@@ -4,6 +4,7 @@
 package shell
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -142,13 +143,21 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 
 	cmd := exec.CommandContext(ctx, "shellcheck", args...)
 
-	output, err := cmd.CombinedOutput()
+	// Stdout only: the JSON report. Stderr is anything else — shellcheck's
+	// own diagnostics, or the tool manager's (on Windows, aqua's shim warns
+	// about a temporary file it could not remove, in color) — and merging
+	// it into the report corrupts the JSON. Keep it for the error message.
+	var stderr bytes.Buffer
+
+	cmd.Stderr = &stderr
+
+	output, err := cmd.Output()
 	// shellcheck returns non-zero if violations found, which is expected
 	// Only return error if we couldn't run shellcheck at all
 	if err != nil {
 		exitError := &exec.ExitError{}
 		if !errors.As(err, &exitError) {
-			return nil, fmt.Errorf("failed to run shellcheck: %w", err)
+			return nil, fmt.Errorf("failed to run shellcheck: %w: %s", err, strings.TrimSpace(stderr.String()))
 		}
 	}
 
