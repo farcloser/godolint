@@ -65,7 +65,7 @@ func lintFiles(processor *process.Processor, paths []string) ([]rule.CheckFailur
 	allFailures := []rule.CheckFailure{}
 
 	for _, dockerfilePath := range paths {
-		//nolint:gosec // G304: reading user-supplied Dockerfile paths is this tool's purpose.
+		// #nosec G304 -- reading user-supplied Dockerfile paths is this tool's purpose.
 		dockerfileContent, err := os.ReadFile(dockerfilePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", dockerfilePath, err)
