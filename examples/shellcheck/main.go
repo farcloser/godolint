@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	dockerfile := `FROM debian:bookworm
+	dockerfile := `FROM debian:bookworm@sha256:6ebd97fa83deb272194a2cf015b3d26a4d538e9ad3a7a79d544c8af5b0a01443
 ENV MY_VAR=value
 ARG BUILD_ARG=default
 SHELL ["/bin/bash", "-c"]
