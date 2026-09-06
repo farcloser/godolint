@@ -1,41 +1,46 @@
 # DO NOT EDIT MANUALLY.
 # This file provides shared tasks common to all projects and managed by limen.
-# If you want to add project specific tasks, you can do so in the `project.just` file.
+# Project recipes live in the root Justfile, below the shared-baseline import.
 
-set working-directory := '..'
+set working-directory := '../..'
 
 # Silence just's per-line command echo; recipes announce themselves via _banner.
 set quiet
 
-# Shared private _banner recipe (see _lib.just).
-import '_lib.just'
+# Shared private _banner recipe (see lib.just).
+import 'lib.just'
 
 default: code mod vuln licenses
 
-# golangci-lint, once per supported platform (see _per-goos in _lib.just:
+# golangci-lint, once per supported platform (see _per-goos in lib.just:
 # platform-specific files are only analyzed for the GOOS that builds them).
-# The formatter is build-graph-independent and runs once.
+# The formatter is build-graph-independent and runs once. The last step bans
+# blanket revive suppressions: nolintlint polices golangci directives, and
+# revive findings proved environment-nondeterministic across the per-GOOS
+# legs — the suppression itself then flakes as "unused". revive's own
+# selective directives are invisible to nolintlint, hence stable.
 code: (_banner "lint go" "go") (_per-goos "golangci-lint run")
     golangci-lint fmt --diff
+    @if git grep -nE 'nolint:[a-z, ]*revive' -- '*.go'; then echo 'blanket revive suppression is banned — use //revive:disable-next-line:<rule> (or a disable/enable block) instead' >&2; exit 1; fi
 
-# go.mod/go.sum tidiness — fails printing the diff; `just fix go mod` repairs.
+# go.mod/go.sum tidiness — fails printing the diff; `just do fix go mod` repairs.
 mod: (_banner "lint go" "mod")
     go mod tidy -diff
 
 # Known-vulnerability scan against the Go vulnerability database (network:
 # govulncheck fetches vuln.go.dev), once per supported platform (see _per-goos
-# in _lib.just: call paths and dependencies differ by GOOS).
+# in lib.just: call paths and dependencies differ by GOOS).
 vuln: (_banner "lint go" "vuln") (_per-goos "govulncheck ./...")
 
 # Dependency license compliance, once per supported platform (see _per-goos in
-# _lib.just: each GOOS pulls its own dependencies). A project that needs extra
+# lib.just: each GOOS pulls its own dependencies). A project that needs extra
 # flags — typically --ignore=<module> for the module-layout false positives of
 # https://github.com/google/go-licenses/issues/186 — exports them from its
-# project.just, the home of all project customization (the variable name
+# root Justfile, the home of all project customization (the variable name
 # mirrors the task path `lint go licenses`):
 #     export LINT_GO_LICENSES_FLAGS := '--ignore=gotest.tools/v3'
 # For a one-off, set it on the invocation instead:
-# LINT_GO_LICENSES_FLAGS='--ignore=x' just lint go licenses
+# LINT_GO_LICENSES_FLAGS='--ignore=x' just do lint go licenses
 #
 # GOROOT is passed explicitly because go-licenses recognizes stdlib packages by
 # their location under GOROOT — but, being a go_install binary, its built-in

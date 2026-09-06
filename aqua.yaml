@@ -3,17 +3,18 @@ checksum:
   enabled: true
   require_checksum: true
   supported_envs:
-    - darwin/amd64
     - darwin/arm64
     - linux/amd64
     - linux/arm64
+    - windows/amd64
+    - windows/arm64
 
 registries:
   - type: standard
     ref: v4.530.0 # renovate: depName=aquaproj/aqua-registry
   - name: local
     type: local
-    path: .just/aqua-registry.yaml
+    path: .limen/aqua-registry.yaml
 
 packages:
   # --- go install tools (local registry, GOSUMDB-verified) ---
@@ -31,14 +32,13 @@ packages:
   - name: github.com/farcloser/godolint/cmd/godolint@v0.1.0
     registry: local
   # --- farcloser tools (local registry; standard once registered upstream) ---
-  # TODO: bump to v0.0.1 once the first real release is cut.
-  - name: farcloser/limen@v0.0.0-test.1 # renovate: depName=farcloser/limen
+  - name: farcloser/limen@v0.0.16 # renovate: depName=farcloser/limen
     registry: local
   # --- toolchain + binary-release tools (standard registry, aqua-verified) ---
   - name: golang/go@go1.26.4
   - name: casey/just@1.55.1
   - name: koalaman/shellcheck@v0.11.0
-  - name: golangci/golangci-lint@v2.12.2
+  - name: golangci/golangci-lint@v2.13.2
   - name: google/yamlfmt@v0.21.0
   - name: lycheeverse/lychee@lychee-v0.24.2
   - name: goreleaser/goreleaser@v2.16.0

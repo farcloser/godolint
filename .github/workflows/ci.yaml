@@ -1,0 +1,173 @@
+# DO NOT EDIT MANUALLY.
+# This workflow is generic — no project-specific content — and is destined to
+# become part of the canonical baseline limen distributes.
+#
+# Design: minimal GitHub glue around the same tooling every developer runs
+# locally. The only marketplace action is GitHub's own checkout, pinned by
+# commit SHA (a tag can be moved to malicious code; a SHA cannot). Everything
+# else is pinned, checksum-verified shell: aqua installs the repo's tools at
+# the versions aqua.yaml pins, and `just` runs the exact recipes a laptop
+# runs — CI green means the same thing as local green, by construction.
+# Deliberately absent: runner egress filtering — the available options are
+# third-party actions, which this workflow avoids on principle.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# No default token permissions: each job states what it needs. This workflow
+# only ever reads the repository — it cannot write code, releases, or
+# packages even if a step is compromised.
+permissions: {}
+
+# A superseded run (new push to the same branch/PR) is cancelled, not raced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every run step is bash on every runner: without this, windows defaults to
+# PowerShell, which never sees the git-bash environment setup-aqua prepares
+# (the whole matrix is designed to run the recipes under git-bash). Explicit
+# bash also means `-eo pipefail` everywhere, which the implicit linux/macos
+# default lacks.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Pinned images, not -latest: a runner bump is a reviewed change.
+        # macOS is not redundant: its /bin/bash is 3.2, the portability floor
+        # the shared recipes target. arm64 (ubuntu-24.04-arm, windows-11-arm)
+        # and windows cover the rest of the supported release matrix — both
+        # windows legs run the recipes under git-bash (native arm64 tools
+        # where upstream ships them, Prism-emulated amd64 via aqua's
+        # windows_arm_emulation where it does not).
+        # These names are NOT the ruleset's required contexts — the `gate` job
+        # below is, precisely so this list can change without touching any
+        # repository's branch protection.
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    # Generous for the windows legs: those runners are markedly slower, and the
+    # per-GOOS lint recipes now run three legs each.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The token is not left behind in .git/config: nothing in this
+          # workflow talks to GitHub after checkout.
+          persist-credentials: false
+          # Full history and refs: `just do lint commits` validates the commit
+          # range against the PR's base branch, which a shallow clone lacks.
+          fetch-depth: 0
+
+      - name: Install aqua (pinned, checksum-verified)
+        uses: ./.github/actions/setup-aqua
+
+      - name: Install pinned tools
+        # Link-only: the shims download each tool lazily on first use (and it
+        # is verified against the committed aqua-checksums.json then), so a
+        # job only ever pays for the tools its recipes actually run.
+        run: aqua install --only-link
+
+      - name: Lint
+        run: just lint
+
+      - name: Test
+        run: just test
+
+  # A short, coverage-guided fuzz of every Fuzz* target, on one linux leg.
+  # One leg, not the matrix: fuzzing explores the same code from the same
+  # corpus wherever it runs, so five legs would spend five times the CPU on
+  # one corpus and add no coverage — unlike unit tests, whose per-OS
+  # behaviour is the point of the matrix. The recipe is limen's
+  # `do::test::go::fuzz`: `go test -fuzz` per target (only the go tool's own
+  # fuzz build compiles in the coverage counters — a prebuilt test binary
+  # mutates blind), the verdict taken from whether a crasher was written
+  # under testdata/fuzz/<Target> rather than from the exit code (the
+  # coordinator reports a spurious "context deadline exceeded" when a worker
+  # is mid-iteration as the budget expires; that is retried once), and a
+  # tree with no Fuzz* targets reporting so and passing. So this job is safe
+  # in every project: it fuzzes what there is, and is a one-line no-op where
+  # there is nothing.
+  fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install aqua (pinned, checksum-verified)
+        uses: ./.github/actions/setup-aqua
+
+      - name: Install pinned tools
+        run: aqua install --only-link
+
+      # The generated corpus is what makes fuzzing cumulative: each run
+      # starts from every input earlier runs found interesting rather than
+      # from the seeds, so a short budget per run compounds into depth over
+      # months. Keyed on the fuzz sources so a changed target restarts its
+      # own corpus; restore-keys keep the rest. GitHub's own action, pinned
+      # by SHA like checkout.
+      - id: fuzzdir
+        run: echo "dir=$(go env GOCACHE)/fuzz" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.fuzzdir.outputs.dir }}
+          key: fuzz-corpus-${{ runner.os }}-${{ hashFiles('**/*_fuzz_test.go', '**/fuzz_test.go') }}
+          restore-keys: |
+            fuzz-corpus-${{ runner.os }}-
+
+      - name: Fuzz
+        run: just do test go fuzz
+
+      # A crasher is a bug with a reproducer attached; the log names the
+      # target, the input file is what reproduces it locally. Uploaded only
+      # on failure, and only if any was written.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: fuzz-crashers
+          path: '**/testdata/fuzz/'
+          if-no-files-found: ignore
+
+  # The ONE required status check (see defaultRequiredChecks in
+  # internal/github/audit.go). Branch protection names contexts as strings, so
+  # requiring the matrix legs directly would bake this workflow's runner list
+  # into every repository's ruleset — and a project whose matrix differs then
+  # waits forever on checks that never report. This job collapses the matrix,
+  # whatever its shape, to a single stable name: change the legs above freely,
+  # the ruleset never moves.
+  gate:
+    needs: [verify, fuzz]
+    # always(), and the result asserted explicitly. Without always() a failed
+    # or cancelled dependency SKIPS this job instead of failing it, and a
+    # skipped required check does not block a merge — branch protection that
+    # quietly stops protecting. `needs.verify.result` is success only when
+    # every matrix leg succeeded; fuzz is asserted alongside so a crasher
+    # blocks a merge the same way a failing test does.
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every verify leg and fuzz succeeded
+        env:
+          # Via env, never interpolated into the script: the shell sees data,
+          # not something the expression layer can rewrite into code.
+          RESULT: ${{ needs.verify.result }}
+          RESULT_FUZZ: ${{ needs.fuzz.result }}
+        run: |
+          printf 'verify: %s\n' "$RESULT"
+          printf 'fuzz: %s\n' "$RESULT_FUZZ"
+          [ "$RESULT" = "success" ] && [ "$RESULT_FUZZ" = "success" ]

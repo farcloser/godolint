@@ -1,39 +1,66 @@
 # DO NOT EDIT MANUALLY.
 # This file provides shared tasks common to all projects and managed by limen.
-# If you want to add project specific tasks, you can do so in the `project.just` file.
+# Project recipes live in the root Justfile, below the shared-baseline import.
 
-set working-directory := '..'
+set working-directory := '../..'
 
 # Silence just's per-line command echo; recipes announce themselves via _banner.
 set quiet
 
-# Shared private _banner recipe (see _lib.just).
-import '_lib.just'
+# Shared private _banner recipe (see lib.just).
+import 'lib.just'
 
 default: limen just aqua links yaml shell dockerfile commits
+
+# Go linters live in their own submodule: `just do lint go` runs them all,
+# `just do lint go <recipe>` (e.g. `just do lint go mod`) runs one.
+mod go 'lint-go.just'
+mod rust 'lint-rust.just'
+
+# Homebrew formula linting (`just do lint homebrew`): brew's own vendored
+# tooling, resolved by absolute path — the machine-layer exception documented
+# in the module itself. Explicit like the language modules, not in the
+# default set.
+mod homebrew 'lint-homebrew.just'
 
 # limen itself: verify the repository against the Farcloser engineering rules
 # (mandatory files, canonical baseline, license, aqua pins). First in the
 # default set: the other linters trust the canonical files this one verifies.
 # LIMEN_BIN exists for one consumer — the limen repository itself, whose
-# project.just points it at `go run ./cmd/limen` so the working tree is judged
+# root Justfile points it at `go run ./cmd/limen` so the working tree is judged
 # by its own enforcer, not by the (always older) released pin. Everyone else
 # runs the aqua-pinned binary.
 limen: (_banner "lint" "limen")
     ${LIMEN_BIN:-limen} check .
 
+# GitHub settings audit — `limen github check` against this repository
+# (inferred from origin), or any target the subcommand takes
+# (`just do lint github -org farcloser`). Named, never in the default set: it
+# needs the network and an authed gh, and its subject is the live GitHub
+# state, not the tree. Same LIMEN_BIN override as `lint limen`.
+github *args: (_banner "lint" "github")
+    ${LIMEN_BIN:-limen} github check {{ args }}
+
 just: (_banner "lint" "just")
     #!/usr/bin/env bash
     set -euo pipefail
     # --cached --others --exclude-standard: tracked *and* new untracked files,
-    # still honoring .gitignore — so a not-yet-staged file is linted too.
-    git ls-files -z --cached --others --exclude-standard 'justfile' 'Justfile' '*.just' '**/justfile' \
-      | xargs -0 -I{} just --fmt --check --justfile {}
-
-# Go linters live in their own submodule: `just lint go` runs them all,
-# `just lint go <recipe>` (e.g. `just lint go mod`) runs one.
-mod go 'lint-go.just'
-mod rust 'lint-rust.just'
+    # still honoring .gitignore — so a not-yet-staged file is linted too. The
+    # index half of that union also lists files deleted from the worktree but
+    # not yet staged (a mid-migration tree, e.g. a renamed canonical module),
+    # so every path is existence-checked before it reaches a tool: enumeration
+    # is git's (ignore semantics), truth is the working tree's. Deleted files
+    # are vacuously well-formatted; guarding required files is `limen check`'s
+    # job, not a formatter's.
+    # Literal names need their '**/' twins — git pathspec literals do not
+    # match across directories (only wildcard patterns like '*.just' do) and
+    # are case-sensitive. All three spellings just honors are covered:
+    # justfile, Justfile, and the hidden .justfile.
+    while IFS= read -r -d '' f; do
+        [ -f "$f" ] || continue
+        just --fmt --check --justfile "$f"
+    done < <(git ls-files -z --cached --others --exclude-standard \
+        'justfile' '**/justfile' 'Justfile' '**/Justfile' '.justfile' '**/.justfile' '*.just')
 
 # godolint — hadolint as pure Go (https://github.com/farcloser/godolint) —
 # over every Dockerfile in the repository; passes vacuously when there are
@@ -52,6 +79,8 @@ dockerfile: (_banner "lint" "dockerfile")
     # already matches across directories; a literal like 'Dockerfile' does not.
     files=()
     while IFS= read -r -d '' f; do
+        # Tracked-but-deleted files are skipped (see `lint just`).
+        [ -f "$f" ] || continue
         files+=("$f")
     done < <(git ls-files -z --cached --others --exclude-standard \
         'Dockerfile' '**/Dockerfile' 'Dockerfile.*' '**/Dockerfile.*' '*.Dockerfile' \
@@ -62,7 +91,7 @@ dockerfile: (_banner "lint" "dockerfile")
     [ ${#files[@]} -eq 0 ] || godolint "${files[@]}"
 
 yaml: (_banner "lint" "yaml")
-    yamlfmt -conf .just/.yamlfmt -lint .
+    yamlfmt -conf .limen/.yamlfmt -lint
 
 shell: (_banner "lint" "shell")
     #!/usr/bin/env bash
@@ -75,18 +104,20 @@ shell: (_banner "lint" "shell")
     # No mapfile (bash 4+): build the array with a read loop, portable to bash 3.2.
     files=()
     while IFS= read -r -d '' f; do
+        # Tracked-but-deleted files are skipped (see `lint just`).
+        [ -f "$f" ] || continue
         case "$f" in
             *.sh|*.bash) files+=("$f"); continue ;;
         esac
         head -n 1 "$f" 2>/dev/null | grep -qE '^#!.*\b(bash|dash|ksh|sh)\b' && files+=("$f")
     done < <(git ls-files -z --cached --others --exclude-standard)
-    [ ${#files[@]} -eq 0 ] || shellcheck --rcfile .just/.shellcheckrc "${files[@]}"
+    [ ${#files[@]} -eq 0 ] || shellcheck --rcfile .limen/.shellcheckrc "${files[@]}"
     # Shebang recipes inside justfiles are shell scripts too — extract each
     # body from `just --dump --dump-format json` and shellcheck it standalone.
     # In the dump a body line is a fragment list: text fragments are strings,
     # interpolations (double-brace expressions — just syntax, not shell) are
     # arrays, masked as INTERP. One dump of the root justfile covers the whole
-    # tree: imports (project.just) are flattened into .recipes — they cannot be
+    # tree: imports (the root Justfile) are flattened into .recipes — they cannot be
     # parsed standalone, their dependencies may name root-level module paths —
     # and every `mod` nests recursively under .modules. mktemp gets an explicit
     # template because macOS mktemp ignores $TMPDIR.
@@ -95,9 +126,16 @@ shell: (_banner "lint" "shell")
     recipes=()
     dump=$(just --dump --dump-format json)
     # Bodies are multi-line: base64 carries each across the one-record-per-line
-    # pipe intact (quotes, tabs and all).
+    # pipe intact (quotes, tabs and all). The trailing tr matters: the native
+    # windows jq writes CRLF, and the stray \r lands in the last TSV field,
+    # corrupting the base64 ("base64: invalid input"). \r cannot legitimately
+    # appear in this stream (recipe names and base64), so a blanket strip is safe.
     while IFS=$'\t' read -r name body; do
-        out="$tmpdir/$name"
+        # ':' is illegal in windows filenames — the msys layer creates
+        # "do::lint" via a private-use encoding that native shellcheck then
+        # cannot open (openBinaryFile: invalid argument). The name is only a
+        # label; flatten module separators.
+        out="$tmpdir/${name//:/_}"
         printf '%s' "$body" | base64 -d > "$out"
         head -n 1 "$out" | grep -qE '^#!.*\b(bash|dash|ksh|sh)\b' || continue
         recipes+=("$out")
@@ -110,30 +148,32 @@ shell: (_banner "lint" "shell")
                     | join("\n") | @base64)]),
             ((.modules // {}) | to_entries[]
                 | .key as $mod | .value | recipes_of(prefix + $mod + "::"));
-        recipes_of("") | @tsv')
+        recipes_of("") | @tsv' | tr -d '\r')
+    # SC1010 is excluded for recipe bodies only: `just do <task>` is our shared
+    # namespace, and shellcheck misreads the argument "do" as the shell keyword.
     # The constant-word checks (SC2050/SC2078/SC2157/SC2194) are excluded for
     # recipe bodies only: a masked INTERP is constant to shellcheck but dynamic
     # in reality, so those hits can only be false positives of the masking.
-    [ ${#recipes[@]} -eq 0 ] || shellcheck --rcfile .just/.shellcheckrc --exclude=SC2050,SC2078,SC2157,SC2194 "${recipes[@]}"
+    [ ${#recipes[@]} -eq 0 ] || shellcheck --rcfile .limen/.shellcheckrc --exclude=SC1010,SC2050,SC2078,SC2157,SC2194 "${recipes[@]}"
 
 # Check documentation links with lychee (respects .gitignore, skips hidden files).
 links: (_banner "lint" "links")
     #!/usr/bin/env bash
     set -euo pipefail
     # A directory input (not a glob) is what makes lychee honor .gitignore/hidden.
-    # Canonical exclusions (and their rationale) live in .just/lychee.toml; a
-    # repository adds its own in a root lychee.toml. Both must be passed
+    # Canonical exclusions (and their rationale) live in .limen/lychee.toml; a
+    # repository adds its own in a root .lychee.toml. Both must be passed
     # explicitly — any --config disables lychee's ./lychee.toml auto-discovery —
     # and lychee merges them, concatenating the exclude lists.
-    args=(--config .just/lychee.toml)
-    if [ -f lychee.toml ]; then
-        args+=(--config lychee.toml)
+    args=(--config .limen/lychee.toml)
+    if [ -f .lychee.toml ]; then
+        args+=(--config .lychee.toml)
     fi
     lychee --no-progress "${args[@]}" .
 
 # Validate commit hygiene — DCO sign-off, subject length, dangling whitespace —
 # over a commit range (default: everything ahead of the upstream default branch;
-# pass one explicitly otherwise, e.g. `just lint commits v1.0.0..HEAD`).
+# pass one explicitly otherwise, e.g. `just do lint commits v1.0.0..HEAD`).
 commits range="": (_banner "lint" "commits")
     #!/usr/bin/env bash
     set -euo pipefail
@@ -142,9 +182,13 @@ commits range="": (_banner "lint" "commits")
     # below verify signatures — this is convenience wiring, not enforcement.
     # See https://github.com/andyfeller/gh-ssh-allowed-signers for automation
     # to retrieve contributor keys.
-    if [ -f .just/allowed_signers ]; then
+    # Best-effort: sandboxed agent sessions (e.g. Claude Code) write-protect
+    # .git/config as an escape-vector guard, and losing the display wiring must
+    # not fail the lint the rules below actually enforce.
+    if [ -f .allowed_signers ]; then
         git config --unset-all gpg.ssh.allowedSignersFile 2>/dev/null || true
-        git config --add gpg.ssh.allowedSignersFile .just/allowed_signers
+        git config --add gpg.ssh.allowedSignersFile .allowed_signers 2>/dev/null ||
+            echo "note: .git/config not writable; signature display not armed" >&2
     fi
     range="{{ range }}"
     if [ -z "$range" ] && [ -n "${GITHUB_BASE_REF:-}" ]; then
@@ -174,17 +218,46 @@ commits range="": (_banner "lint" "commits")
         git-validation -run DCO,short-subject,dangling-whitespace
     fi
 
-# Verify aqua-checksums.json is complete and in sync with aqua.yaml.
+# Verify aqua-checksums.json is in sync with aqua.yaml — the working tree's
+# pair, exactly as it stands: git state (staged, committed, neither) is
+# irrelevant to coherence. Recipes judge the working tree; git answers
+# enumeration and history questions only.
 aqua: (_banner "lint" "aqua")
     #!/usr/bin/env bash
     set -euo pipefail
-    # aqua has no read-only validator, so regenerate and compare against the
-    # committed file (needs network). `git diff HEAD` is staging-independent — it
-    # compares the working tree to the last commit, not the index. On drift the
-    # corrected file is left in place — review and commit it.
+    # aqua has no read-only validator, so regenerate, compare against a
+    # snapshot, and restore (needs network): the lint observes, never mutates —
+    # `just do fix aqua` is the mutating twin. mktemp gets an explicit template
+    # because macOS mktemp ignores $TMPDIR.
+    tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/lint-aqua.XXXXXX")
+    trap 'rm -rf "$tmpdir"' EXIT
+    had=""
+    if [ -f aqua-checksums.json ]; then
+        cp aqua-checksums.json "$tmpdir/snapshot"
+        had=1
+    fi
+    # Restore the working tree from the snapshot on EVERY exit — success, drift,
+    # an aqua failure (set -e), or an interrupt. update-checksum mutates
+    # aqua-checksums.json in place, and a lint must never leave that behind; an
+    # inline restore only runs on the paths it is written on, so it belongs in the
+    # trap. Installed AFTER the snapshot so `had` is known — restoring before that
+    # would wrongly rm a file we had not yet copied.
+    # Trap-invoked functions aren't seen as invoked, so this is false-flagged as
+    # dead code (SC2329) — https://github.com/koalaman/shellcheck/wiki/SC2329.
+    # shellcheck disable=SC2329
+    restore() {
+        if [ -n "$had" ]; then
+            cp "$tmpdir/snapshot" aqua-checksums.json
+        else
+            rm -f aqua-checksums.json
+        fi
+        rm -rf "$tmpdir"
+    }
+    trap restore EXIT
     # --log-level warn: the per-package INFO lines are noise when nothing is wrong.
     aqua --log-level warn update-checksum --prune
-    if ! git diff --quiet HEAD -- aqua-checksums.json; then
-        echo "aqua-checksums.json was out of sync with aqua.yaml (regenerated above) — review and commit it." >&2
-        exit 1
+    if [ -n "$had" ] && cmp -s aqua-checksums.json "$tmpdir/snapshot"; then
+        exit 0
     fi
+    echo "aqua-checksums.json is out of sync with aqua.yaml — run 'just do fix aqua'." >&2
+    exit 1

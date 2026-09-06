@@ -1,14 +1,14 @@
 # DO NOT EDIT MANUALLY.
 # This file provides shared tasks common to all projects and managed by limen.
-# If you want to add project specific tasks, you can do so in the `project.just` file.
+# Project recipes live in the root Justfile, below the shared-baseline import.
 
-set working-directory := '..'
+set working-directory := '../..'
 
 # Silence just's per-line command echo; recipes announce themselves via _banner.
 set quiet
 
-# Shared private _banner recipe (see _lib.just).
-import '_lib.just'
+# Shared private _banner recipe (see lib.just).
+import 'lib.just'
 
 # Ported from the historical Make build system, corrected along the way:
 #   - a "binary" is a DIRECTORY under cmd/ that contains Go sources — a stray
@@ -24,20 +24,30 @@ import '_lib.just'
 #   - a race build exists.
 # Binaries land in build/ (covered by the canonical .gitignore). Projects
 # declare `var version = "dev"` in each main package for the stamp to land.
-# Extra flags: export BUILD_GO_FLAGS from project.just, the home of all
+# Extra flags: export BUILD_GO_FLAGS from the root Justfile, the home of all
 # project customization (the variable name mirrors the task path), or set it
 # on the invocation for a one-off.
+#
+# Extra LINKER flags: BUILD_GO_LDFLAGS, same convention. It exists because
+# -ldflags cannot come through BUILD_GO_FLAGS: go takes the LAST occurrence of a
+# repeated flag, and BUILD_GO_FLAGS is appended after the -ldflags these recipes
+# compute, so a project passing its own would silently REPLACE the version stamp
+# and the CGO linkmode rather than add to them. BUILD_GO_LDFLAGS is appended
+# INSIDE the -ldflags string instead, last, so it composes — and, being last,
+# also wins on a genuine conflict (a project overriding -X main.version).
+# Typical use is a second stamp the project needs pinned at link time:
+#     export BUILD_GO_LDFLAGS := '-X main.someImage=' + some_digest_pinned_ref
 
 # netgo/osusergo force the pure-Go resolver and user lookups. No-ops when
 # CGO_ENABLED=0 (pure Go already); with CGO they keep DNS and user handling
 # out of libc, which is exactly what makes `static` viable on glibc.
 go_tags := 'netgo,osusergo'
 
-# CGO is opt-in per invocation (`CGO_ENABLED=1 just build go`). Defaulted to 0
-# explicitly for every recipe rather than left unset: go's own default is CGO
-# on for native builds when a C toolchain exists, and unset must mean pure Go
-# here.
-export CGO_ENABLED := env('CGO_ENABLED', '0')
+# CGO is off unless asked for: per invocation with `CGO_ENABLED=1 just do build
+# go`, or for good with `export GO_CGO := '1'` in the root Justfile, for a project
+# whose product cannot link without it. Every recipe below resolves it through
+# lib.just's `go_cgo`, which documents the precedence and why it is a shell
+# expansion rather than a just variable.
 
 # --- C toolchain hardening — only effective when CGO_ENABLED=1 --------------
 # The canonical hardening set (see the Red Hat compiler-flags guidance),
@@ -64,6 +74,7 @@ default: release
 release: (_banner "build go" "release")
     #!/usr/bin/env bash
     set -euo pipefail
+    export CGO_ENABLED="{{ go_cgo }}"
     version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
     ldflags="-s -w -X main.version=${version}"
     if [ "${CGO_ENABLED:-0}" = "1" ]; then
@@ -72,6 +83,7 @@ release: (_banner "build go" "release")
         export CGO_LDFLAGS='{{ cgo_ldflags }}'
         ldflags="-linkmode=external -extldflags=-pie ${ldflags}"
     fi
+    ldflags="${ldflags} ${BUILD_GO_LDFLAGS:-}"
     extra=()
     [ -z "${BUILD_GO_FLAGS:-}" ] || read -ra extra <<<"${BUILD_GO_FLAGS}"
     mkdir -p build
@@ -88,6 +100,7 @@ release: (_banner "build go" "release")
 debug: (_banner "build go" "debug")
     #!/usr/bin/env bash
     set -euo pipefail
+    export CGO_ENABLED="{{ go_cgo }}"
     version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
     ldflags="-X main.version=${version}"
     if [ "${CGO_ENABLED:-0}" = "1" ]; then
@@ -96,6 +109,7 @@ debug: (_banner "build go" "debug")
         export CGO_LDFLAGS='{{ cgo_ldflags }}'
         ldflags="-linkmode=external -extldflags=-pie ${ldflags}"
     fi
+    ldflags="${ldflags} ${BUILD_GO_LDFLAGS:-}"
     extra=()
     [ -z "${BUILD_GO_FLAGS:-}" ] || read -ra extra <<<"${BUILD_GO_FLAGS}"
     mkdir -p build
@@ -115,6 +129,7 @@ race: (_banner "build go" "race")
     set -euo pipefail
     export CGO_ENABLED=1
     version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
+    ldflags="-linkmode=external -X main.version=${version} ${BUILD_GO_LDFLAGS:-}"
     extra=()
     [ -z "${BUILD_GO_FLAGS:-}" ] || read -ra extra <<<"${BUILD_GO_FLAGS}"
     mkdir -p build
@@ -123,7 +138,7 @@ race: (_banner "build go" "race")
         ls "${dir}"*.go >/dev/null 2>&1 || continue
         echo "→ build/${name}-race"
         go build -race -tags='{{ go_tags }}' \
-            -ldflags "-linkmode=external -X main.version=${version}" \
+            -ldflags "${ldflags}" \
             ${extra[@]+"${extra[@]}"} -o "build/${name}-race" "./${dir%/}"
     done
 
@@ -134,18 +149,20 @@ race: (_banner "build go" "race")
 static: (_banner "build go" "static")
     #!/usr/bin/env bash
     set -euo pipefail
+    export CGO_ENABLED="{{ go_cgo }}"
     if [ "$(uname -s)" != "Linux" ]; then
         echo "static builds require Linux: macOS has no static libc to link against." >&2
         exit 1
     fi
     if [ "${CGO_ENABLED:-0}" != "1" ]; then
-        echo "static needs CGO_ENABLED=1 — a pure-Go build is already static (use \`just build go\`)." >&2
+        echo "static needs CGO_ENABLED=1 — a pure-Go build is already static (use \`just do build go\`)." >&2
         exit 1
     fi
     version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
     export CGO_CFLAGS='{{ cgo_cflags_release }}'
     export CGO_CXXFLAGS='{{ cgo_cflags_release }}'
     export CGO_LDFLAGS='{{ cgo_ldflags }}'
+    ldflags="-linkmode=external -extldflags=-static -s -w -X main.version=${version} ${BUILD_GO_LDFLAGS:-}"
     extra=()
     [ -z "${BUILD_GO_FLAGS:-}" ] || read -ra extra <<<"${BUILD_GO_FLAGS}"
     mkdir -p build
@@ -154,6 +171,6 @@ static: (_banner "build go" "static")
         ls "${dir}"*.go >/dev/null 2>&1 || continue
         echo "→ build/${name}-static"
         go build -trimpath -tags='{{ go_tags }}' \
-            -ldflags "-linkmode=external -extldflags=-static -s -w -X main.version=${version}" \
+            -ldflags "${ldflags}" \
             ${extra[@]+"${extra[@]}"} -o "build/${name}-static" "./${dir%/}"
     done
