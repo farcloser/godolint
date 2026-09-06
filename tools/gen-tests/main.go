@@ -141,7 +141,7 @@ func main() {
 }
 
 func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConfig, error) {
-	//nolint:gosec
+	// #nosec G304 G703
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w: %w", ErrTestGeneration, err)
@@ -772,7 +772,7 @@ func Test{{.RuleCode}}(t *testing.T) {
 
 	filename := strings.ToLower(ruleCode) + "_test.go"
 
-	//nolint:gosec
+	// #nosec G304
 	outputFile, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrTestGeneration, err)

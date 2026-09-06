@@ -82,7 +82,7 @@ func main() {
 		implFile := strings.ToLower(rules[idx].Code) + "_impl.go"
 		// The "taint" is the maintainer's own hadolint checkout, and the code
 		// is regex-constrained to DL\d+ — no traversal is possible.
-		//nolint:gosec // G703: dev-only codegen; path derives from a regex-matched rule code.
+		// #nosec G703 -- dev-only codegen; path derives from a regex-matched rule code.
 		if _, err := os.Stat(implFile); err == nil {
 			rules[idx].Implemented = true
 		}
@@ -155,7 +155,7 @@ func main() {
 }
 
 func parseRuleFile(path string) (RuleMetadata, error) {
-	//nolint:gosec
+	// #nosec G304 G703
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return RuleMetadata{}, fmt.Errorf("%w: %w", ErrRuleGeneration, err)
@@ -301,7 +301,7 @@ var {{.Code}}Meta = rule.Meta{
 
 	filename := strings.ToLower(rule.Code) + ".go"
 
-	//nolint:gosec
+	// #nosec G304
 	outputFile, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
@@ -357,7 +357,7 @@ func {{.Code}}() rule.Rule {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
 	}
 
-	//nolint:gosec
+	// #nosec G304
 	outputFile, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrRuleGeneration, err)
