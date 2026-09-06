@@ -64,6 +64,9 @@ linters:
     - misspell
     - unconvert
 
+    # Remove legacy behavior
+    - copyloopvar # go 1.22+
+
     # More linters that are enabled by default to review
 
     # arangolint: Opinionated best practices for arangodb client.
@@ -125,9 +128,9 @@ linters:
 
   disable:
     # These are the linters that we know we do not want
-    - copyloopvar # no longer needed after go 1.22
     - errchkjson # forces handling of json err (eg: prevents _), which is too much
     - exhaustruct # does not serve much of a purpose
+    - exhaustruct_v5 # the v2.13 rewrite of exhaustruct: same verdict (an unknown name here fails golangci < 2.13, so the pin and this line move together)
     - ginkgolinter # no ginkgo
     - godox # not helpful unless we could downgrade it to warning / info
     - nestif # already provided ten different ways with revive cognitive complexity, etc
@@ -142,7 +145,7 @@ linters:
     - cyclop # provided by revive
     - gocyclo # provided by revive
     - errcheck # provided by revive
-    - errname # provide by revive
+    - errname # provided by revive
     - forcetypeassert # provided by revive
     - funlen # provided by revive
     - gocognit # provided by revive
@@ -199,10 +202,10 @@ linters:
   settings:
     govet:
       enable:
-        # Struct fields ordered to minimize padding waste. Off by default in
-        # vet; reordering is safe for us — nothing relies on field order or
-        # memory layout (JSON marshals by name).
-        # - fieldalignment
+      # Struct fields ordered to minimize padding waste. Off by default in
+      # vet; reordering is safe for us — nothing relies on field order or
+      # memory layout (JSON marshals by name).
+      # - fieldalignment
     # Note: default, no changes
     errorlint:
       # Disable err==target → errors.Is(err, target) auto-rewrite. The fixer
@@ -251,32 +254,32 @@ linters:
         - assign-exclusive # Only allow cuddling new OR existing variables, not both
         - assign-expr # Don't allow assignments cuddled with expressions
 
-#    forbidigo:
-#      forbid:
-#        - pattern: '^fmt\.Print(ln|f)?$'
-#          msg: "use structured logging instead"
-#        - pattern: '^os\.ReadFile$'
-#          msg: "use xos.ReadFile instead"
-#        - pattern: '^os\.ReadDir$'
-#          msg: "use xos.ReadDir instead"
-#        - pattern: '^os\.WriteFile$'
-#          msg: "use filesystem.WriteFile instead"
-#        - pattern: '^os\.Stat$'
-#          msg: "use xos.Stat instead"
-#        - pattern: '^os\.Open$'
-#          msg: "use xos.Open instead"
-#        - pattern: '^os\.OpenFile$'
-#          msg: "use xos.OpenFile instead"
-#        - pattern: '^os\.Create$'
-#          msg: "use xos.OpenFile instead"
-#        - pattern: '^os\.CreateTemp$'
-#          msg: "use xos.CreateTemp instead"
-#        - pattern: '^os\.MkdirTemp$'
-#          msg: "use xos.MkdirTemp instead"
-#        - pattern: '^os\.Truncate$'
-#          msg: "use xos.Truncate instead"
-#        - pattern: '^os\.UserHomeDir$'
-#          msg: "use filesystem.HomeDir instead"
+      #    forbidigo:
+      #      forbid:
+      #        - pattern: '^fmt\.Print(ln|f)?$'
+      #          msg: "use structured logging instead"
+      #        - pattern: '^os\.ReadFile$'
+      #          msg: "use xos.ReadFile instead"
+      #        - pattern: '^os\.ReadDir$'
+      #          msg: "use xos.ReadDir instead"
+      #        - pattern: '^os\.WriteFile$'
+      #          msg: "use filesystem.WriteFile instead"
+      #        - pattern: '^os\.Stat$'
+      #          msg: "use xos.Stat instead"
+      #        - pattern: '^os\.Open$'
+      #          msg: "use xos.Open instead"
+      #        - pattern: '^os\.OpenFile$'
+      #          msg: "use xos.OpenFile instead"
+      #        - pattern: '^os\.Create$'
+      #          msg: "use xos.OpenFile instead"
+      #        - pattern: '^os\.CreateTemp$'
+      #          msg: "use xos.CreateTemp instead"
+      #        - pattern: '^os\.MkdirTemp$'
+      #          msg: "use xos.MkdirTemp instead"
+      #        - pattern: '^os\.Truncate$'
+      #          msg: "use xos.Truncate instead"
+      #        - pattern: '^os\.UserHomeDir$'
+      #          msg: "use filesystem.HomeDir instead"
 
       exclude-godoc-examples: true
       analyze-types: true
