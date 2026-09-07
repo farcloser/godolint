@@ -2,8 +2,7 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "config:recommended",
-    // Default preset: detects owner/repo@ver and go-module packages in aqua.yaml,
-    // updates the standard-registry ref, and bumps aqua_version in CI/devcontainer too.
+    // Also bumps aqua_version in CI/devcontainer files, not only aqua.yaml.
     "github>aquaproj/aqua-renovate-config#2.13.0",
   ],
   // Supply-chain cooldown: wait before proposing a bump. Doubles as protection

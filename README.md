@@ -380,8 +380,7 @@ This single command:
 
 ```bash
 # Build CLI binary
-make build
-# Output: ./bin/godolint
+just do build go
 
 # Or directly
 go build -o godolint ./cmd/godolint
@@ -391,7 +390,7 @@ go build -o godolint ./cmd/godolint
 
 ```bash
 # Run all tests
-make test
+just test
 
 # Run specific rule tests
 go test ./internal/rules -run DL3007
@@ -400,11 +399,8 @@ go test ./internal/rules -run DL3007
 ### Lint
 
 ```bash
-# Install dev tools
-make install-dev-tools
-
-# Run linters
-make lint
+# Run linters (tools are pinned by aqua: `aqua install --only-link` once)
+just lint
 ```
 
 ### Adding New Rules
@@ -433,6 +429,12 @@ func checkDL3007(instruction syntax.Instruction) bool {
     return true
 }
 ```
+
+## Releasing
+
+A release is a signed, annotated tag `vX.Y.Z` on `main`; no binaries are
+published. Consumers pin the tag as a `go_install` package (through aqua) or
+with `go install github.com/farcloser/godolint/cmd/godolint@vX.Y.Z`.
 
 ## Roadmap
 
