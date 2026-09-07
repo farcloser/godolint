@@ -55,7 +55,6 @@ func main() {
 
 	hadolintTestDir := os.Args[1]
 
-	// Find all test files
 	pattern := filepath.Join(hadolintTestDir, "DL*Spec.hs")
 
 	files, err := filepath.Glob(pattern)
@@ -71,7 +70,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse all test files
 	allTests := make(map[string][]TestCase)
 	allConfigs := make(map[string]*HadolintConfig)
 	totalTests := 0
@@ -109,12 +107,10 @@ func main() {
 		}
 	}
 
-	// Sort for consistent output
 	slices.Sort(implementedRules)
 
 	fmt.Printf("Detected %d implemented rules\n\n", len(implementedRules))
 
-	// Generate tests for implemented rules
 	generated := 0
 
 	for _, ruleCode := range implementedRules {
@@ -151,10 +147,8 @@ func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConf
 	tests := make(map[string][]TestCase)
 	configs := make(map[string]*HadolintConfig)
 
-	// Parse config for this file
 	config := parseHadolintConfig(text)
 
-	// Parse simple single-line tests
 	matches := simpleTestPattern.FindAllStringSubmatch(text, -1)
 	for _, match := range matches {
 		if len(match) < 5 {
@@ -175,7 +169,6 @@ func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConf
 		}
 	}
 
-	// Parse do-block tests
 	doBlockTests := parseDoBlockTests(text)
 	for _, testCase := range doBlockTests {
 		tests[testCase.RuleCode] = append(tests[testCase.RuleCode], testCase)
@@ -185,7 +178,6 @@ func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConf
 		}
 	}
 
-	// Parse multi-line tests
 	multilineTests := parseMultilineTests(text)
 	for _, testCase := range multilineTests {
 		tests[testCase.RuleCode] = append(tests[testCase.RuleCode], testCase)
@@ -362,7 +354,7 @@ func parseDoBlockTests(text string) []TestCase {
 	return tests
 }
 
-//revive:disable:max-control-nesting // yolo!
+//revive:disable:max-control-nesting
 func parseMultilineTests(text string) []TestCase {
 	var tests []TestCase
 

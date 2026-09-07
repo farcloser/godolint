@@ -42,7 +42,6 @@ func main() {
 
 	hadolintRuleDir := os.Args[1]
 
-	// Find all rule files
 	pattern := filepath.Join(hadolintRuleDir, "DL*.hs")
 
 	files, err := filepath.Glob(pattern)
@@ -58,7 +57,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse all rules
 	var rules []RuleMetadata
 
 	for _, file := range files {
@@ -72,7 +70,6 @@ func main() {
 		rules = append(rules, rule)
 	}
 
-	// Sort by code
 	slices.SortFunc(rules, func(left, right RuleMetadata) int {
 		return strings.Compare(left.Code, right.Code)
 	})
@@ -88,7 +85,6 @@ func main() {
 		}
 	}
 
-	// Generate output
 	fmt.Print("# Hadolint Rules Status\n\n")
 	fmt.Printf("Total rules: %d\n", len(rules))
 
@@ -104,7 +100,6 @@ func main() {
 	fmt.Printf("Not implemented: %d\n", len(rules)-implemented)
 	fmt.Println()
 
-	// Always generate metadata files (safe to overwrite)
 	metadataGenerated := 0
 
 	for _, rule := range rules {
@@ -118,7 +113,6 @@ func main() {
 
 	fmt.Printf("Generated %d metadata files\n", metadataGenerated)
 
-	// Generate implementations for rules we can auto-generate (never overwrites)
 	implGenerated := 0
 
 	for _, rule := range rules {
@@ -134,7 +128,6 @@ func main() {
 
 	fmt.Printf("Generated %d working implementations\n", implGenerated)
 
-	// Print summary by status
 	fmt.Print("\n## Rules by Status\n\n")
 
 	fmt.Printf("### Implemented (%d)\n", implemented)
@@ -167,7 +160,6 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 		SourceFile: filepath.Base(path),
 	}
 
-	// Extract code
 	match := codePattern.FindStringSubmatch(text)
 	if len(match) <= 1 {
 		return rule, fmt.Errorf("%w: could not find rule code", ErrRuleGeneration)
@@ -175,7 +167,6 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 
 	rule.Code = match[1]
 
-	// Extract severity
 	match = severityPattern.FindStringSubmatch(text)
 	if len(match) <= 1 {
 		return rule, fmt.Errorf("%w: could not find severity", ErrRuleGeneration)
@@ -183,20 +174,17 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 
 	rule.Severity = mapSeverity(match[1])
 
-	// Extract message (handle multiline with \)
 	match = messagePattern.FindStringSubmatch(text)
 	if len(match) <= 1 {
 		return rule, fmt.Errorf("%w: could not find message", ErrRuleGeneration)
 	}
 
 	msg := match[1]
-	// Remove Haskell line continuation
 	msg = strings.ReplaceAll(msg, "\\\n", "")
 	msg = strings.ReplaceAll(msg, "\\", "")
 	msg = strings.TrimSpace(msg)
 	rule.Message = msg
 
-	// Extract check function patterns
 	// Match patterns like: check (Maintainer _) = False
 	//                      check _ = True
 	checkPattern := regexp.MustCompile(`(?m)^\s*check\s+(.+?)\s*=`)
