@@ -65,6 +65,10 @@ godolint --without-shellcheck Dockerfile
 # shellcheck never finds a repository's .shellcheckrc, since the checked
 # scripts run from a temp dir (requires shellcheck >= 0.10.0)
 godolint --shellcheck-rcfile .shellcheckrc Dockerfile
+
+# Logs go to stderr (stdout is the JSON only): --log-level or LOG_LEVEL,
+# one of debug, info (default), warn, error
+godolint --log-level debug Dockerfile
 ```
 
 ### SDK Usage
@@ -284,7 +288,7 @@ godolint outputs JSON arrays of violations:
 
 Exit codes:
 - `0`: No violations
-- `1`: Violations found
+- `1`: Violations found — or a usage or runtime error, reported on stderr with nothing on stdout
 
 ## Architecture
 

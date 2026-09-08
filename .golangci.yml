@@ -45,7 +45,6 @@ linters:
     # Specialized linters
     - promlinter # prometheus
     - sloglint # slog
-    - zerologlint # zerolog
 
     # Documentation style
     - godoclint # warn if package level doc is duplicated
@@ -325,8 +324,8 @@ linters:
             - $all
           allow:
             - $gostd
-            - github.com/rs/zerolog
-            - github.com/urfave/cli
+            - github.com/mycophonic/primordium
+            - github.com/alecthomas/kong
             - github.com/farcloser/godolint
             - mvdan.cc/sh/v3/syntax
             - github.com/moby/buildkit
