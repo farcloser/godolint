@@ -6,14 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"slices"
-	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/mycophonic/primordium/app/logger"
 
 	"github.com/farcloser/godolint/internal/parser"
 	"github.com/farcloser/godolint/internal/process"
@@ -30,6 +29,10 @@ var errViolations = errors.New("violations found")
 // exactly as given — no kong file type, whose tilde and absolute-path
 // expansion would rewrite the File field of every reported failure.
 type CLI struct {
+	// A blank line ends a tag-alignment block (tagalign pads keys per block),
+	// so the one flag with more tag keys than help stands alone.
+	LogLevel string `default:"info" enum:"debug,info,warn,error" env:"LOG_LEVEL" help:"Log verbosity (stderr)."`
+
 	DisableIgnorePragma bool     `help:"Disable inline ignore pragmas (# hadolint ignore=DLxxxx)."`
 	WithoutShellcheck   bool     `help:"Disable shellcheck integration for RUN instruction validation."`
 	Ignore              []string `help:"Rule code to ignore (repeatable: --ignore DL3006 --ignore SC2050)."                                                placeholder:"CODE"`
@@ -80,7 +83,7 @@ func (c *CLI) buildRules() ([]rule.Rule, error) {
 	// lint without the integration rather than failing the run.
 	//nolint:nilerr // intentional, see above.
 	if _, err := exec.LookPath("shellcheck"); err != nil {
-		log.Warn().Msg("shellcheck binary not found in PATH, shellcheck integration disabled")
+		slog.Warn("shellcheck binary not found in PATH, shellcheck integration disabled")
 
 		return rules, nil
 	}
@@ -118,7 +121,7 @@ func lintFiles(processor *process.Processor, paths []string) ([]rule.CheckFailur
 			return nil, fmt.Errorf("failed to parse %s: %w", dockerfilePath, err)
 		}
 
-		log.Debug().Str("file", dockerfilePath).Int("instructions", len(instructions)).Msg("Parsed Dockerfile")
+		slog.Debug("parsed Dockerfile", "file", dockerfilePath, "instructions", len(instructions))
 
 		failures := processor.Run(instructions)
 		for i := range failures {
@@ -148,36 +151,27 @@ func dropIgnored(failures []rule.CheckFailure, ignoredRules []string) []rule.Che
 	return filtered
 }
 
-func configureLogger(ctx context.Context, level ...zerolog.Level) {
-	zerolog.TimeFieldFormat = time.RFC3339
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	log.Logger.WithContext(ctx)
+// configureLogger installs the process-wide slog handler through primordium:
+// tint on a terminal, JSON when stderr is redirected. The level is the
+// --log-level flag, whose enum kong has already validated.
+func configureLogger(level string) {
+	slogLevel := slog.LevelInfo
 
-	if len(level) > 0 {
-		// Explicit level provided
-		zerolog.SetGlobalLevel(level[0])
-	} else {
-		// Read from LOG_LEVEL environment variable
-		logLevel := os.Getenv("LOG_LEVEL")
-		if logLevel == "" {
-			logLevel = "info"
-		}
-
-		parsedLevel, err := zerolog.ParseLevel(logLevel)
-		if err != nil {
-			// Invalid level, default to info
-			parsedLevel = zerolog.InfoLevel
-
-			log.Warn().Str("LOG_LEVEL", logLevel).Msg("Invalid log level, defaulting to info")
-		}
-
-		zerolog.SetGlobalLevel(parsedLevel)
+	switch level {
+	case "debug":
+		slogLevel = slog.LevelDebug
+	case "warn":
+		slogLevel = slog.LevelWarn
+	case "error":
+		slogLevel = slog.LevelError
+	default:
+		// info, the enum's remaining value.
 	}
+
+	logger.SetDefaultsForLogger(context.Background(), slogLevel)
 }
 
 func main() {
-	configureLogger(context.Background())
-
 	var cli CLI
 
 	// Parse and usage errors are kong's: printed with the usage. Every
@@ -196,12 +190,14 @@ func main() {
 		}),
 	)
 
+	configureLogger(cli.LogLevel)
+
 	if err := kctx.Run(); err != nil {
 		if errors.Is(err, errViolations) {
 			os.Exit(1)
 		}
 
-		log.Error().Err(err).Msg("failed to run godolint")
+		slog.Error("failed to run godolint", "err", err)
 		os.Exit(1)
 	}
 }
