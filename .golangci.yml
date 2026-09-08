@@ -326,7 +326,7 @@ linters:
           allow:
             - $gostd
             - github.com/rs/zerolog
-            - github.com/urfave/cli
+            - github.com/alecthomas/kong
             - github.com/farcloser/godolint
             - mvdan.cc/sh/v3/syntax
             - github.com/moby/buildkit

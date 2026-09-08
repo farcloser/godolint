@@ -3,9 +3,9 @@ module github.com/farcloser/godolint
 go 1.25.9
 
 require (
+	github.com/alecthomas/kong v1.16.1
 	github.com/moby/buildkit v0.31.1
 	github.com/rs/zerolog v1.35.1
-	github.com/urfave/cli/v3 v3.10.1
 	mvdan.cc/sh/v3 v3.13.1
 )
 

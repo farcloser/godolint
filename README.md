@@ -284,7 +284,7 @@ godolint outputs JSON arrays of violations:
 
 Exit codes:
 - `0`: No violations
-- `1`: Violations found
+- `1`: Violations found — or a usage or runtime error, reported on stderr with nothing on stdout
 
 ## Architecture
 

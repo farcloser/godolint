@@ -11,9 +11,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v3"
 
 	"github.com/farcloser/godolint/internal/parser"
 	"github.com/farcloser/godolint/internal/process"
@@ -22,15 +22,57 @@ import (
 	"github.com/farcloser/godolint/sdk"
 )
 
-// errUsage reports an invocation without any Dockerfile argument.
-var errUsage = errors.New("at least one argument required: path to Dockerfile(s)")
+// errViolations is how Run tells main that the lint found something: the
+// failures are already on stdout, and the exit status is 1 without a log line.
+var errViolations = errors.New("violations found")
+
+// CLI is the kong grammar: the flags and the Dockerfile arguments. Paths stay
+// exactly as given — no kong file type, whose tilde and absolute-path
+// expansion would rewrite the File field of every reported failure.
+type CLI struct {
+	DisableIgnorePragma bool     `help:"Disable inline ignore pragmas (# hadolint ignore=DLxxxx)."`
+	WithoutShellcheck   bool     `help:"Disable shellcheck integration for RUN instruction validation."`
+	Ignore              []string `help:"Rule code to ignore (repeatable: --ignore DL3006 --ignore SC2050)."                                                placeholder:"CODE"`
+	ShellcheckRcfile    string   `help:"Shellcheckrc forwarded to shellcheck (--rcfile) when validating RUN instructions (requires shellcheck >= 0.10.0)." placeholder:"FILE"`
+
+	Dockerfiles []string `arg:"" help:"Dockerfile(s) to lint." name:"dockerfile"`
+}
+
+// Run lints every Dockerfile, writes the failures to stdout as JSON, and
+// returns errViolations when there were any.
+func (c *CLI) Run() error {
+	rules, err := c.buildRules()
+	if err != nil {
+		return err
+	}
+
+	// One processor, every rule, reused across files.
+	processor := process.NewProcessor(rules).WithDisableIgnorePragmas(c.DisableIgnorePragma)
+
+	allFailures, err := lintFiles(processor, c.Dockerfiles)
+	if err != nil {
+		return err
+	}
+
+	allFailures = dropIgnored(allFailures, c.Ignore)
+
+	if err := json.NewEncoder(os.Stdout).Encode(allFailures); err != nil {
+		return fmt.Errorf("failed to encode failures: %w", err)
+	}
+
+	if len(allFailures) > 0 {
+		return errViolations
+	}
+
+	return nil
+}
 
 // buildRules assembles the rule set, wiring in the shellcheck integration
 // unless it is disabled or the binary is missing from PATH.
-func buildRules(cmd *cli.Command) ([]rule.Rule, error) {
+func (c *CLI) buildRules() ([]rule.Rule, error) {
 	rules := sdk.AllRules()
 
-	if cmd.Bool("without-shellcheck") {
+	if c.WithoutShellcheck {
 		return rules, nil
 	}
 
@@ -47,12 +89,12 @@ func buildRules(cmd *cli.Command) ([]rule.Rule, error) {
 	// Fail fast on an unreadable rcfile: shellcheck errors are non-fatal per
 	// rule (matching hadolint), so a bad path would otherwise silently
 	// disable every SC check.
-	if rcfile := cmd.String("shellcheck-rcfile"); rcfile != "" {
-		if _, err := os.Stat(rcfile); err != nil {
+	if c.ShellcheckRcfile != "" {
+		if _, err := os.Stat(c.ShellcheckRcfile); err != nil {
 			return nil, fmt.Errorf("cannot read shellcheck rcfile: %w", err)
 		}
 
-		checker.RCFile = rcfile
+		checker.RCFile = c.ShellcheckRcfile
 	}
 
 	return append(rules, shell.NewShellcheckRule(checker)), nil
@@ -134,67 +176,31 @@ func configureLogger(ctx context.Context, level ...zerolog.Level) {
 }
 
 func main() {
-	ctx := context.Background()
-	configureLogger(ctx)
+	configureLogger(context.Background())
 
-	cmd := &cli.Command{
-		Name:  "godolint",
-		Usage: "Dockerfile linter",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "disable-ignore-pragma",
-				Usage: "Disable inline ignore pragmas `# hadolint ignore=DLxxxx`",
-			},
-			&cli.BoolFlag{
-				Name:  "without-shellcheck",
-				Usage: "Disable shellcheck integration for RUN instruction validation",
-			},
-			&cli.StringSliceFlag{
-				Name:  "ignore",
-				Usage: "Rule code to ignore (can be specified multiple times, e.g., --ignore DL3006 --ignore SC2050)",
-			},
-			&cli.StringFlag{
-				Name:  "shellcheck-rcfile",
-				Usage: "Shellcheckrc `FILE` forwarded to shellcheck (--rcfile) when validating RUN instructions (requires shellcheck >= 0.10.0)",
-			},
-		},
-		Action: func(_ context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() == 0 {
-				return errUsage
+	var cli CLI
+
+	// Parse and usage errors are kong's: printed with the usage. Every
+	// failure exits 1 — kong's own usage-error status (80) is folded into
+	// the one non-zero status this tool has always had; --help stays 0.
+	kctx := kong.Parse(&cli,
+		kong.Name("godolint"),
+		kong.Description("Dockerfile linter"),
+		kong.UsageOnError(),
+		kong.Exit(func(code int) {
+			if code != 0 {
+				code = 1
 			}
 
-			rules, err := buildRules(cmd)
-			if err != nil {
-				return err
-			}
+			os.Exit(code)
+		}),
+	)
 
-			// Create processor with all rules (reuse for all files)
-			processor := process.NewProcessor(rules).
-				WithDisableIgnorePragmas(cmd.Bool("disable-ignore-pragma"))
+	if err := kctx.Run(); err != nil {
+		if errors.Is(err, errViolations) {
+			os.Exit(1)
+		}
 
-			allFailures, err := lintFiles(processor, cmd.Args().Slice())
-			if err != nil {
-				return err
-			}
-
-			allFailures = dropIgnored(allFailures, cmd.StringSlice("ignore"))
-
-			// Output failures as JSON
-			if err := json.NewEncoder(os.Stdout).Encode(allFailures); err != nil {
-				return fmt.Errorf("failed to encode failures: %w", err)
-			}
-
-			// Exit with code 1 if any failures found
-			if len(allFailures) > 0 {
-				os.Exit(1)
-			}
-
-			return nil
-		},
-	}
-
-	err := cmd.Run(context.Background(), os.Args)
-	if err != nil {
 		log.Error().Err(err).Msg("failed to run godolint")
 		os.Exit(1)
 	}
