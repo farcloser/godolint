@@ -347,7 +347,15 @@ formatters:
       no-prefix-comments: true
       custom-order: true
     gofumpt:
-      extra-rules: true
+      # `extra-rules: true` is deprecated. golangci-lint's warning names
+      # `extra.group-params` as the replacement, which is a third of it:
+      # gofumpt's ExtraRules calls Extra.Set("true"), and that enables all
+      # three. Taking the warning at its word would silently stop clothing
+      # naked returns and balancing multi-line calls.
+      extra:
+        group-params: true
+        clothe-returns: true
+        balance-calls: true
     golines:
       max-len: 120
       tab-len: 4
