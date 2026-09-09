@@ -49,7 +49,7 @@ require (
 	github.com/urfave/cli/v3 v3.6.1 // indirect
 	github.com/vbatts/git-validation v1.2.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/image v0.21.0 // indirect
+	golang.org/x/image v0.41.0 // indirect
 	golang.org/x/mod v0.39.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
