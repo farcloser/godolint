@@ -187,15 +187,14 @@ linters:
         text: "add-constant|cognitive-complexity|confusing-results|nested-structs|use-waitgroup-go|unchecked-type-assertion|unhandled-error|unused-receiver"
         linters:
           - revive
-      # Dev-only code generators (never shipped; under internal/gen-* because
-      # tools/ is limen's tools module): parseMultilineTests is a port of
-      # hadolint's test-corpus parser and legitimately sprawling — an explicit
-      # carve-out is more honest than raising the repo-wide limits.
-      - path: ^internal/gen-
+      # Dev-only code generators, never shipped: parseMultilineTests is a port
+      # of hadolint's test-corpus parser and legitimately sprawling — an
+      # explicit carve-out is more honest than raising the repo-wide limits.
+      - path: ^hack/gen-
         text: "cognitive-complexity|function-length|add-constant"
         linters:
           - revive
-      - path: ^internal/gen-
+      - path: ^hack/gen-
         linters:
           - maintidx
 
