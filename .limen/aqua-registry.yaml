@@ -72,3 +72,59 @@ packages:
       - darwin/arm64
       - linux
       - windows
+  # Quint (quint.sh): executable formal specifications, the model language of
+  # the spec-driven testing experiment (traces in ITF, replayed against the
+  # implementation). Upstream ships one bare Node-bundled binary per platform,
+  # with no checksums, signatures, or attestations: sourcing-ladder rung 1 on
+  # trust-on-first-use — aqua pins the checksum on first fetch. No
+  # windows/arm64 asset upstream. The repo also tags `evaluator/vX.Y.Z`
+  # releases (the Rust simulator that `quint run` downloads at run time into
+  # $QUINT_HOME unless told `--backend=typescript`); they are a different
+  # artifact and are filtered out of version resolution here.
+  - type: github_release
+    repo_owner: quint-co
+    repo_name: quint
+    description: Executable formal specifications (TLA+ semantics, ITF traces)
+    asset: quint-{{.OS}}-{{.Arch}}
+    format: raw
+    replacements:
+      darwin: macos
+      windows: pc
+    version_filter: not (Version startsWith "evaluator/")
+    supported_envs:
+      - darwin
+      - linux
+      - windows/amd64
+  # ossein: microVM containers on macOS. The `docker` file puts a command named
+  # docker on the hermetic PATH ahead of any Docker the machine has, on purpose,
+  # for the repositories that pin it: build scripts type `docker`, and get
+  # ossein-docker, which execs the ossein beside it — both from this archive.
+  # Elsewhere aqua's proxy falls through to the machine's own docker. Signed
+  # keyless from CI like limen; darwin/arm64 only, since ossein links
+  # Virtualization.framework, and aqua skips the package on every other env.
+  - type: github_release
+    repo_owner: farcloser
+    repo_name: ossein
+    description: microVM containers on macOS, with a docker-shaped front
+    asset: ossein_{{trimV .Version}}_{{.OS}}_{{.Arch}}.tar.gz
+    format: tar.gz
+    files:
+      - name: ossein
+      - name: ossein-docker
+      - name: docker
+        src: ossein-docker
+    checksum:
+      type: github_release
+      asset: checksums.txt
+      algorithm: sha256
+      cosign:
+        bundle:
+          type: github_release
+          asset: checksums.txt.sigstore.json
+        opts:
+          - --certificate-identity
+          - https://github.com/farcloser/ossein/.github/workflows/release.yaml@refs/tags/{{.Version}}
+          - --certificate-oidc-issuer
+          - https://token.actions.githubusercontent.com
+    supported_envs:
+      - darwin/arm64
