@@ -55,11 +55,11 @@ func checkDL3036(instruction syntax.Instruction) bool {
 }
 
 func isZypperInstallCmd(cmd shell.Command) bool {
-	return shell.CmdHasArgs(zypperCommand, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(zypperCommand, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"in"}, cmd)
 }
 
 func isZypperCleanCmd(cmd shell.Command) bool {
-	return shell.CmdHasArgs(zypperCommand, []string{"clean"}, cmd) ||
+	return shell.CmdHasArgs(zypperCommand, []string{cleanArg}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"cc"}, cmd)
 }

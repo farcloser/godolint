@@ -31,7 +31,7 @@ func checkDL3032(instruction syntax.Instruction) bool {
 	hasYumClean := false
 
 	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs(yumCommand, []string{"install"}, cmd) {
+		if shell.CmdHasArgs(yumCommand, []string{installArg}, cmd) {
 			hasYumInstall = true
 		}
 
@@ -51,12 +51,12 @@ func checkDL3032(instruction syntax.Instruction) bool {
 
 func isYumClean(cmd shell.Command) bool {
 	// yum clean all
-	if shell.CmdHasArgs(yumCommand, []string{"clean", "all"}, cmd) {
+	if shell.CmdHasArgs(yumCommand, []string{cleanArg, allArg}, cmd) {
 		return true
 	}
 
 	// rm -rf /var/cache/yum/*
-	if shell.CmdHasArgs("rm", []string{"-rf", "/var/cache/yum/*"}, cmd) {
+	if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/yum/*"}, cmd) {
 		return true
 	}
 

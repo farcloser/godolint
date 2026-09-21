@@ -35,7 +35,7 @@ func checkDL3015(instruction syntax.Instruction) bool {
 
 func forgotNoInstallRecommends(cmd shell.Command) bool {
 	// Must be apt-get install
-	if !shell.CmdHasArgs("apt-get", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs("apt-get", []string{installArg}, cmd) {
 		return false
 	}
 

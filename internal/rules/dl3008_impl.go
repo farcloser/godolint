@@ -44,7 +44,7 @@ func checkDL3008(instruction syntax.Instruction) bool {
 
 func aptGetPackages(cmd shell.Command) []string {
 	// Only check apt-get install commands
-	if !shell.CmdHasArgs("apt-get", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs("apt-get", []string{installArg}, cmd) {
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func aptGetPackages(cmd shell.Command) []string {
 	var packages []string
 
 	for _, arg := range args {
-		if arg != "install" {
+		if arg != installArg {
 			packages = append(packages, arg)
 		}
 	}
