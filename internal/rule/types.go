@@ -70,6 +70,18 @@ type CheckFailure struct {
 	Message  string   `json:"message"`
 }
 
+// Fail is the failure a rule reports about itself at a line: the describing
+// triple, with the column hadolint always emits.
+func Fail(d Describer, line int) CheckFailure {
+	return CheckFailure{
+		Code:     d.Code(),
+		Severity: d.Severity(),
+		Message:  d.Message(),
+		Line:     line,
+		Column:   1, // Hardcoded to 1 (matches hadolint)
+	}
+}
+
 // State holds failures and custom state for a rule.
 // Ported from State a in Hadolint/Rule.hs.
 type State struct {
@@ -115,9 +127,11 @@ func Data[T any](s State) T {
 	return data
 }
 
-// Rule is ported from the concept of Rule in Hadolint/Rule.hs.
-// All rules are stateful - simple rules just use empty state.
-type Rule interface {
+// Describer is what a rule says about itself: the triple of Meta, which the
+// generated metadata of every rule carries, read on its own by the parts that
+// select and report rules rather than run them (sdk/rules.go filters on code
+// and severity, and a failure is built from all three).
+type Describer interface {
 	// Code returns the unique rule identifier
 	Code() Code
 
@@ -126,6 +140,13 @@ type Rule interface {
 
 	// Message returns the human-readable description of the rule
 	Message() string
+}
+
+// Rule is ported from the concept of Rule in Hadolint/Rule.hs.
+// All rules are stateful - simple rules just use empty state.
+// A rule is a Describer and a state machine over the instructions.
+type Rule interface {
+	Describer
 
 	// InitialState returns the initial state for this rule
 	InitialState() State
