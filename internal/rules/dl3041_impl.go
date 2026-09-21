@@ -145,7 +145,7 @@ func isDnfVersionLike(parts []string) bool {
 			break
 		}
 
-		if len(part) > 0 && unicode.IsDigit(rune(part[0])) {
+		if part != "" && unicode.IsDigit(rune(part[0])) {
 			hasDigitStart = true
 		}
 	}
@@ -154,7 +154,7 @@ func isDnfVersionLike(parts []string) bool {
 }
 
 func isDnfValidVersionPart(part string) bool {
-	if len(part) == 0 {
+	if part == "" {
 		return false
 	}
 

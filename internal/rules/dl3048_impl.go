@@ -37,7 +37,7 @@ func checkDL3048(instruction syntax.Instruction) bool {
 // isValidLabelKey checks if a label key follows Docker naming conventions.
 // Ported from DL3048.hs validation logic.
 func isValidLabelKey(key string) bool {
-	if len(key) == 0 {
+	if key == "" {
 		return false
 	}
 

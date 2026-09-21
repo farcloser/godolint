@@ -11,6 +11,11 @@ import (
 	"github.com/forkcloser/godolint/internal/syntax"
 )
 
+// onBuildPrefix is the keyword ONBUILD lines start with, trailing space
+// included: buildkit hands the converter the whole line, and what follows the
+// keyword is the instruction ONBUILD wraps.
+const onBuildPrefix = "ONBUILD "
+
 // Static sentinel errors for instruction conversion failures, so callers can
 // match them with errors.Is; detail is attached by wrapping where needed.
 var (
@@ -492,12 +497,12 @@ func convertOnBuild(node *parser.Node) (*syntax.OnBuild, error) {
 	// We need to parse the inner instruction from the Original string
 	original := strings.TrimSpace(node.Original)
 
-	// Remove "ONBUILD " prefix
-	if !strings.HasPrefix(strings.ToUpper(original), "ONBUILD ") {
+	// Remove the ONBUILD keyword, leaving the instruction it wraps.
+	if !strings.HasPrefix(strings.ToUpper(original), onBuildPrefix) {
 		return nil, ErrInvalidOnBuild
 	}
 
-	innerText := strings.TrimSpace(original[8:]) // len("ONBUILD ") = 8
+	innerText := strings.TrimSpace(original[len(onBuildPrefix):])
 	if innerText == "" {
 		return nil, ErrOnBuildMissingInstruction
 	}

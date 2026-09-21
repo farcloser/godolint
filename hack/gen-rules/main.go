@@ -377,7 +377,7 @@ func generateCheckFunction(rule RuleMetadata) string {
 
 	// Pattern 1: Simple instruction type check
 	// Example: (Maintainer _) followed by _
-	simplePattern := regexp.MustCompile(`\((\w+)\s+[_\w]+\)`)
+	simplePattern := regexp.MustCompile(`\((\w+)\s+\w+\)`)
 	if len(lines) == 2 && simplePattern.MatchString(lines[0]) && strings.TrimSpace(lines[1]) == "_" {
 		match := simplePattern.FindStringSubmatch(lines[0])
 		if len(match) > 1 {
