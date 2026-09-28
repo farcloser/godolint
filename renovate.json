@@ -10,6 +10,7 @@
   ],
   "forkProcessing": "enabled",
   "gitIgnoredAuthors": [
+    "317468017+limen-ci-forkcloser[bot]@users.noreply.github.com",
     "300983632+limen-ci-farcloser[bot]@users.noreply.github.com",
     "41898282+github-actions[bot]@users.noreply.github.com"
   ]
