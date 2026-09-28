@@ -271,7 +271,7 @@ func generateMetadata(rule RuleMetadata) error {
 
 package rules
 
-import "github.com/farcloser/godolint/internal/rule"
+import "github.com/forkcloser/godolint/internal/rule"
 
 // {{.Code}}Meta contains metadata for rule {{.Code}}.
 // Source: hadolint/src/Hadolint/Rule/{{.SourceFile}}
@@ -322,8 +322,8 @@ func generateImplementation(rule RuleMetadata) error {
 	tmpl := `package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // {{.Code}} creates a rule from the generated metadata.

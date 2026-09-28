@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // Severity is ported from DLSeverity in Hadolint/Rule.hs.

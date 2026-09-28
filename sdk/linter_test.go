@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/farcloser/godolint/sdk"
+	"github.com/forkcloser/godolint/sdk"
 )
 
 // INTENTION: New() should create a linter with default configuration.

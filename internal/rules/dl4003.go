@@ -3,7 +3,7 @@
 
 package rules
 
-import "github.com/farcloser/godolint/internal/rule"
+import "github.com/forkcloser/godolint/internal/rule"
 
 // DL4003Meta contains metadata for rule DL4003.
 // Source: hadolint/src/Hadolint/Rule/DL4003.hs

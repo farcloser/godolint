@@ -3,8 +3,8 @@ package rules
 import (
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3045 checks for COPY to relative destination without WORKDIR set.

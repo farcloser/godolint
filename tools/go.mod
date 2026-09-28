@@ -1,7 +1,7 @@
 // The Go-built tools the shared recipes run, pinned as tool directives
 // in a module of their own so their dependency graph never reaches the
 // project's go.mod (book/tooling.md).
-module github.com/farcloser/godolint/tools
+module github.com/forkcloser/godolint/tools
 
 go 1.26.0
 

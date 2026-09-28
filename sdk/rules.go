@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
 )
 
 // AllRules returns all 65 implemented hadolint DL#### rules (pure Go).

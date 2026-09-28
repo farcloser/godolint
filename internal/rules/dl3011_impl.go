@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // maxPort is the highest valid TCP/UDP port number.

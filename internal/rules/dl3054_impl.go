@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/farcloser/godolint/internal/config"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/config"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3054Rule checks that SPDX license labels are valid.

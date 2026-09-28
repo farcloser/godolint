@@ -4,9 +4,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // dl4006State tracks whether pipefail is set.

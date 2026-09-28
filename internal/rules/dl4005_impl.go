@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL4005 checks for ln /bin/sh instead of using SHELL.
