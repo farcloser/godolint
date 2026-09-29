@@ -92,6 +92,12 @@ func (*BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, error)
 }
 
 // convertNode converts a buildkit AST node to our Instruction type.
+// The arms are one keyword each, calling one converter, with no nesting and
+// no shared state: cyclomatic complexity counts them all, while cognitive
+// complexity, which weighs nesting, reads the table as the flat lookup it is.
+// Splitting it would only move keywords into a second switch.
+//
+//nolint:gocyclo // flat dispatch table: one arm per Dockerfile keyword
 func convertNode(node *parser.Node) (syntax.Instruction, error) {
 	switch strings.ToLower(node.Value) {
 	case "from":
