@@ -73,13 +73,7 @@ func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instru
 		if newCurl && newWget && (!currentState.HasCurl || !currentState.HasWget) {
 			return state.
 				ReplaceData(dl4001State{HasCurl: newCurl, HasWget: newWget}).
-				AddFailure(rule.CheckFailure{
-					Code:     r.Code(),
-					Severity: r.Severity(),
-					Message:  r.Message(),
-					Line:     line,
-					Column:   1, // Hardcoded to 1 (matches hadolint)
-				})
+				AddFailure(rule.Fail(r, line))
 		}
 
 		return state.ReplaceData(dl4001State{HasCurl: newCurl, HasWget: newWget})

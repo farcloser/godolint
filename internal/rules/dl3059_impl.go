@@ -67,13 +67,7 @@ func (r *DL3059Rule) Check(line int, state rule.State, instruction syntax.Instru
 			commandCount < 2 && // Current is not chained
 			prevState.Count < 2 { // Previous is not chained
 			// Fail: consecutive simple RUN instructions with same flags
-			return state.AddFailure(rule.CheckFailure{
-				Code:     r.Code(),
-				Severity: r.Severity(),
-				Message:  r.Message(),
-				Line:     line,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
-			}).ReplaceData(dl3059State{
+			return state.AddFailure(rule.Fail(r, line)).ReplaceData(dl3059State{
 				Flags: currentFlags,
 				Count: commandCount,
 			})
