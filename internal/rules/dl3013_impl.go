@@ -137,7 +137,7 @@ func stripPipInstallPrefix(args []string) []string {
 	for _, arg := range args {
 		if foundInstall {
 			result = append(result, arg)
-		} else if arg == "install" {
+		} else if arg == installArg {
 			foundInstall = true
 		}
 	}

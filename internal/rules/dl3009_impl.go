@@ -147,14 +147,14 @@ func forgotToCleanup(parsed *shell.ParsedShell) bool {
 
 	for _, cmd := range parsed.PresentCommands {
 		// Check for apt/apt-get/aptitude update
-		if shell.CmdHasArgs("apt", []string{"update"}, cmd) ||
-			shell.CmdHasArgs("apt-get", []string{"update"}, cmd) ||
-			shell.CmdHasArgs("aptitude", []string{"update"}, cmd) {
+		if shell.CmdHasArgs("apt", []string{updateArg}, cmd) ||
+			shell.CmdHasArgs("apt-get", []string{updateArg}, cmd) ||
+			shell.CmdHasArgs("aptitude", []string{updateArg}, cmd) {
 			hasUpdate = true
 		}
 
 		// Check for cleanup
-		if shell.CmdHasArgs("rm", []string{"-rf", "/var/lib/apt/lists/*"}, cmd) {
+		if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/lib/apt/lists/*"}, cmd) {
 			hasCleanup = true
 		}
 	}

@@ -82,20 +82,20 @@ func getDnfModules(parsed *shell.ParsedShell) []string {
 }
 
 func isDnfModuleCmd(cmd shell.Command) bool {
-	if cmd.Name != "dnf" && cmd.Name != "microdnf" {
+	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
 		return false
 	}
 
-	return shell.CmdHasArgs(cmd.Name, []string{"module"}, cmd)
+	return shell.CmdHasArgs(cmd.Name, []string{moduleArg}, cmd)
 }
 
 func dnfInstallFilter(cmd shell.Command) []string {
-	if cmd.Name != "dnf" && cmd.Name != "microdnf" {
+	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
 		return nil
 	}
 
 	// Must be install command
-	if !shell.CmdHasArgs(cmd.Name, []string{"install"}, cmd) {
+	if !shell.CmdHasArgs(cmd.Name, []string{installArg}, cmd) {
 		return nil
 	}
 
@@ -104,7 +104,7 @@ func dnfInstallFilter(cmd shell.Command) []string {
 	var packages []string
 
 	for _, arg := range args {
-		if arg != "install" && arg != "module" {
+		if arg != installArg && arg != moduleArg {
 			packages = append(packages, arg)
 		}
 	}

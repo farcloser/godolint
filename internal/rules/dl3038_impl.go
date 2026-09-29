@@ -42,11 +42,11 @@ func forgotDnfYesOption(cmd shell.Command) bool {
 }
 
 func isDnfInstall(cmd shell.Command) bool {
-	if cmd.Name != "dnf" && cmd.Name != "microdnf" {
+	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
 		return false
 	}
 
-	return shell.CmdHasArgs(cmd.Name, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(cmd.Name, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(cmd.Name, []string{"groupinstall"}, cmd) ||
 		shell.CmdHasArgs(cmd.Name, []string{"localinstall"}, cmd)
 }

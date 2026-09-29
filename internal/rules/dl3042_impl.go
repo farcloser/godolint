@@ -133,9 +133,9 @@ func forgotPipNoCacheDir(cmd shell.Command) bool {
 }
 
 func isPipInstall(cmd shell.Command) bool {
-	return shell.CmdHasArgs("pip", []string{"install"}, cmd) ||
-		shell.CmdHasArgs("pip2", []string{"install"}, cmd) ||
-		shell.CmdHasArgs("pip3", []string{"install"}, cmd)
+	return shell.CmdHasArgs("pip", []string{installArg}, cmd) ||
+		shell.CmdHasArgs("pip2", []string{installArg}, cmd) ||
+		shell.CmdHasArgs("pip3", []string{installArg}, cmd)
 }
 
 func isPipWrapper(cmd shell.Command) bool {

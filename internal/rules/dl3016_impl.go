@@ -36,7 +36,7 @@ func checkDL3016(instruction syntax.Instruction) bool {
 
 func forgotToPinNpmVersion(cmd shell.Command) bool {
 	// Must be npm install
-	if !shell.CmdHasArgs("npm", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs("npm", []string{installArg}, cmd) {
 		return false
 	}
 
@@ -111,7 +111,7 @@ func stripNpmInstallPrefix(args []string) []string {
 	for _, arg := range args {
 		if foundInstall {
 			result = append(result, arg)
-		} else if arg == "install" {
+		} else if arg == installArg {
 			foundInstall = true
 		}
 	}

@@ -40,7 +40,7 @@ func checkDL3019(instruction syntax.Instruction) bool {
 
 func forgotApkNoCacheOption(cmd shell.Command) bool {
 	// Must be apk add
-	if !shell.CmdHasArgs("apk", []string{"add"}, cmd) {
+	if !shell.CmdHasArgs("apk", []string{addArg}, cmd) {
 		return false
 	}
 

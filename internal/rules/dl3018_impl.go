@@ -44,7 +44,7 @@ func checkDL3018(instruction syntax.Instruction) bool {
 
 func apkAddPackages(cmd shell.Command) []string {
 	// Only check apk add commands
-	if !shell.CmdHasArgs("apk", []string{"add"}, cmd) {
+	if !shell.CmdHasArgs("apk", []string{addArg}, cmd) {
 		return nil
 	}
 
@@ -90,7 +90,7 @@ func apkAddPackages(cmd shell.Command) []string {
 			continue
 		}
 		// Skip "add" itself
-		if arg.Arg == "add" {
+		if arg.Arg == addArg {
 			continue
 		}
 

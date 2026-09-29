@@ -39,11 +39,11 @@ func checkDL3040(instruction syntax.Instruction) bool {
 	hasMicroDnfClean := false
 
 	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs("dnf", []string{"install"}, cmd) {
+		if shell.CmdHasArgs(dnfCommand, []string{installArg}, cmd) {
 			hasDnfInstall = true
 		}
 
-		if shell.CmdHasArgs("microdnf", []string{"install"}, cmd) {
+		if shell.CmdHasArgs(microdnfCommand, []string{installArg}, cmd) {
 			hasMicroDnfInstall = true
 		}
 
@@ -70,11 +70,11 @@ func checkDL3040(instruction syntax.Instruction) bool {
 }
 
 func isDnfCleanCmd(cmd shell.Command) bool {
-	if shell.CmdHasArgs("dnf", []string{"clean", "all"}, cmd) {
+	if shell.CmdHasArgs(dnfCommand, []string{cleanArg, allArg}, cmd) {
 		return true
 	}
 
-	if shell.CmdHasArgs("rm", []string{"-rf", "/var/cache/libdnf5*"}, cmd) {
+	if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/libdnf5*"}, cmd) {
 		return true
 	}
 
@@ -82,11 +82,11 @@ func isDnfCleanCmd(cmd shell.Command) bool {
 }
 
 func isMicroDnfCleanCmd(cmd shell.Command) bool {
-	if shell.CmdHasArgs("microdnf", []string{"clean", "all"}, cmd) {
+	if shell.CmdHasArgs(microdnfCommand, []string{cleanArg, allArg}, cmd) {
 		return true
 	}
 
-	if shell.CmdHasArgs("rm", []string{"-rf", "/var/cache/libdnf5*"}, cmd) {
+	if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/libdnf5*"}, cmd) {
 		return true
 	}
 

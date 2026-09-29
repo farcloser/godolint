@@ -37,11 +37,11 @@ func checkDL3060(instruction syntax.Instruction) bool {
 	hasYarnCacheClean := false
 
 	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs("yarn", []string{"install"}, cmd) {
+		if shell.CmdHasArgs("yarn", []string{installArg}, cmd) {
 			hasYarnInstall = true
 		}
 
-		if shell.CmdHasArgs("yarn", []string{"cache", "clean"}, cmd) {
+		if shell.CmdHasArgs("yarn", []string{"cache", cleanArg}, cmd) {
 			hasYarnCacheClean = true
 		}
 	}

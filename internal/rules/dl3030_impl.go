@@ -47,7 +47,7 @@ func forgotYumYesOption(cmd shell.Command) bool {
 }
 
 func isYumInstall(cmd shell.Command) bool {
-	return shell.CmdHasArgs(yumCommand, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(yumCommand, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(yumCommand, []string{"groupinstall"}, cmd) ||
 		shell.CmdHasArgs(yumCommand, []string{"localinstall"}, cmd)
 }

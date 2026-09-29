@@ -45,7 +45,7 @@ func forgotZypperYesOption(cmd shell.Command) bool {
 }
 
 func isZypperInstall(cmd shell.Command) bool {
-	return shell.CmdHasArgs(zypperCommand, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(zypperCommand, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"in"}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"remove"}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"rm"}, cmd) ||
