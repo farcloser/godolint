@@ -47,6 +47,8 @@ func (*DL3010Rule) InitialState() rule.State {
 
 // Check tracks COPYed archives and flags those later extracted by RUN
 // instead of being extracted directly by ADD.
+//
+//nolint:gocognit // one case per instruction kind, each read in place; moving the case bodies out left the logic the same, only further away
 func (*DL3010Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	currentState := rule.Data[dl3010State](state)
 
