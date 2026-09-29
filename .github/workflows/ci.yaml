@@ -53,10 +53,49 @@ jobs:
       - name: Install aqua (pinned, checksum-verified)
         uses: ./.github/actions/setup-aqua
 
+      # Not here: turning Defender's real-time scan off. Tried on the windows
+      # legs, before the caches, and measured neutral twice against the same
+      # commit without it — the slowness is process creation and small-file
+      # writes under git-bash, not the scanner.
+
+      # aqua's package store, keyed on the exact pins and per architecture
+      # (the store holds native binaries). A warm store turns every lazy first
+      # use below into a link; the fallback key keeps the tools a pin bump did
+      # not touch, and the changed one downloads and verifies as before.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.AQUA_ROOT_DIR }}/pkgs
+          key: aqua-pkgs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('aqua.yaml', 'aqua-checksums.json', '.limen/aqua-registry.yaml') }}
+          restore-keys: |
+            aqua-pkgs-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Install pinned tools
         # Link-only: tools download lazily on first use, checksum-verified; a
         # job pays only for what its recipes run.
         run: aqua install --only-link
+
+      # The Go build and module caches, plus the linter's (build/cache/, see
+      # main.just). The per-platform analysis legs compile the whole module
+      # graph five times, cold, on every run without this. Paths come from the
+      # pinned go itself — they differ per OS — and the key carries its version
+      # and every go.sum; a stale restore is harmless (the build cache is
+      # content-addressed, the module cache is checksum-verified), so the
+      # fallback key is always worth taking.
+      - id: gocache
+        run: |
+          echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+          echo "mod=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "version=$(go env GOVERSION)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ steps.gocache.outputs.build }}
+            ${{ steps.gocache.outputs.mod }}
+            build/cache
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ steps.gocache.outputs.version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            go-${{ runner.os }}-${{ runner.arch }}-${{ steps.gocache.outputs.version }}-
+            go-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Lint
         run: just lint
@@ -131,7 +170,10 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.AQUA_ROOT_DIR }}/pkgs
-          key: aqua-pkgs-${{ runner.os }}-${{ hashFiles('aqua.yaml', 'aqua-checksums.json', '.limen/aqua-registry.yaml') }}
+          # The same key as the verify legs', so this job and the linux leg
+          # share one store — and no fallback key here: a changed pin must be
+          # a real install, which is what this job exists to prove.
+          key: aqua-pkgs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('aqua.yaml', 'aqua-checksums.json', '.limen/aqua-registry.yaml') }}
 
       - name: Install every pinned tool
         run: aqua install
