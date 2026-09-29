@@ -120,7 +120,11 @@ func TestParseShell(t *testing.T) {
 func TestCmdHasArgs(t *testing.T) {
 	t.Parallel()
 
-	ps, _ := shell.ParseShell("apt-get install vim")
+	ps, err := shell.ParseShell("apt-get install vim")
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
 	cmd := ps.PresentCommands[0]
 
 	if !shell.CmdHasArgs("apt-get", []string{"install"}, cmd) {

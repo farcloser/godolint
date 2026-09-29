@@ -33,40 +33,36 @@ func checkDL3040(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	hasDnfInstall := false
-	hasMicroDnfInstall := false
-	hasDnfClean := false
-	hasMicroDnfClean := false
-
+	var usage dnfUsage
 	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs(dnfCommand, []string{installArg}, cmd) {
-			hasDnfInstall = true
-		}
-
-		if shell.CmdHasArgs(microdnfCommand, []string{installArg}, cmd) {
-			hasMicroDnfInstall = true
-		}
-
-		if isDnfCleanCmd(cmd) {
-			hasDnfClean = true
-		}
-
-		if isMicroDnfCleanCmd(cmd) {
-			hasMicroDnfClean = true
-		}
+		usage.observe(cmd)
 	}
 
-	// If has dnf install, must have dnf clean
-	if hasDnfInstall && !hasDnfClean {
-		return false
-	}
+	return usage.cleansWhatItInstalls()
+}
 
-	// If has microdnf install, must have microdnf clean
-	if hasMicroDnfInstall && !hasMicroDnfClean {
-		return false
-	}
+// dnfUsage is what one RUN does with dnf and with microdnf. The two are
+// tracked apart: each cleans its own cache, and cleaning the other's leaves
+// the layer just as fat.
+type dnfUsage struct {
+	dnfInstall      bool
+	dnfClean        bool
+	microdnfInstall bool
+	microdnfClean   bool
+}
 
-	return true
+// observe folds one command of the RUN into the usage.
+func (u *dnfUsage) observe(cmd shell.Command) {
+	u.dnfInstall = u.dnfInstall || shell.CmdHasArgs(dnfCommand, []string{installArg}, cmd)
+	u.microdnfInstall = u.microdnfInstall || shell.CmdHasArgs(microdnfCommand, []string{installArg}, cmd)
+	u.dnfClean = u.dnfClean || isDnfCleanCmd(cmd)
+	u.microdnfClean = u.microdnfClean || isMicroDnfCleanCmd(cmd)
+}
+
+// cleansWhatItInstalls reports whether every install in the RUN is followed by
+// the matching clean.
+func (u *dnfUsage) cleansWhatItInstalls() bool {
+	return (!u.dnfInstall || u.dnfClean) && (!u.microdnfInstall || u.microdnfClean)
 }
 
 func isDnfCleanCmd(cmd shell.Command) bool {
