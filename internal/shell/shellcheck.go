@@ -82,38 +82,58 @@ type shellcheckOutput struct {
 	Message string `json:"message"`
 }
 
+// isPOSIXShell reports whether a RUN's shell is one shellcheck can read.
+// pwsh, powershell and cmd are not shells it knows anything about.
+func isPOSIXShell(name string) bool {
+	lower := strings.ToLower(name)
+
+	return !strings.Contains(lower, "pwsh") &&
+		!strings.Contains(lower, "powershell") &&
+		!strings.Contains(lower, "cmd")
+}
+
 // Check runs shellcheck on the given script.
 // Ported from Hadolint.Shell.shellcheck.
 func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailure, error) {
-	// Skip non-POSIX shells (pwsh, powershell, cmd)
-	shellLower := strings.ToLower(opts.ShellName)
-	if strings.Contains(shellLower, "pwsh") ||
-		strings.Contains(shellLower, "powershell") ||
-		strings.Contains(shellLower, "cmd") {
-		return nil, nil
-	}
-
-	// Skip if script has unsupported shebang
-	if hasUnsupportedShebang(script) {
+	// A script for another interpreter, or one that declares an unsupported
+	// shebang, is not shellcheck's to judge.
+	if !isPOSIXShell(opts.ShellName) || hasUnsupportedShebang(script) {
 		return nil, nil
 	}
 
 	// Build complete script with shebang and exports
-	fullScript := buildScript(script, opts)
+	output, err := c.run(buildScript(script, opts))
+	if err != nil {
+		return nil, err
+	}
 
-	// Write script to temp file
+	// Parse JSON output
+	var scResults []shellcheckOutput
+
+	if len(output) > 0 {
+		if err = json.Unmarshal(output, &scResults); err != nil {
+			return nil, fmt.Errorf("failed to parse shellcheck output: %w", err)
+		}
+	}
+
+	return convertFindings(scResults, opts), nil
+}
+
+// run hands the script to shellcheck as a file and returns its JSON report.
+// A shellcheck that ran and found violations exits non-zero, which is the
+// expected path; only one that could not run at all is an error here
+// (matching hadolint).
+func (c *BinaryShellchecker) run(fullScript string) ([]byte, error) {
 	tmpFile, err := os.CreateTemp("", "shellcheck-*.sh")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 
-	// Every path below closes the file before this runs, as windows requires
-	// to remove it. A temp file that outlives a failed removal is the OS's to
-	// reap, so that error is dropped.
-	defer func() { _ = os.Remove(tmpFile.Name()) }()
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
 
 	if _, err = tmpFile.WriteString(fullScript); err != nil {
-		return nil, errors.Join(fmt.Errorf("failed to write script: %w", err), tmpFile.Close())
+		return nil, fmt.Errorf("failed to write script: %w", err)
 	}
 
 	if err = tmpFile.Close(); err != nil {
@@ -154,8 +174,6 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 	cmd.Stderr = &stderr
 
 	output, err := cmd.Output()
-	// shellcheck returns non-zero if violations found, which is expected
-	// Only return error if we couldn't run shellcheck at all
 	if err != nil {
 		exitError := &exec.ExitError{}
 		if !errors.As(err, &exitError) {
@@ -163,21 +181,17 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 		}
 	}
 
-	// Parse JSON output
-	var scResults []shellcheckOutput
-	if len(output) > 0 {
-		err := json.Unmarshal(output, &scResults)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse shellcheck output: %w", err)
-		}
-	}
+	return output, nil
+}
 
-	// Convert to CheckFailures. shellcheck reports positions within the
-	// synthesized script; subtract the header (shebang + exports) to get the
-	// 0-based offset within the original script, which the rule anchors to
-	// the instruction's Dockerfile line. Today the parser collapses a RUN
-	// command onto one line, so the offset is 0 in practice — but any
-	// multi-line command (e.g. future heredoc support) maps correctly.
+// convertFindings turns shellcheck's report into rule failures. shellcheck
+// reports positions within the synthesized script; subtracting the header
+// (shebang + exports) gives the 0-based offset within the original script,
+// which the rule anchors to the instruction's Dockerfile line. Today the
+// parser collapses a RUN command onto one line, so the offset is 0 in
+// practice — but any multi-line command (e.g. future heredoc support) maps
+// correctly.
+func convertFindings(scResults []shellcheckOutput, opts Opts) []rule.CheckFailure {
 	headerLines := 1 + len(opts.EnvVars)
 
 	var failures []rule.CheckFailure
@@ -206,7 +220,7 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 		})
 	}
 
-	return failures, nil
+	return failures
 }
 
 // buildScript constructs the complete script to pass to shellcheck.
