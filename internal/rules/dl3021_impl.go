@@ -1,8 +1,8 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3021 creates a rule for checking COPY with multiple sources ends with /.
@@ -28,7 +28,7 @@ func checkDL3021(instruction syntax.Instruction) bool {
 
 	// Multiple sources - destination must end with /
 	dest := dropQuotes(copyInstr.Destination)
-	if len(dest) == 0 {
+	if dest == "" {
 		return false
 	}
 

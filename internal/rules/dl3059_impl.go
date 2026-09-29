@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3059 creates a rule for checking multiple consecutive RUN instructions.
@@ -67,13 +67,7 @@ func (r *DL3059Rule) Check(line int, state rule.State, instruction syntax.Instru
 			commandCount < 2 && // Current is not chained
 			prevState.Count < 2 { // Previous is not chained
 			// Fail: consecutive simple RUN instructions with same flags
-			return state.AddFailure(rule.CheckFailure{
-				Code:     r.Code(),
-				Severity: r.Severity(),
-				Message:  r.Message(),
-				Line:     line,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
-			}).ReplaceData(dl3059State{
+			return state.AddFailure(rule.Fail(r, line)).ReplaceData(dl3059State{
 				Flags: currentFlags,
 				Count: commandCount,
 			})

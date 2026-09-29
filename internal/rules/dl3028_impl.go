@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3028 checks for gem install without version pinning.
@@ -44,7 +44,7 @@ func checkDL3028(instruction syntax.Instruction) bool {
 
 func getGemPackages(cmd shell.Command) []string {
 	// Must be gem install or gem i
-	if !shell.CmdHasArgs("gem", []string{"install"}, cmd) && !shell.CmdHasArgs("gem", []string{"i"}, cmd) {
+	if !shell.CmdHasArgs("gem", []string{installArg}, cmd) && !shell.CmdHasArgs("gem", []string{"i"}, cmd) {
 		return nil
 	}
 
@@ -85,7 +85,7 @@ func getGemPackages(cmd shell.Command) []string {
 		}
 
 		// Skip "install" and "i" commands
-		if arg == "install" || arg == "i" {
+		if arg == installArg || arg == "i" {
 			continue
 		}
 

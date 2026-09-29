@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3060 checks for yarn cache clean after yarn install.
@@ -37,11 +37,11 @@ func checkDL3060(instruction syntax.Instruction) bool {
 	hasYarnCacheClean := false
 
 	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs("yarn", []string{"install"}, cmd) {
+		if shell.CmdHasArgs("yarn", []string{installArg}, cmd) {
 			hasYarnInstall = true
 		}
 
-		if shell.CmdHasArgs("yarn", []string{"cache", "clean"}, cmd) {
+		if shell.CmdHasArgs("yarn", []string{"cache", cleanArg}, cmd) {
 			hasYarnCacheClean = true
 		}
 	}

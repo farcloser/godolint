@@ -3,9 +3,9 @@
 package process
 
 import (
-	"github.com/farcloser/godolint/internal/pragma"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/pragma"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // Processor runs rules against a Dockerfile AST and collects violations.

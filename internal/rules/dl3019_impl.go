@@ -3,9 +3,9 @@ package rules
 import (
 	"slices"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3019 checks for apk add without --no-cache flag.
@@ -40,7 +40,7 @@ func checkDL3019(instruction syntax.Instruction) bool {
 
 func forgotApkNoCacheOption(cmd shell.Command) bool {
 	// Must be apk add
-	if !shell.CmdHasArgs("apk", []string{"add"}, cmd) {
+	if !shell.CmdHasArgs("apk", []string{addArg}, cmd) {
 		return false
 	}
 

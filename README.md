@@ -28,13 +28,13 @@ and can also be used (of course, and primarily) as a library in Go projects.
 ### As a CLI tool
 
 ```bash
-go install github.com/farcloser/godolint/cmd/godolint@latest
+go install github.com/forkcloser/godolint/cmd/godolint@latest
 ```
 
 ### As a library
 
 ```bash
-go get github.com/farcloser/godolint
+go get github.com/forkcloser/godolint
 ```
 
 ## Quick Start
@@ -81,7 +81,7 @@ import (
     "fmt"
     "os"
 
-    "github.com/farcloser/godolint/sdk"
+    "github.com/forkcloser/godolint/sdk"
 )
 
 func main() {
@@ -438,7 +438,7 @@ func checkDL3007(instruction syntax.Instruction) bool {
 
 A release is a signed, annotated tag `vX.Y.Z` on `main`; no binaries are
 published. Consumers pin the tag as a `go_install` package (through aqua) or
-with `go install github.com/farcloser/godolint/cmd/godolint@vX.Y.Z`.
+with `go install github.com/forkcloser/godolint/cmd/godolint@vX.Y.Z`.
 
 ## Roadmap
 

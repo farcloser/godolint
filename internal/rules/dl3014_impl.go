@@ -3,9 +3,9 @@ package rules
 import (
 	"slices"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3014 checks for apt-get install without -y flag.
@@ -35,7 +35,7 @@ func checkDL3014(instruction syntax.Instruction) bool {
 
 func forgotAptYesOption(cmd shell.Command) bool {
 	// Must be apt-get install
-	if !shell.CmdHasArgs("apt-get", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs("apt-get", []string{installArg}, cmd) {
 		return false
 	}
 

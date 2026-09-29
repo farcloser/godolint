@@ -3,10 +3,10 @@ package sdk
 import (
 	"context"
 
-	"github.com/farcloser/godolint/internal/parser"
-	"github.com/farcloser/godolint/internal/process"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/parser"
+	"github.com/forkcloser/godolint/internal/process"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
 )
 
 // Linter performs Dockerfile linting.

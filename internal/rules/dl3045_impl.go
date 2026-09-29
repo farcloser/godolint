@@ -3,8 +3,8 @@ package rules
 import (
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3045 checks for COPY to relative destination without WORKDIR set.
@@ -101,13 +101,7 @@ func (r *DL3045Rule) Check(line int, state rule.State, instruction syntax.Instru
 		// Otherwise, this is a violation
 		return state.
 			ReplaceData(currentState).
-			AddFailure(rule.CheckFailure{
-				Code:     r.Code(),
-				Severity: r.Severity(),
-				Message:  r.Message(),
-				Line:     line,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
-			})
+			AddFailure(rule.Fail(r, line))
 	}
 
 	return state.ReplaceData(currentState)

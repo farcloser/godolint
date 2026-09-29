@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 func TestBinaryShellchecker_Check(t *testing.T) {
@@ -78,7 +78,7 @@ func TestBinaryShellchecker_RCFile(t *testing.T) {
 
 	// …and is silenced by an rcfile that disables it.
 	rcfile := filepath.Join(t.TempDir(), "shellcheckrc")
-	if err := os.WriteFile(rcfile, []byte("disable=SC2086\n"), 0o600); err != nil {
+	if err = os.WriteFile(rcfile, []byte("disable=SC2086\n"), 0o600); err != nil {
 		t.Fatalf("writing rcfile: %v", err)
 	}
 

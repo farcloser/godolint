@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // shellcheckTimeout bounds a single shellcheck invocation: one RUN
@@ -107,14 +107,16 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+	// Every path below closes the file before this runs, as windows requires
+	// to remove it. A temp file that outlives a failed removal is the OS's to
+	// reap, so that error is dropped.
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
-	if _, err := tmpFile.WriteString(fullScript); err != nil {
-		return nil, fmt.Errorf("failed to write script: %w", err)
+	if _, err = tmpFile.WriteString(fullScript); err != nil {
+		return nil, errors.Join(fmt.Errorf("failed to write script: %w", err), tmpFile.Close())
 	}
 
-	if err := tmpFile.Close(); err != nil {
+	if err = tmpFile.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close temp file: %w", err)
 	}
 

@@ -4,9 +4,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3016 checks for npm install without version pinning.
@@ -36,7 +36,7 @@ func checkDL3016(instruction syntax.Instruction) bool {
 
 func forgotToPinNpmVersion(cmd shell.Command) bool {
 	// Must be npm install
-	if !shell.CmdHasArgs("npm", []string{"install"}, cmd) {
+	if !shell.CmdHasArgs("npm", []string{installArg}, cmd) {
 		return false
 	}
 
@@ -111,7 +111,7 @@ func stripNpmInstallPrefix(args []string) []string {
 	for _, arg := range args {
 		if foundInstall {
 			result = append(result, arg)
-		} else if arg == "install" {
+		} else if arg == installArg {
 			foundInstall = true
 		}
 	}

@@ -3,9 +3,9 @@ package rules
 import (
 	"slices"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // zypperCommand is the zypper package-manager binary, matched by the DL303x rules.
@@ -45,7 +45,7 @@ func forgotZypperYesOption(cmd shell.Command) bool {
 }
 
 func isZypperInstall(cmd shell.Command) bool {
-	return shell.CmdHasArgs(zypperCommand, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(zypperCommand, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"in"}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"remove"}, cmd) ||
 		shell.CmdHasArgs(zypperCommand, []string{"rm"}, cmd) ||

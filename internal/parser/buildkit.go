@@ -8,8 +8,13 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
+
+// onBuildPrefix is the keyword ONBUILD lines start with, trailing space
+// included: buildkit hands the converter the whole line, and what follows the
+// keyword is the instruction ONBUILD wraps.
+const onBuildPrefix = "ONBUILD "
 
 // Static sentinel errors for instruction conversion failures, so callers can
 // match them with errors.Is; detail is attached by wrapping where needed.
@@ -87,6 +92,12 @@ func (*BuildkitParser) Parse(dockerfile []byte) ([]syntax.InstructionPos, error)
 }
 
 // convertNode converts a buildkit AST node to our Instruction type.
+// The arms are one keyword each, calling one converter, with no nesting and
+// no shared state: cyclomatic complexity counts them all, while cognitive
+// complexity, which weighs nesting, reads the table as the flat lookup it is.
+// Splitting it would only move keywords into a second switch.
+//
+//nolint:gocyclo // flat dispatch table: one arm per Dockerfile keyword
 func convertNode(node *parser.Node) (syntax.Instruction, error) {
 	switch strings.ToLower(node.Value) {
 	case "from":
@@ -492,12 +503,12 @@ func convertOnBuild(node *parser.Node) (*syntax.OnBuild, error) {
 	// We need to parse the inner instruction from the Original string
 	original := strings.TrimSpace(node.Original)
 
-	// Remove "ONBUILD " prefix
-	if !strings.HasPrefix(strings.ToUpper(original), "ONBUILD ") {
+	// Remove the ONBUILD keyword, leaving the instruction it wraps.
+	if !strings.HasPrefix(strings.ToUpper(original), onBuildPrefix) {
 		return nil, ErrInvalidOnBuild
 	}
 
-	innerText := strings.TrimSpace(original[8:]) // len("ONBUILD ") = 8
+	innerText := strings.TrimSpace(original[len(onBuildPrefix):])
 	if innerText == "" {
 		return nil, ErrOnBuildMissingInstruction
 	}

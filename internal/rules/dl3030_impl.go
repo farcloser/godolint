@@ -3,9 +3,9 @@ package rules
 import (
 	"slices"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // yumCommand is the yum package-manager binary, matched by the DL303x rules.
@@ -47,7 +47,7 @@ func forgotYumYesOption(cmd shell.Command) bool {
 }
 
 func isYumInstall(cmd shell.Command) bool {
-	return shell.CmdHasArgs(yumCommand, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(yumCommand, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(yumCommand, []string{"groupinstall"}, cmd) ||
 		shell.CmdHasArgs(yumCommand, []string{"localinstall"}, cmd)
 }

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3033 checks for yum install without version pinning.
@@ -54,7 +54,7 @@ func getYumPackages(parsed *shell.ParsedShell) []string {
 
 	for _, cmd := range parsed.PresentCommands {
 		// Skip yum module commands
-		if shell.CmdHasArgs(yumCommand, []string{"module"}, cmd) {
+		if shell.CmdHasArgs(yumCommand, []string{moduleArg}, cmd) {
 			continue
 		}
 
@@ -70,7 +70,7 @@ func getYumModules(parsed *shell.ParsedShell) []string {
 
 	for _, cmd := range parsed.PresentCommands {
 		// Only yum module commands
-		if !shell.CmdHasArgs(yumCommand, []string{"module"}, cmd) {
+		if !shell.CmdHasArgs(yumCommand, []string{moduleArg}, cmd) {
 			continue
 		}
 
@@ -83,7 +83,7 @@ func getYumModules(parsed *shell.ParsedShell) []string {
 
 func yumInstallFilter(cmd shell.Command) []string {
 	// Must be yum install
-	if !shell.CmdHasArgs(yumCommand, []string{"install"}, cmd) {
+	if !shell.CmdHasArgs(yumCommand, []string{installArg}, cmd) {
 		return nil
 	}
 
@@ -92,7 +92,7 @@ func yumInstallFilter(cmd shell.Command) []string {
 	var packages []string
 
 	for _, arg := range args {
-		if arg != "install" && arg != "module" {
+		if arg != installArg && arg != moduleArg {
 			packages = append(packages, arg)
 		}
 	}
@@ -133,7 +133,7 @@ func isVersionLike(parts []string) bool {
 			break
 		}
 
-		if len(part) > 0 && unicode.IsDigit(rune(part[0])) {
+		if part != "" && unicode.IsDigit(rune(part[0])) {
 			hasDigitStart = true
 		}
 	}
@@ -142,7 +142,7 @@ func isVersionLike(parts []string) bool {
 }
 
 func isValidVersionPart(part string) bool {
-	if len(part) == 0 {
+	if part == "" {
 		return false
 	}
 

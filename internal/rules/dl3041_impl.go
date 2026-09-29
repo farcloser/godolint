@@ -4,9 +4,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3041 checks for dnf/microdnf install without version pinning.
@@ -82,20 +82,20 @@ func getDnfModules(parsed *shell.ParsedShell) []string {
 }
 
 func isDnfModuleCmd(cmd shell.Command) bool {
-	if cmd.Name != "dnf" && cmd.Name != "microdnf" {
+	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
 		return false
 	}
 
-	return shell.CmdHasArgs(cmd.Name, []string{"module"}, cmd)
+	return shell.CmdHasArgs(cmd.Name, []string{moduleArg}, cmd)
 }
 
 func dnfInstallFilter(cmd shell.Command) []string {
-	if cmd.Name != "dnf" && cmd.Name != "microdnf" {
+	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
 		return nil
 	}
 
 	// Must be install command
-	if !shell.CmdHasArgs(cmd.Name, []string{"install"}, cmd) {
+	if !shell.CmdHasArgs(cmd.Name, []string{installArg}, cmd) {
 		return nil
 	}
 
@@ -104,7 +104,7 @@ func dnfInstallFilter(cmd shell.Command) []string {
 	var packages []string
 
 	for _, arg := range args {
-		if arg != "install" && arg != "module" {
+		if arg != installArg && arg != moduleArg {
 			packages = append(packages, arg)
 		}
 	}
@@ -145,7 +145,7 @@ func isDnfVersionLike(parts []string) bool {
 			break
 		}
 
-		if len(part) > 0 && unicode.IsDigit(rune(part[0])) {
+		if part != "" && unicode.IsDigit(rune(part[0])) {
 			hasDigitStart = true
 		}
 	}
@@ -154,7 +154,7 @@ func isDnfVersionLike(parts []string) bool {
 }
 
 func isDnfValidVersionPart(part string) bool {
-	if len(part) == 0 {
+	if part == "" {
 		return false
 	}
 

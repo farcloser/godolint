@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL4001 checks for using both wget and curl.
@@ -73,13 +73,7 @@ func (r *DL4001Rule) Check(line int, state rule.State, instruction syntax.Instru
 		if newCurl && newWget && (!currentState.HasCurl || !currentState.HasWget) {
 			return state.
 				ReplaceData(dl4001State{HasCurl: newCurl, HasWget: newWget}).
-				AddFailure(rule.CheckFailure{
-					Code:     r.Code(),
-					Severity: r.Severity(),
-					Message:  r.Message(),
-					Line:     line,
-					Column:   1, // Hardcoded to 1 (matches hadolint)
-				})
+				AddFailure(rule.Fail(r, line))
 		}
 
 		return state.ReplaceData(dl4001State{HasCurl: newCurl, HasWget: newWget})

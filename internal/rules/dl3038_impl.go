@@ -3,9 +3,9 @@ package rules
 import (
 	"slices"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3038 checks for dnf/microdnf install without -y flag.
@@ -42,11 +42,11 @@ func forgotDnfYesOption(cmd shell.Command) bool {
 }
 
 func isDnfInstall(cmd shell.Command) bool {
-	if cmd.Name != "dnf" && cmd.Name != "microdnf" {
+	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
 		return false
 	}
 
-	return shell.CmdHasArgs(cmd.Name, []string{"install"}, cmd) ||
+	return shell.CmdHasArgs(cmd.Name, []string{installArg}, cmd) ||
 		shell.CmdHasArgs(cmd.Name, []string{"groupinstall"}, cmd) ||
 		shell.CmdHasArgs(cmd.Name, []string{"localinstall"}, cmd)
 }

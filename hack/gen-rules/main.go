@@ -271,7 +271,7 @@ func generateMetadata(rule RuleMetadata) error {
 
 package rules
 
-import "github.com/farcloser/godolint/internal/rule"
+import "github.com/forkcloser/godolint/internal/rule"
 
 // {{.Code}}Meta contains metadata for rule {{.Code}}.
 // Source: hadolint/src/Hadolint/Rule/{{.SourceFile}}
@@ -322,8 +322,8 @@ func generateImplementation(rule RuleMetadata) error {
 	tmpl := `package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // {{.Code}} creates a rule from the generated metadata.
@@ -377,7 +377,7 @@ func generateCheckFunction(rule RuleMetadata) string {
 
 	// Pattern 1: Simple instruction type check
 	// Example: (Maintainer _) followed by _
-	simplePattern := regexp.MustCompile(`\((\w+)\s+[_\w]+\)`)
+	simplePattern := regexp.MustCompile(`\((\w+)\s+\w+\)`)
 	if len(lines) == 2 && simplePattern.MatchString(lines[0]) && strings.TrimSpace(lines[1]) == "_" {
 		match := simplePattern.FindStringSubmatch(lines[0])
 		if len(match) > 1 {

@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3062 checks for go install/get/run without version pinning.
@@ -41,7 +41,7 @@ func checkDL3062(instruction syntax.Instruction) bool {
 }
 
 //nolint:gochecknoglobals // read-only lookup table, effectively constant
-var goCommands = []string{"install", "get", "run"}
+var goCommands = []string{installArg, "get", "run"}
 
 func getGoPackages(parsed *shell.ParsedShell) []string {
 	var packages []string
@@ -55,7 +55,7 @@ func getGoPackages(parsed *shell.ParsedShell) []string {
 		args := shell.GetArgsNoFlags(cmd)
 		for _, arg := range args {
 			// Skip command names
-			if arg == "install" || arg == "get" || arg == "run" {
+			if arg == installArg || arg == "get" || arg == "run" {
 				continue
 			}
 

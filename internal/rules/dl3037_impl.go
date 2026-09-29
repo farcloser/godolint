@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3037 checks for zypper install without version pinning.
@@ -44,11 +44,11 @@ func getZypperPackages(parsed *shell.ParsedShell) []string {
 	var packages []string
 
 	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs(zypperCommand, []string{"install"}, cmd) ||
+		if shell.CmdHasArgs(zypperCommand, []string{installArg}, cmd) ||
 			shell.CmdHasArgs(zypperCommand, []string{"in"}, cmd) {
 			args := shell.GetArgsNoFlags(cmd)
 			for _, arg := range args {
-				if arg != "install" && arg != "in" {
+				if arg != installArg && arg != "in" {
 					packages = append(packages, arg)
 				}
 			}

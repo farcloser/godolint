@@ -3,9 +3,9 @@ package rules_test
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/rules"
-	"github.com/farcloser/godolint/internal/testutils"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for DL4006 ported from hadolint test suite.
