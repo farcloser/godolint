@@ -110,11 +110,11 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
 
-	if _, err := tmpFile.WriteString(fullScript); err != nil {
+	if _, err = tmpFile.WriteString(fullScript); err != nil {
 		return nil, fmt.Errorf("failed to write script: %w", err)
 	}
 
-	if err := tmpFile.Close(); err != nil {
+	if err = tmpFile.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close temp file: %w", err)
 	}
 
