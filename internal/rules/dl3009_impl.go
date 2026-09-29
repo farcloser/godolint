@@ -14,6 +14,16 @@ type dl3009State struct {
 	forgets     map[int]string    // map[line]alias - tracks lines that forgot cleanup
 }
 
+// stageAlias is the alias of the stage being processed, empty when the stage
+// has none: what a forgotten cleanup is recorded and reported against.
+func (s dl3009State) stageAlias() string {
+	if s.lastFrom == nil || s.lastFrom.Alias == nil {
+		return ""
+	}
+
+	return *s.lastFrom.Alias
+}
+
 // DL3009Rule checks for deletion of apt lists after apt update.
 type DL3009Rule struct{}
 
@@ -82,12 +92,7 @@ func (*DL3009Rule) Check(line int, state rule.State, instruction syntax.Instruct
 			}
 
 			// Record this line as forgetting cleanup
-			alias := ""
-			if currentState.lastFrom != nil && currentState.lastFrom.Alias != nil {
-				alias = *currentState.lastFrom.Alias
-			}
-
-			currentState.forgets[line] = alias
+			currentState.forgets[line] = currentState.stageAlias()
 		} else if disabledDockerClean(parsed) {
 			currentState.dockerClean = false
 		}
@@ -104,10 +109,7 @@ func (*DL3009Rule) Finalize(state rule.State) rule.State {
 
 	finalState := state
 
-	lastAlias := ""
-	if currentState.lastFrom != nil && currentState.lastFrom.Alias != nil {
-		lastAlias = *currentState.lastFrom.Alias
-	}
+	lastAlias := currentState.stageAlias()
 
 	// Add failures for forgets that matter
 	for line, alias := range currentState.forgets {

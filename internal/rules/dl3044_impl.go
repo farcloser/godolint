@@ -56,47 +56,46 @@ func (*DL3044Rule) Check(line int, state rule.State, instruction syntax.Instruct
 		return state.ReplaceData(currentState)
 
 	case *syntax.Env:
-		// Check if any variable in this ENV references another variable
-		// defined in the same ENV statement
-		newVars := make([]string, 0, len(inst.Pairs))
-		for _, pair := range inst.Pairs {
-			newVars = append(newVars, pair.Key)
-		}
-
-		// Check for self-references
-		for i, pair := range inst.Pairs {
-			// Check if this value references any of the other variables
-			// defined in the same ENV (but not itself)
-			for j, otherPair := range inst.Pairs {
-				if i == j {
-					continue // Skip self
-				}
-
-				// Check if value references the other variable
-				if referencesVar(pair.Value, otherPair.Key) {
-					// Only fail if the referenced variable is NOT already defined
-					if !currentState.definedVars[otherPair.Key] {
-						return state.AddFailure(rule.CheckFailure{
-							Code:     DL3044Meta.Code,
-							Severity: DL3044Meta.Severity,
-							Message:  DL3044Meta.Message,
-							Line:     line,
-							Column:   1, // Hardcoded to 1 (matches hadolint)
-						})
-					}
-				}
-			}
+		if referencesUndefinedSibling(inst.Pairs, currentState.definedVars) {
+			return state.AddFailure(rule.CheckFailure{
+				Code:     DL3044Meta.Code,
+				Severity: DL3044Meta.Severity,
+				Message:  DL3044Meta.Message,
+				Line:     line,
+				Column:   1, // Hardcoded to 1 (matches hadolint)
+			})
 		}
 
 		// Add all new variables to defined set
-		for _, varName := range newVars {
-			currentState.definedVars[varName] = true
+		for _, pair := range inst.Pairs {
+			currentState.definedVars[pair.Key] = true
 		}
 
 		return state.ReplaceData(currentState)
 	}
 
 	return state
+}
+
+// referencesUndefinedSibling reports whether a pair of one ENV reads another
+// variable that same ENV defines. Docker evaluates the pairs left to right
+// against the environment as it was before the statement, so the reference
+// resolves to nothing — unless an earlier instruction defined the name, which
+// is what defined holds.
+func referencesUndefinedSibling(pairs []syntax.EnvPair, defined map[string]bool) bool {
+	for i, pair := range pairs {
+		for j, otherPair := range pairs {
+			if i == j {
+				continue // Skip self
+			}
+
+			if referencesVar(pair.Value, otherPair.Key) && !defined[otherPair.Key] {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // Finalize performs final checks after processing all instructions.
