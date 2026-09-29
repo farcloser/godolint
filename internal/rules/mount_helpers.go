@@ -4,6 +4,8 @@ import "strings"
 
 // hasCacheOrTmpfsMount checks if RUN flags contain a cache or tmpfs mount
 // for the specified path.
+//
+//nolint:gocognit // one pass over each mount spec; a parsed-mount type split it into more code, not clearer code
 func hasCacheOrTmpfsMount(flags []string, path string) bool {
 	for _, flag := range flags {
 		if !strings.HasPrefix(flag, "--mount=") {

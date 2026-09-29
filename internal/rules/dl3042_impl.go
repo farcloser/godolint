@@ -47,6 +47,8 @@ func (*DL3042Rule) InitialState() rule.State {
 }
 
 // Check flags pip install runs that do not disable the pip cache.
+//
+//nolint:gocognit // one case per instruction kind, each read in place; moving the case bodies out left the logic the same, only further away
 func (*DL3042Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
 	currentState := rule.Data[dl3042State](state)
 
