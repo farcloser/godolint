@@ -27,6 +27,8 @@ var (
 
 // Parse extracts ignore pragmas from Dockerfile instructions.
 // Ported from Hadolint.Pragma module.
+//
+//nolint:gocognit // a walk and a choice between two pragma kinds, one point over the threshold
 func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
 	directives := IgnoreDirectives{
 		LineIgnores:   make(map[int]map[rule.Code]bool),
