@@ -3,7 +3,7 @@
 
 package rules
 
-import "github.com/farcloser/godolint/internal/rule"
+import "github.com/forkcloser/godolint/internal/rule"
 
 // DL1001Meta contains metadata for rule DL1001.
 // Source: hadolint/src/Hadolint/Rule/DL1001.hs

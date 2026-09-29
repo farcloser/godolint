@@ -1,8 +1,8 @@
 package rules //nolint:dupl // intentional near-copy of DL4003/DL4004: the port keeps one file per hadolint rule
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 type healthcheckState int

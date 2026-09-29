@@ -1,8 +1,8 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3023Rule checks that COPY --from doesn't reference its own FROM alias.

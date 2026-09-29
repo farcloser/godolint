@@ -3,9 +3,9 @@ package rules
 import (
 	"slices"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3038 checks for dnf/microdnf install without -y flag.

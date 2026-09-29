@@ -710,10 +710,10 @@ func generateTestFile(ruleCode string, cases []TestCase, config *HadolintConfig)
 import (
 	"testing"
 
-{{if .Config}}	"github.com/farcloser/godolint/internal/config"
-{{end}}	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/rules"
-	"github.com/farcloser/godolint/internal/testutils"
+{{if .Config}}	"github.com/forkcloser/godolint/internal/config"
+{{end}}	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
 )
 
 // Auto-generated tests for {{.RuleCode}} ported from hadolint test suite.

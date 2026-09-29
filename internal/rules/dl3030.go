@@ -3,7 +3,7 @@
 
 package rules
 
-import "github.com/farcloser/godolint/internal/rule"
+import "github.com/forkcloser/godolint/internal/rule"
 
 // DL3030Meta contains metadata for rule DL3030.
 // Source: hadolint/src/Hadolint/Rule/DL3030.hs
