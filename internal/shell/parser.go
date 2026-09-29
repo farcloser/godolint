@@ -4,6 +4,7 @@ package shell
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"mvdan.cc/sh/v3/syntax"
@@ -379,12 +380,22 @@ func HasPipes(ps *ParsedShell) bool {
 	return hasPipe
 }
 
+// isPipName reports whether a name is one pip goes by, as a command or as a
+// python module. Matched exactly, so that pipenv — a different tool — is not.
+func isPipName(name string) bool {
+	switch name {
+	case "pip", "pip2", "pip3":
+		return true
+	default:
+		return false
+	}
+}
+
 // IsPipInstall checks if a command is a pip install command.
 // Ported from Hadolint.Shell.isPipInstall.
 func IsPipInstall(cmd Command) bool {
 	// Check for: pip install, pip2 install, pip3 install
-	// Note: exact match to avoid matching "pipenv"
-	if cmd.Name == "pip" || cmd.Name == "pip2" || cmd.Name == "pip3" {
+	if isPipName(cmd.Name) {
 		args := GetArgsNoFlags(cmd)
 
 		return len(args) > 0 && args[0] == "install"
@@ -392,20 +403,23 @@ func IsPipInstall(cmd Command) bool {
 
 	// Check for: python -m pip install
 	if strings.HasPrefix(cmd.Name, "python") {
-		args := GetArgs(cmd)
-		for idx := range len(args) - 1 {
-			if args[idx] == "-m" {
-				pipModule := args[idx+1]
-				// Exact match to avoid "pipenv"
-				if pipModule == "pip" || pipModule == "pip2" || pipModule == "pip3" {
-					// Check if "install" follows
-					for j := idx + 2; j < len(args); j++ {
-						if args[j] == "install" {
-							return true
-						}
-					}
-				}
-			}
+		return runsPipModuleInstall(GetArgs(cmd))
+	}
+
+	return false
+}
+
+// runsPipModuleInstall reports whether a python command runs pip's install
+// through -m. Anything may sit between the module and the subcommand:
+// python -m pip --quiet install is still an install.
+func runsPipModuleInstall(args []string) bool {
+	for idx := range len(args) - 1 {
+		if args[idx] != "-m" || !isPipName(args[idx+1]) {
+			continue
+		}
+
+		if slices.Contains(args[idx+2:], "install") {
+			return true
 		}
 	}
 
