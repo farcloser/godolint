@@ -129,11 +129,13 @@ func (c *BinaryShellchecker) run(fullScript string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+	// Every path below closes the file before this runs, as windows requires
+	// to remove it. A temp file that outlives a failed removal is the OS's to
+	// reap, so that error is dropped.
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	if _, err = tmpFile.WriteString(fullScript); err != nil {
-		return nil, fmt.Errorf("failed to write script: %w", err)
+		return nil, errors.Join(fmt.Errorf("failed to write script: %w", err), tmpFile.Close())
 	}
 
 	if err = tmpFile.Close(); err != nil {
