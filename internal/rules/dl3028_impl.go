@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/forkcloser/godolint/internal/rule"
@@ -48,58 +49,50 @@ func getGemPackages(cmd shell.Command) []string {
 		return nil
 	}
 
-	// Skip if using -v or --version flag
+	// A version flag pins every package the command installs, which is what
+	// the rule asks for; nothing to report.
 	args := shell.GetArgs(cmd)
-	for _, arg := range args {
-		if arg == "-v" || arg == "--version" {
-			return nil
-		}
+	if hasGemVersionFlag(args) {
+		return nil
+	}
 
-		if strings.HasPrefix(arg, "--version=") {
-			return nil
+	// Everything after "--" belongs to the built extension, not to gem.
+	if end := slices.Index(args, "--"); end >= 0 {
+		args = args[:end]
+	}
+
+	return gemOperands(args)
+}
+
+// hasGemVersionFlag reports whether the command carries gem's version flag, in
+// either of its three spellings.
+func hasGemVersionFlag(args []string) bool {
+	for _, arg := range args {
+		if arg == "-v" || arg == "--version" || strings.HasPrefix(arg, "--version=") {
+			return true
 		}
 	}
 
-	// Get packages from arguments
-	// Process only args until "--" separator
-	argsUntilDoubleDash := []string{}
+	return false
+}
 
-	for _, arg := range args {
-		if arg == "--" {
-			break
-		}
-
-		argsUntilDoubleDash = append(argsUntilDoubleDash, arg)
-	}
-
-	// Remove flags and their values
+// gemOperands drops the subcommand and the flags, leaving the package names.
+// A flag without "=" takes the next argument as its value.
+func gemOperands(args []string) []string {
 	var packages []string
 
 	skipNext := false
 
-	for _, arg := range argsUntilDoubleDash {
-		if skipNext {
+	for _, arg := range args {
+		switch {
+		case skipNext:
 			skipNext = false
-
-			continue
+		case arg == installArg || arg == "i":
+		case strings.HasPrefix(arg, "-"):
+			skipNext = !strings.Contains(arg, "=")
+		default:
+			packages = append(packages, arg)
 		}
-
-		// Skip "install" and "i" commands
-		if arg == installArg || arg == "i" {
-			continue
-		}
-
-		// If it's a flag, skip it and next arg
-		if strings.HasPrefix(arg, "-") {
-			// For flags like --foo or -f, skip the next argument too
-			if !strings.Contains(arg, "=") {
-				skipNext = true
-			}
-
-			continue
-		}
-
-		packages = append(packages, arg)
 	}
 
 	return packages
