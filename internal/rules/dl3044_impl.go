@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // dl3044State tracks defined environment variables.

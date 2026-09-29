@@ -3,7 +3,7 @@ package shell_test
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/shell"
 )
 
 func TestParseShell(t *testing.T) {

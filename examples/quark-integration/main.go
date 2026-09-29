@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/farcloser/godolint/sdk"
+	"github.com/forkcloser/godolint/sdk"
 )
 
 // This example mirrors quark's audit.Auditor.AuditDockerfile implementation,

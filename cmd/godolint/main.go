@@ -14,11 +14,11 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/mycophonic/primordium/app/logger"
 
-	"github.com/farcloser/godolint/internal/parser"
-	"github.com/farcloser/godolint/internal/process"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/sdk"
+	"github.com/forkcloser/godolint/internal/parser"
+	"github.com/forkcloser/godolint/internal/process"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/sdk"
 )
 
 // errViolations is how Run tells main that the lint found something: the

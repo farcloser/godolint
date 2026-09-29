@@ -8,7 +8,7 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // Static sentinel errors for instruction conversion failures, so callers can

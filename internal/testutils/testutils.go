@@ -4,9 +4,9 @@ package testutils
 import (
 	"testing"
 
-	"github.com/farcloser/godolint/internal/parser"
-	"github.com/farcloser/godolint/internal/process"
-	"github.com/farcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/parser"
+	"github.com/forkcloser/godolint/internal/process"
+	"github.com/forkcloser/godolint/internal/rule"
 )
 
 // LintDockerfile lints a Dockerfile string with the given rules and returns violations.

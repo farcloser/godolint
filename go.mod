@@ -1,4 +1,4 @@
-module github.com/farcloser/godolint
+module github.com/forkcloser/godolint
 
 go 1.26.3
 

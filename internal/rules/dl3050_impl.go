@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/config"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/config"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3050Rule checks for superfluous labels (labels not in schema).

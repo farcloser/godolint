@@ -326,7 +326,7 @@ linters:
             - $gostd
             - github.com/mycophonic/primordium
             - github.com/alecthomas/kong
-            - github.com/farcloser/godolint
+            - github.com/forkcloser/godolint
             - mvdan.cc/sh/v3/syntax
             - github.com/moby/buildkit
 
@@ -340,7 +340,7 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/farcloser)
+        - prefix(github.com/forkcloser)
         - localmodule
       no-inline-comments: true
       no-prefix-comments: true

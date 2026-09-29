@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/shell"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // DL3060 checks for yarn cache clean after yarn install.

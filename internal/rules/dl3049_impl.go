@@ -3,9 +3,9 @@ package rules
 import (
 	"fmt"
 
-	"github.com/farcloser/godolint/internal/config"
-	"github.com/farcloser/godolint/internal/rule"
-	"github.com/farcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/config"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/syntax"
 )
 
 // dl3049State tracks which required labels have been defined.
