@@ -16,6 +16,7 @@ func DL3040() rule.Rule {
 	)
 }
 
+//nolint:gocognit // four flags gathered in one pass over the commands, then checked; a type holding them read no better
 func checkDL3040(instruction syntax.Instruction) bool {
 	run, ok := instruction.(*syntax.Run)
 	if !ok {
@@ -33,36 +34,40 @@ func checkDL3040(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	var usage dnfUsage
+	hasDnfInstall := false
+	hasMicroDnfInstall := false
+	hasDnfClean := false
+	hasMicroDnfClean := false
+
 	for _, cmd := range parsed.PresentCommands {
-		usage.observe(cmd)
+		if shell.CmdHasArgs(dnfCommand, []string{installArg}, cmd) {
+			hasDnfInstall = true
+		}
+
+		if shell.CmdHasArgs(microdnfCommand, []string{installArg}, cmd) {
+			hasMicroDnfInstall = true
+		}
+
+		if isDnfCleanCmd(cmd) {
+			hasDnfClean = true
+		}
+
+		if isMicroDnfCleanCmd(cmd) {
+			hasMicroDnfClean = true
+		}
 	}
 
-	return usage.cleansWhatItInstalls()
-}
+	// If has dnf install, must have dnf clean
+	if hasDnfInstall && !hasDnfClean {
+		return false
+	}
 
-// dnfUsage is what one RUN does with dnf and with microdnf. The two are
-// tracked apart: each cleans its own cache, and cleaning the other's leaves
-// the layer just as fat.
-type dnfUsage struct {
-	dnfInstall      bool
-	dnfClean        bool
-	microdnfInstall bool
-	microdnfClean   bool
-}
+	// If has microdnf install, must have microdnf clean
+	if hasMicroDnfInstall && !hasMicroDnfClean {
+		return false
+	}
 
-// observe folds one command of the RUN into the usage.
-func (u *dnfUsage) observe(cmd shell.Command) {
-	u.dnfInstall = u.dnfInstall || shell.CmdHasArgs(dnfCommand, []string{installArg}, cmd)
-	u.microdnfInstall = u.microdnfInstall || shell.CmdHasArgs(microdnfCommand, []string{installArg}, cmd)
-	u.dnfClean = u.dnfClean || isDnfCleanCmd(cmd)
-	u.microdnfClean = u.microdnfClean || isMicroDnfCleanCmd(cmd)
-}
-
-// cleansWhatItInstalls reports whether every install in the RUN is followed by
-// the matching clean.
-func (u *dnfUsage) cleansWhatItInstalls() bool {
-	return (!u.dnfInstall || u.dnfClean) && (!u.microdnfInstall || u.microdnfClean)
+	return true
 }
 
 func isDnfCleanCmd(cmd shell.Command) bool {
