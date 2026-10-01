@@ -67,9 +67,10 @@ func (r *DL3055Rule) Check(line int, state rule.State, instruction syntax.Instru
 			return state.AddFailure(rule.CheckFailure{
 				Code:     DL3055Meta.Code,
 				Severity: DL3055Meta.Severity,
-				Message:  fmt.Sprintf("Label `%s` is not a valid git hash.", pair.Key),
-				Line:     line,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
+				//nolint:gocritic // sprintfQuotedString: hadolint prints the key raw; %#q would escape one holding a backquote
+				Message: fmt.Sprintf("Label `%s` is not a valid git hash.", pair.Key),
+				Line:    line,
+				Column:  1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

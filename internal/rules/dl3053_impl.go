@@ -67,9 +67,10 @@ func (r *DL3053Rule) Check(line int, state rule.State, instruction syntax.Instru
 			return state.AddFailure(rule.CheckFailure{
 				Code:     DL3053Meta.Code,
 				Severity: DL3053Meta.Severity,
-				Message:  fmt.Sprintf("Label `%s` is not a valid time format - must conform to RFC3339.", pair.Key),
-				Line:     line,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
+				//nolint:gocritic // sprintfQuotedString: hadolint prints the key raw; %#q would escape one holding a backquote
+				Message: fmt.Sprintf("Label `%s` is not a valid time format - must conform to RFC3339.", pair.Key),
+				Line:    line,
+				Column:  1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}
