@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/alecthomas/kong v1.16.1
 	github.com/moby/buildkit v0.33.0
-	github.com/mycophonic/primordium v0.10.0
+	github.com/mycophonic/primordium v0.10.1
 	mvdan.cc/sh/v3 v3.14.1
 )
 
