@@ -129,6 +129,8 @@ func Data[T any](s State) T {
 
 // Rule is ported from the concept of Rule in Hadolint/Rule.hs.
 // All rules are stateful - simple rules just use empty state.
+//
+//nolint:interfacebloat // what a rule is (code, severity, message) and what it does (initial state, check, finalize), which every rule implements together
 type Rule interface {
 	// Code returns the unique rule identifier
 	Code() Code

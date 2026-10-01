@@ -90,9 +90,10 @@ func (r *DL3049Rule) Finalize(state rule.State) rule.State {
 			state = state.AddFailure(rule.CheckFailure{
 				Code:     DL3049Meta.Code,
 				Severity: DL3049Meta.Severity,
-				Message:  fmt.Sprintf("Label `%s` is missing.", requiredLabel),
-				Line:     0,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
+				//nolint:gocritic // sprintfQuotedString: hadolint prints the key raw; %#q would escape one holding a backquote
+				Message: fmt.Sprintf("Label `%s` is missing.", requiredLabel),
+				Line:    0,
+				Column:  1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

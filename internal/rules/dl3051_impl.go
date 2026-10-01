@@ -66,9 +66,10 @@ func (r *DL3051Rule) Check(line int, state rule.State, instruction syntax.Instru
 			return state.AddFailure(rule.CheckFailure{
 				Code:     DL3051Meta.Code,
 				Severity: DL3051Meta.Severity,
-				Message:  fmt.Sprintf("label `%s` is empty.", pair.Key),
-				Line:     line,
-				Column:   1, // Hardcoded to 1 (matches hadolint)
+				//nolint:gocritic // sprintfQuotedString: hadolint prints the key raw; %#q would escape one holding a backquote
+				Message: fmt.Sprintf("label `%s` is empty.", pair.Key),
+				Line:    line,
+				Column:  1, // Hardcoded to 1 (matches hadolint)
 			})
 		}
 	}

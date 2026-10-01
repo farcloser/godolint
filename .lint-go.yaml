@@ -1,0 +1,42 @@
+# This project's carve-outs from the Go lint baseline (.limen/lint-go.yaml):
+# the baseline's sections, in its shape, holding only what this project adds,
+# changes or takes out (book/per-language.md, "one baseline, per-project
+# carve-outs"). `just do lint go` renders the two on every run.
+golangci:
+  linters:
+    exclusions:
+      rules:
+        # Tests are black-box consumers: beyond what the baseline already
+        # exempts them from, the rule corpus is one table per rule,
+        # deliberately alike.
+        - path: _test\.go
+          linters:
+            - dupl # a rule's test table looks like every other rule's
+            - dupword # Dockerfile fixtures repeat words
+        # hack/ holds the generators that ported hadolint's rules and tests.
+        # They are dev-only programs, run by hand and never shipped: printing
+        # to stdout is their interface, and the hadolint corpus they parse
+        # dictates their shape.
+        - path: ^hack/
+          linters:
+            - forbidigo # a generator reports on stdout
+            - gocognit
+            - goconst
+        # examples/ are runnable programs for a reader, printing what they
+        # demonstrate.
+        - path: ^examples/
+          linters:
+            - forbidigo
+    settings:
+      depguard:
+        rules:
+          main:
+            # The four dependencies this linter is built on: the Dockerfile
+            # parser it shares with buildkit, the shell parser it hands RUN
+            # commands to, the CLI framework, and the house application
+            # toolkit. Everything else stays the baseline's $gostd.
+            allow:
+              - github.com/moby/buildkit
+              - mvdan.cc/sh/v3/syntax
+              - github.com/alecthomas/kong
+              - github.com/mycophonic/primordium

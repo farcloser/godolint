@@ -4,7 +4,9 @@ import '.limen/just/main.just'
 
 lint: do::lint::default do::lint::go::default do::lint::go::deadcode
 fix: do::fix::default do::fix::go::default
-test: do::test::go::unit do::test::go::race do::test::go::bench do::test::go::cover do::test::go::profile
+test: do::test::go::unit do::test::go::race do::test::go::cover
+# The security workflow runs `just security`.
+security: do::security::default
 
 # Regenerate from third-party/hadolint: DLxxxx metadata files are ALWAYS
 # rewritten; stubs and ported tests only when absent. See internal/rules/generate.go.
