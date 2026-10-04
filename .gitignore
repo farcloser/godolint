@@ -27,4 +27,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 # --- added by limen fix: baseline patterns ---
-/tmp
+
+# Required by limen (book/mandatory-files.md, ".gitignore").
+.claude

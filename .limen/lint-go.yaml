@@ -511,8 +511,9 @@ golangci:
         max: 5
 
       gomoddirectives:
-        # `replace` is refused by default (a local one is a project carve-out);
-        # `exclude` is refused too, being a replace by other means.
+        # `replace` is refused by default, and no project loosens that: a
+        # replace is never committed (book/per-language.md, "no replace,
+        # ever"). `exclude` is refused too, being a replace by other means.
         exclude-forbidden: true
 
       reassign:
