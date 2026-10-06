@@ -17,6 +17,7 @@ import (
 
 	"github.com/forkcloser/godolint/internal/rule"
 	"github.com/forkcloser/godolint/internal/syntax"
+	"github.com/forkcloser/godolint/internal/userpath"
 )
 
 // shellcheckTimeout bounds a single shellcheck invocation: one RUN
@@ -124,6 +125,12 @@ func (c *BinaryShellchecker) Check(script string, opts Opts) ([]rule.CheckFailur
 // expected path; only one that could not run at all is an error here
 // (matching hadolint).
 func (c *BinaryShellchecker) run(fullScript string) ([]byte, error) {
+	if c.RCFile != "" {
+		if err := userpath.Validate(c.RCFile); err != nil {
+			return nil, fmt.Errorf("shellcheck rcfile: %w", err)
+		}
+	}
+
 	tmpFile, err := os.CreateTemp("", "shellcheck-*.sh")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)

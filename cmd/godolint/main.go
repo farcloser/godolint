@@ -18,6 +18,7 @@ import (
 	"github.com/forkcloser/godolint/internal/process"
 	"github.com/forkcloser/godolint/internal/rule"
 	"github.com/forkcloser/godolint/internal/shell"
+	"github.com/forkcloser/godolint/internal/userpath"
 	"github.com/forkcloser/godolint/sdk"
 )
 
@@ -93,6 +94,10 @@ func (c *CLI) buildRules() ([]rule.Rule, error) {
 	// rule (matching hadolint), so a bad path would otherwise silently
 	// disable every SC check.
 	if c.ShellcheckRcfile != "" {
+		if err := userpath.Validate(c.ShellcheckRcfile); err != nil {
+			return nil, fmt.Errorf("shellcheck rcfile: %w", err)
+		}
+
 		if _, err := os.Stat(c.ShellcheckRcfile); err != nil {
 			return nil, fmt.Errorf("cannot read shellcheck rcfile: %w", err)
 		}
@@ -110,6 +115,10 @@ func lintFiles(processor *process.Processor, paths []string) ([]rule.CheckFailur
 	allFailures := []rule.CheckFailure{}
 
 	for _, dockerfilePath := range paths {
+		if err := userpath.Validate(dockerfilePath); err != nil {
+			return nil, fmt.Errorf("dockerfile: %w", err)
+		}
+
 		// #nosec G304 -- reading user-supplied Dockerfile paths is this tool's purpose.
 		dockerfileContent, err := os.ReadFile(dockerfilePath)
 		if err != nil {

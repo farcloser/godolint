@@ -7,6 +7,13 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Dockerfile paths, `--shellcheck-rcfile` and the `sdk`'s
+  `WithShellcheckRCFile` path are checked with primordium's `pathcheck`
+  (forbidden characters, per-platform component length) before use; a path
+  that fails is an error naming it.
+
 ## [0.2.0] - 2026-10-05
 
 ### Changed
