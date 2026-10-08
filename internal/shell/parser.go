@@ -410,11 +410,10 @@ func isPipName(name string) bool {
 // IsPipInstall checks if a command is a pip install command.
 // Ported from Hadolint.Shell.isPipInstall.
 func IsPipInstall(cmd Command) bool {
-	// Check for: pip install, pip2 install, pip3 install
-	if isPipName(cmd.Name) {
-		args := GetArgsNoFlags(cmd)
-
-		return len(args) > 0 && args[0] == "install"
+	// pip, pip3, pipx and whatever else pip goes by; pipenv is a different
+	// tool. install may follow flags.
+	if strings.HasPrefix(cmd.Name, "pip") && !strings.HasPrefix(cmd.Name, "pipenv") {
+		return slices.Contains(GetArgs(cmd), "install")
 	}
 
 	// Check for: python -m pip install
