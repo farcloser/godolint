@@ -74,6 +74,7 @@ func filterNpmFlags(args []string) []string {
 	// Flags that take a value
 	flagsWithValues := map[string]bool{
 		"--loglevel": true,
+		"--registry": true,
 	}
 
 	var result []string

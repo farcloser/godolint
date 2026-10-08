@@ -33,6 +33,18 @@ func TestDL3018(t *testing.T) {
 	)
 
 	t.Run(
+		"apk add tilde version pinning single",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN apk add --no-cache git~2.52.0`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3018")
+		},
+	)
+
+	t.Run(
 		"apk add version pinned chained",
 		func(t *testing.T) {
 			t.Parallel()
@@ -74,6 +86,22 @@ libbz2=1.0.6-r5`
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertContainsViolation(t, violations, "DL3018")
+		},
+	)
+
+	t.Run(
+		"apk add version pinned with fuzzy versions",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN apk add --no-cache \
+  "flex>=2.6.1-r1" \
+  "libffi~3.2.1" \
+  "python3<3.6.12-r2" \
+  "libbz2=~1.0.6-r4"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3018")
 		},
 	)
 
@@ -142,6 +170,30 @@ flow=0.78.0-r0`
 			dockerfile := `RUN apk add --no-cache \
 --repository https://nl.alpinelinux.org/alpine/edge/testing \
 flow=0.78.0-r0`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3018")
+		},
+	)
+
+	t.Run(
+		"apk add ~= and =~ version pinning",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN apk add --no-cache git~=2.52`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3018")
+		},
+	)
+
+	t.Run(
+		"apk add ~= and =~ version pinning (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN apk add --no-cache git=~2.52`
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertNoViolation(t, violations, "DL3018")

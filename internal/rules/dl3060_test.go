@@ -45,6 +45,18 @@ func TestDL3060(t *testing.T) {
 	)
 
 	t.Run(
+		"not ok with clean before install",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN yarn cache clean && yarn install foo`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3060")
+		},
+	)
+
+	t.Run(
 		"not ok with no cache clean",
 		func(t *testing.T) {
 			t.Parallel()

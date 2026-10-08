@@ -69,6 +69,18 @@ func TestDL3016(t *testing.T) {
 	)
 
 	t.Run(
+		"don't fire on registry flag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN npm install --registry https://example.com sax@0.1.1`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3016")
+		},
+	)
+
+	t.Run(
 		"version does not have to be pinned for folder - absolute path",
 		func(t *testing.T) {
 			t.Parallel()
@@ -182,6 +194,30 @@ func TestDL3016(t *testing.T) {
 			t.Parallel()
 
 			dockerfile := `RUN npm install --global express`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3016")
+		},
+	)
+
+	t.Run(
+		"version not pinned with --registry flag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN npm install --registry https://example.com express`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3016")
+		},
+	)
+
+	t.Run(
+		"version not pinned with --registry=value form",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN npm install --registry=https://example.com express`
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertContainsViolation(t, violations, "DL3016")

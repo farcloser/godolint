@@ -16,14 +16,11 @@ func DL3036() rule.Rule {
 	)
 }
 
+// checkDL3036 passes a RUN with no zypper install, one whose cache is a
+// mount, or one whose first zypper install comes before its first clean.
 func checkDL3036(instruction syntax.Instruction) bool {
 	run, ok := instruction.(*syntax.Run)
 	if !ok {
-		return true
-	}
-
-	// Skip if has cache/tmpfs mount for /var/cache/zypp
-	if hasCacheOrTmpfsMount(run.Flags, "/var/cache/zypp") {
 		return true
 	}
 
@@ -32,26 +29,15 @@ func checkDL3036(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	hasZypperInstall := false
-	hasZypperClean := false
-
-	for _, cmd := range parsed.PresentCommands {
-		if isZypperInstallCmd(cmd) {
-			hasZypperInstall = true
-		}
-
-		if isZypperCleanCmd(cmd) {
-			hasZypperClean = true
-		}
-	}
-
-	// If no zypper install, pass
-	if !hasZypperInstall {
+	if firstCommand(parsed.PresentCommands, isZypperInstallCmd) < 0 {
 		return true
 	}
 
-	// If has zypper install, must have clean
-	return hasZypperClean
+	if hasCacheOrTmpfsMount(run.Flags, "/var/cache/zypp") {
+		return true
+	}
+
+	return cleanFollowsInstall(parsed.PresentCommands, isZypperInstallCmd, isZypperCleanCmd)
 }
 
 func isZypperInstallCmd(cmd shell.Command) bool {

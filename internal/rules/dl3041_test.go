@@ -21,6 +21,21 @@ func TestDL3041(t *testing.T) {
 	}
 
 	t.Run(
+		"not ok with version as variable - different stages, new stage",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM fedora:fc42 AS build
+ENV version=2.51.0-2.fc42
+FROM fedora:fc42
+RUN dnf -y install git-core-${version}`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
 		"not ok without dnf version pinning",
 		func(t *testing.T) {
 			t.Parallel()
@@ -89,6 +104,54 @@ func TestDL3041(t *testing.T) {
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertContainsViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN dnf -y group install "Development Tools"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN dnf -y --setopt=group_package_types="mandatory" group install "Development Tools"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install (3)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN dnf group install -y "Development Tools" && dnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install (4)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN microdnf group install -y "Development Tools" && microdnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
 		},
 	)
 
@@ -218,6 +281,62 @@ func TestDL3041(t *testing.T) {
 			t.Parallel()
 
 			dockerfile := `RUN microdnf install -y openssl-1:1.1.1k`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with version as arg - different stages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM fedora:fc42 AS build
+ARG version=2.51.0-2.fc42
+FROM fedora:fc42
+RUN dnf -y install git-core-${version}`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with version as arg - unbraced",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ARG version=2.51.0-2.fc42
+RUN dnf -y install git-core-$version`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with version as env - different stages, reused stage",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM fedora:fc42 AS build
+ENV version=2.51.0-2.fc42
+FROM build
+RUN dnf -y install git-core-${version}`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with version as variable - braced",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `ENV version=2.51.0-2.fc42
+RUN dnf -y install git-core-${version}`
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertNoViolation(t, violations, "DL3041")

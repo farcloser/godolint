@@ -1,0 +1,64 @@
+package rules_test
+
+import (
+	"testing"
+
+	"github.com/forkcloser/godolint/internal/config"
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
+)
+
+// Auto-generated tests for DL3056 ported from hadolint test suite.
+// Source: hadolint/test/Hadolint/Rule/DL3056Spec.hs
+//
+// To regenerate: go generate ./internal/rules
+
+func TestDL3056(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		LabelSchema: map[string]config.LabelType{
+			"semver": config.LabelTypeSemVer,
+		},
+	}
+	allRules := []rule.Rule{
+		rules.DL3056WithConfig(cfg),
+	}
+
+	t.Run(
+		"not ok with label not containing semantic version",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL semver="not-sem-ver"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3056")
+		},
+	)
+
+	t.Run(
+		"ok with label containing semantic version",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL semver="1.0.0"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3056")
+		},
+	)
+
+	t.Run(
+		"ok with other label not containing semantic version",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `LABEL other="foo"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3056")
+		},
+	)
+}

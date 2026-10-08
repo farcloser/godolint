@@ -1,0 +1,94 @@
+package rules_test
+
+import (
+	"testing"
+
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
+)
+
+// Auto-generated tests for DL3065 ported from hadolint test suite.
+// Source: hadolint/test/Hadolint/Rule/DL3065Spec.hs
+//
+// To regenerate: go generate ./internal/rules
+
+func TestDL3065(t *testing.T) {
+	t.Parallel()
+
+	allRules := []rule.Rule{
+		rules.DL3065(),
+	}
+
+	t.Run(
+		"not ok: FROM --platform=$TARGETPLATFORM",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM --platform=$TARGETPLATFORM alpine:3.24`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3065")
+		},
+	)
+
+	t.Run(
+		"not ok: FROM --platform=$TARGETPLATFORM (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM --platform=${TARGETPLATFORM} alpine:3.24`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3065")
+		},
+	)
+
+	t.Run(
+		"ok: FROM --platform not $TARGETPLATFORM",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM --platform=$FOOBAR alpine:3.24`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3065")
+		},
+	)
+
+	t.Run(
+		"ok: FROM --platform not $TARGETPLATFORM (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM --platform=foobar alpine:3.24`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3065")
+		},
+	)
+
+	t.Run(
+		"ok: FROM --platform not $TARGETPLATFORM (3)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM --platform=foobar/arm64 alpine:3.24`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3065")
+		},
+	)
+
+	t.Run(
+		"ok: FROM no --platform",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM alpine:3.24`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3065")
+		},
+	)
+}

@@ -8,7 +8,7 @@ import (
 	"github.com/forkcloser/godolint/internal/syntax"
 )
 
-// DL3062 checks for go install/get/run without version pinning.
+// DL3062 checks for go install, go get and go run without a pinned version.
 func DL3062() rule.Rule {
 	return rule.NewSimpleRule(
 		DL3062Meta.Code,
@@ -29,9 +29,7 @@ func checkDL3062(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	// Check all go packages
-	packages := getGoPackages(parsed)
-	for _, pkg := range packages {
+	for _, pkg := range goPackages(parsed) {
 		if !isGoVersionPinned(pkg) {
 			return false
 		}
@@ -40,56 +38,71 @@ func checkDL3062(instruction syntax.Instruction) bool {
 	return true
 }
 
-//nolint:gochecknoglobals // read-only lookup table, effectively constant
-var goCommands = []string{installArg, "get", "run"}
+// goPackages is what hadolint checks: the package a `go run` names when
+// there is one, else the packages `go install` and `go get` name.
+func goPackages(parsed *shell.ParsedShell) []string {
+	if run := goRunPackages(parsed); len(run) > 0 {
+		return run
+	}
 
-func getGoPackages(parsed *shell.ParsedShell) []string {
+	return goInstallPackages(parsed)
+}
+
+// goRunPackages is the first non-flag argument after `run` of each `go run`:
+// everything after the package is an argument to the program it runs.
+func goRunPackages(parsed *shell.ParsedShell) []string {
 	var packages []string
 
 	for _, cmd := range parsed.PresentCommands {
-		if !isGoCommand(cmd) {
+		if !shell.CmdHasArgs("go", []string{"run"}, cmd) {
 			continue
 		}
 
-		// Get packages from arguments
-		args := shell.GetArgsNoFlags(cmd)
-		for _, arg := range args {
-			// Skip command names
-			if arg == installArg || arg == "get" || arg == "run" {
-				continue
+		for idx, arg := range shell.GetArgsNoFlags(cmd) {
+			if arg != "run" && idx <= 1 {
+				packages = append(packages, arg)
 			}
-
-			packages = append(packages, arg)
 		}
 	}
 
 	return packages
 }
 
-func isGoCommand(cmd shell.Command) bool {
-	if cmd.Name != "go" {
-		return false
-	}
+// goInstallPackages is every non-flag argument of `go install` and `go get`
+// but the subcommand words.
+func goInstallPackages(parsed *shell.ParsedShell) []string {
+	var packages []string
 
-	for _, goCmd := range goCommands {
-		if shell.CmdHasArgs("go", []string{goCmd}, cmd) {
-			return true
+	for _, cmd := range parsed.PresentCommands {
+		if !shell.CmdHasArgs("go", []string{installArg, "get"}, cmd) {
+			continue
+		}
+
+		for _, arg := range shell.GetArgsNoFlags(cmd) {
+			if arg != installArg && arg != "get" && arg != "tool" {
+				packages = append(packages, arg)
+			}
 		}
 	}
 
-	return false
+	return packages
 }
 
+// isGoVersionPinned is a local path, which has no version to pin, or a module
+// path with an @version that is neither @latest nor @none.
 func isGoVersionPinned(pkg string) bool {
-	// Must have @ symbol
+	if isGoLocalPath(pkg) {
+		return true
+	}
+
 	if !strings.Contains(pkg, "@") {
 		return false
 	}
 
-	// Must not end with @latest or @none
-	if strings.HasSuffix(pkg, "@latest") || strings.HasSuffix(pkg, "@none") {
-		return false
-	}
+	return !strings.HasSuffix(pkg, "@latest") && !strings.HasSuffix(pkg, "@none")
+}
 
-	return true
+// isGoLocalPath is `.`, or a path that starts with `/` or `.`.
+func isGoLocalPath(pkg string) bool {
+	return pkg == "." || strings.HasPrefix(pkg, "/") || strings.HasPrefix(pkg, ".")
 }

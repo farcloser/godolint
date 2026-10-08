@@ -6,7 +6,7 @@ import (
 	"github.com/forkcloser/godolint/internal/syntax"
 )
 
-// DL3040 checks for dnf clean all after dnf install.
+// DL3040 checks for dnf clean all after a dnf install.
 func DL3040() rule.Rule {
 	return rule.NewSimpleRule(
 		DL3040Meta.Code,
@@ -16,14 +16,15 @@ func DL3040() rule.Rule {
 	)
 }
 
-//nolint:gocognit // four flags gathered in one pass over the commands, then checked; a type holding them read no better
+// checkDL3040 passes a RUN whose dnf cache is a mount, and otherwise one
+// where, for dnf and for microdnf alike, there is no install or the first
+// install comes before the first clean.
 func checkDL3040(instruction syntax.Instruction) bool {
 	run, ok := instruction.(*syntax.Run)
 	if !ok {
 		return true
 	}
 
-	// Check if cache/tmpfs mount is present
 	if hasCacheOrTmpfsMount(run.Flags, "/var/cache/libdnf5") ||
 		hasCacheOrTmpfsMount(run.Flags, ".cache/libdnf5") {
 		return true
@@ -34,62 +35,35 @@ func checkDL3040(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	hasDnfInstall := false
-	hasMicroDnfInstall := false
-	hasDnfClean := false
-	hasMicroDnfClean := false
+	for _, name := range []string{dnfCommand, microdnfCommand} {
+		install := func(cmd shell.Command) bool { return isDnfInstallCmd(name, cmd) }
+		clean := func(cmd shell.Command) bool { return isDnfCleanCmd(name, cmd) }
 
-	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs(dnfCommand, []string{installArg}, cmd) {
-			hasDnfInstall = true
+		if firstCommand(parsed.PresentCommands, install) < 0 {
+			continue
 		}
 
-		if shell.CmdHasArgs(microdnfCommand, []string{installArg}, cmd) {
-			hasMicroDnfInstall = true
+		if !cleanFollowsInstall(parsed.PresentCommands, install, clean) {
+			return false
 		}
-
-		if isDnfCleanCmd(cmd) {
-			hasDnfClean = true
-		}
-
-		if isMicroDnfCleanCmd(cmd) {
-			hasMicroDnfClean = true
-		}
-	}
-
-	// If has dnf install, must have dnf clean
-	if hasDnfInstall && !hasDnfClean {
-		return false
-	}
-
-	// If has microdnf install, must have microdnf clean
-	if hasMicroDnfInstall && !hasMicroDnfClean {
-		return false
 	}
 
 	return true
 }
 
-func isDnfCleanCmd(cmd shell.Command) bool {
-	if shell.CmdHasArgs(dnfCommand, []string{cleanArg, allArg}, cmd) {
-		return true
-	}
-
-	if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/libdnf5*"}, cmd) {
-		return true
-	}
-
-	return false
+// isDnfInstallCmd is a dnf or microdnf command that installs or upgrades,
+// in any of the spellings dnf accepts.
+func isDnfInstallCmd(name string, cmd shell.Command) bool {
+	return shell.CmdHasArgs(name, []string{
+		installArg, "in", "upgrade", "up", "upgrade-minimal", "up-min", "reinstall", "rei",
+	}, cmd)
 }
 
-func isMicroDnfCleanCmd(cmd shell.Command) bool {
-	if shell.CmdHasArgs(microdnfCommand, []string{cleanArg, allArg}, cmd) {
+// isDnfCleanCmd is `<name> clean all`, or an rm of dnf's cache.
+func isDnfCleanCmd(name string, cmd shell.Command) bool {
+	if shell.CmdHasArgs(name, []string{cleanArg, allArg}, cmd) {
 		return true
 	}
 
-	if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/libdnf5*"}, cmd) {
-		return true
-	}
-
-	return false
+	return shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/libdnf5*"}, cmd)
 }

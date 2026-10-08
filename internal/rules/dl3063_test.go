@@ -1,0 +1,58 @@
+package rules_test
+
+import (
+	"testing"
+
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
+)
+
+// Auto-generated tests for DL3063 ported from hadolint test suite.
+// Source: hadolint/test/Hadolint/Rule/DL3063Spec.hs
+//
+// To regenerate: go generate ./internal/rules
+
+func TestDL3063(t *testing.T) {
+	t.Parallel()
+
+	allRules := []rule.Rule{
+		rules.DL3063(),
+	}
+
+	t.Run(
+		"not ok: stage name `context`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM foo:bar AS context`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3063")
+		},
+	)
+
+	t.Run(
+		"not ok: stage name `scratch`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM foo:bar AS scratch`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3063")
+		},
+	)
+
+	t.Run(
+		"ok: stage name `foobar`",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM foo:bar AS foobar`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3063")
+		},
+	)
+}

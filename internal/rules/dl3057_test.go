@@ -1,0 +1,124 @@
+package rules_test
+
+import (
+	"testing"
+
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
+)
+
+// Auto-generated tests for DL3057 ported from hadolint test suite.
+// Source: hadolint/test/Hadolint/Rule/DL3057Spec.hs
+//
+// To regenerate: go generate ./internal/rules
+
+func TestDL3057(t *testing.T) {
+	t.Parallel()
+
+	allRules := []rule.Rule{
+		rules.DL3057(),
+	}
+
+	t.Run(
+		"ok when HEALTHCHECK is explicitly disabled",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
+HEALTHCHECK NONE`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3057")
+		},
+	)
+
+	t.Run(
+		"ok with ending inheritance chain with HEALTCHECK",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch AS base1
+FROM base1 AS base2
+FROM base2 AS base3
+FROM base3 AS end
+HEALTHCHECK NONE`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3057")
+		},
+	)
+
+	t.Run(
+		"ok with inheriting HEALTHCHECK instruction",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch AS base
+HEALTHCHECK CMD /bin/bla
+FROM base`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3057")
+		},
+	)
+
+	t.Run(
+		"ok with one HEALTHCHECK instruction",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch
+HEALTHCHECK CMD /bin/bla`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3057")
+		},
+	)
+
+	t.Run(
+		"warn when inheritance chain bifurcates",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch AS base1
+FROM base1 AS base2
+FROM base2 AS base3.1
+FROM base2 AS base3.2
+
+FROM base3.1 AS end1
+HEALTHCHECK NONE
+
+FROM base3.2 AS end2`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3057")
+		},
+	)
+
+	t.Run(
+		"warn when not inheriting with no HEALTHCHECK instruction",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch AS base
+HEALTHCHECK CMD /bin/bla
+FROM scratch`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3057")
+		},
+	)
+
+	t.Run(
+		"warn with no HEALTHCHECK instructions",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `FROM scratch`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3057")
+		},
+	)
+}

@@ -143,7 +143,7 @@ func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConf
 		return nil, nil, fmt.Errorf("%w: %w", ErrTestGeneration, err)
 	}
 
-	text := string(content)
+	text := resolveRuleBinding(string(content))
 	tests := make(map[string][]TestCase)
 	configs := make(map[string]*HadolintConfig)
 
@@ -187,7 +187,188 @@ func parseTestFile(path string) (map[string][]TestCase, map[string]*HadolintConf
 		}
 	}
 
+	letDockerfileTests := parseLetDockerfileTests(text)
+	for _, testCase := range letDockerfileTests {
+		tests[testCase.RuleCode] = append(tests[testCase.RuleCode], testCase)
+
+		if config != nil {
+			configs[testCase.RuleCode] = config
+		}
+	}
+
 	return tests, configs, nil
+}
+
+var (
+	// ruleBindingPattern is a spec naming its rule once: let rule = "DL3065".
+	ruleBindingPattern = regexp.MustCompile(`let\s+rule\s*=\s*"(DL\d+)"`)
+	// ruleVarUsePattern is an assertion written against that binding.
+	ruleVarUsePattern = regexp.MustCompile(
+		`\b(onBuildRuleCatchesNot|onBuildRuleCatches|ruleCatchesNot|ruleCatches)\s+rule\b`,
+	)
+)
+
+// resolveRuleBinding rewrites a spec that binds its rule code to a name
+// (`let rule = "DL3065"`, then `ruleCatches rule …`) into the literal form
+// every parser below reads.
+func resolveRuleBinding(text string) string {
+	match := ruleBindingPattern.FindStringSubmatch(text)
+	if match == nil {
+		return text
+	}
+
+	return ruleVarUsePattern.ReplaceAllString(text, `$1 "`+match[1]+`"`)
+}
+
+// parseLetDockerfileTests handles a Dockerfile bound by `let`, as `dockerfile`
+// or `snippet`, and asserted by name:
+//
+//	it "name" $ do
+//	  let dockerfile =
+//	        Text.unlines
+//	          [ "FROM debian",
+//	            "RUN foo"
+//	          ]
+//	   in do
+//	      ruleCatchesNot "DL3064" dockerfile
+//	      onBuildRuleCatchesNot "DL3064" dockerfile
+//
+// with the list on one line or many, `in` with or without `do`, and the `let`
+// alone on its line when it binds the rule too. The onBuild form is read as
+// the plain one, as the other parsers read it: hadolint wraps only RUN in
+// ONBUILD there. A block that sets its own `?config` is left out, as it is by
+// the other parsers: its expectation depends on configuration the generated
+// test cannot express.
+func parseLetDockerfileTests(text string) []TestCase {
+	var tests []TestCase
+
+	lines := strings.Split(text, "\n")
+	itPattern := regexp.MustCompile(`^(\s*)it\s+"([^"]+)"\s+\$(\s+do)?\s*$`)
+	letPattern := regexp.MustCompile(`^\s*let\b`)
+	boundPattern := regexp.MustCompile(`\b(dockerfile|snippet)\s*=`)
+	configPattern := regexp.MustCompile(`let\s+\?config\s*=`)
+
+	for idx := range lines {
+		itMatch := itPattern.FindStringSubmatch(lines[idx])
+		if itMatch == nil {
+			continue
+		}
+
+		block := blockBelow(lines, idx, len(itMatch[1]))
+		if len(block) == 0 || !letPattern.MatchString(block[0]) {
+			continue
+		}
+
+		joined := strings.Join(block, "\n")
+		if configPattern.MatchString(joined) {
+			continue
+		}
+
+		bound := boundPattern.FindStringIndex(joined)
+		if bound == nil {
+			continue
+		}
+
+		listStart := strings.Index(joined[bound[1]:], "[")
+		if listStart < 0 {
+			continue
+		}
+
+		listStart += bound[1]
+
+		items, listEnd := bracketedStrings(joined[listStart:])
+		if len(items) == 0 || listEnd < 0 {
+			continue
+		}
+
+		dockerfile := strings.Join(items, "\n")
+		tests = append(tests, assertionsByName(itMatch[2], dockerfile, joined[listStart+listEnd:])...)
+	}
+
+	return tests
+}
+
+// blockBelow is the lines after idx that belong to the `it` at idx: every
+// line until one indented no deeper than the `it`, blank lines dropped.
+func blockBelow(lines []string, idx, indent int) []string {
+	var block []string
+
+	for _, line := range lines[idx+1:] {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		if len(line)-len(strings.TrimLeft(line, " ")) <= indent {
+			break
+		}
+
+		block = append(block, line)
+	}
+
+	return block
+}
+
+// bracketedStrings reads the Haskell list literal text starts with, `[ "a",
+// "b" ]`, and returns its strings unescaped and the offset just past the
+// closing bracket, or -1 when the list does not close. Brackets inside a
+// string are text.
+func bracketedStrings(text string) ([]string, int) {
+	quoted := regexp.MustCompile(`"((?:[^"\\]|\\.)*)"`)
+	depth, inString, escaped := 0, false, false
+
+	for offset, char := range text {
+		switch {
+		case escaped:
+			escaped = false
+		case inString && char == '\\':
+			escaped = true
+		case char == '"':
+			inString = !inString
+		case inString:
+		case char == '[':
+			depth++
+		case char == ']':
+			depth--
+			if depth == 0 {
+				var items []string
+
+				for _, match := range quoted.FindAllStringSubmatch(text[:offset], -1) {
+					items = append(items, unescapeHaskellString(match[1]))
+				}
+
+				return items, offset + 1
+			}
+		}
+	}
+
+	return nil, -1
+}
+
+// assertionsByName reads every `ruleCatches "DLxxxx" dockerfile` (or
+// `snippet`) in text, `in` and `do` and the onBuild prefix allowed, into one
+// case each, numbered past the first as the other parsers number them.
+func assertionsByName(name, dockerfile, text string) []TestCase {
+	assertPattern := regexp.MustCompile(
+		`(?:onBuild)?(ruleCatches|ruleCatchesNot)\s+"(DL\d+)"\s+(?:dockerfile|snippet)\b`,
+	)
+
+	var tests []TestCase
+
+	for count, match := range assertPattern.FindAllStringSubmatch(text, -1) {
+		caseName := name
+		if count > 0 {
+			caseName = fmt.Sprintf("%s (%d)", name, count+1)
+		}
+
+		tests = append(tests, TestCase{
+			Name:       caseName,
+			RuleCode:   match[2],
+			Dockerfile: dockerfile,
+			ShouldFail: match[1] == "ruleCatches",
+		})
+	}
+
+	return tests
 }
 
 // unescapeHaskellString converts Haskell escape sequences to actual characters.

@@ -30,7 +30,10 @@ var (
 	// Regex patterns for extracting Haskell rule metadata.
 	codePattern     = regexp.MustCompile(`code\s*=\s*"(DL\d+)"`)
 	severityPattern = regexp.MustCompile(`severity\s*=\s*(DL\w+)`)
-	messagePattern  = regexp.MustCompile(`message\s*=\s*\n?\s*"([^"]*(?:\\\s*\\[^"]*)*)"`)
+	// A label rule's message starts as Text.pack "Label `" and goes on with
+	// the label's name; the literal is what the metadata keeps, as for the
+	// label rules written without Text.pack.
+	messagePattern = regexp.MustCompile(`message\s*=\s*\n?\s*(?:Text\.pack\s*)?"([^"]*(?:\\\s*\\[^"]*)*)"`)
 	// stringGapPattern is a Haskell string gap inside a message literal.
 	stringGapPattern = regexp.MustCompile(`\\\s+\\`)
 )

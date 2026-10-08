@@ -98,8 +98,9 @@ func filterPipFlags(args []string) []string {
 		"--find-links": true, "-f": true, "--index-url": true, "-i": true,
 		"--implementation": true, "--no-binary": true, "--only-binary": true,
 		"--platform": true, "--prefix": true, "--progress-bar": true,
-		"--proxy": true, "--python-version": true, "--root": true,
-		"--src": true, "--target": true, "-t": true, "--upgrade-strategy": true,
+		"--proxy": true, "--python": true, "--python-version": true, "--root": true,
+		"--root-user-action": true,
+		"--src":              true, "--target": true, "-t": true, "--upgrade-strategy": true,
 	}
 
 	var result []string

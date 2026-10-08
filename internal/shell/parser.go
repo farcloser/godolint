@@ -126,15 +126,17 @@ func wordToString(word *syntax.Word) string {
 		case *syntax.DblQuoted:
 			// Recursively process quoted parts
 			for _, qp := range typart.Parts {
-				if lit, ok := qp.(*syntax.Lit); ok {
-					_, _ = build.WriteString(lit.Value)
-				} else {
-					// Variables, expansions, etc. - simplified as ${VAR}
+				switch quoted := qp.(type) {
+				case *syntax.Lit:
+					_, _ = build.WriteString(quoted.Value)
+				case *syntax.ParamExp:
+					_, _ = build.WriteString(paramString(quoted))
+				default:
 					_, _ = build.WriteString(maskedExpansion)
 				}
 			}
 		case *syntax.ParamExp:
-			_, _ = build.WriteString(maskedExpansion)
+			_, _ = build.WriteString(paramString(typart))
 		case *syntax.CmdSubst:
 			_, _ = build.WriteString(maskedExpansion)
 		case *syntax.ArithmExp:
@@ -146,6 +148,20 @@ func wordToString(word *syntax.Word) string {
 	}
 
 	return build.String()
+}
+
+// paramString is a plain variable reference, $name or ${name}, as ${name},
+// so that a rule can tell which variable a word uses, as hadolint's simplify
+// lets it; a reference with an operator (${name:-x}, ${#name}, ${name[0]})
+// is masked like any other expansion.
+func paramString(param *syntax.ParamExp) string {
+	plain := param.Param != nil && !param.Excl && !param.Length && !param.Width &&
+		param.Index == nil && param.Slice == nil && param.Repl == nil && param.Exp == nil && param.Names == 0
+	if !plain {
+		return maskedExpansion
+	}
+
+	return "${" + param.Param.Value + "}"
 }
 
 // extractFlags extracts flag arguments from a list of arguments.
@@ -394,11 +410,10 @@ func isPipName(name string) bool {
 // IsPipInstall checks if a command is a pip install command.
 // Ported from Hadolint.Shell.isPipInstall.
 func IsPipInstall(cmd Command) bool {
-	// Check for: pip install, pip2 install, pip3 install
-	if isPipName(cmd.Name) {
-		args := GetArgsNoFlags(cmd)
-
-		return len(args) > 0 && args[0] == "install"
+	// pip, pip3, pipx and whatever else pip goes by; pipenv is a different
+	// tool. install may follow flags.
+	if strings.HasPrefix(cmd.Name, "pip") && !strings.HasPrefix(cmd.Name, "pipenv") {
+		return slices.Contains(GetArgs(cmd), "install")
 	}
 
 	// Check for: python -m pip install
