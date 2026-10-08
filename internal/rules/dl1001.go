@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL1001Meta = rule.Meta{
 	Code:     "DL1001",
 	Severity: rule.Ignore,
-	Message:  "Please refrain from using inline ignore pragmas `# hadolint ignore=DLxxxx`.",
+	Message:  "Please refrain from using inline ignore pragmas  `# hadolint ignore=DLxxxx`.",
 }
