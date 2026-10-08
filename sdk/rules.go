@@ -5,7 +5,7 @@ import (
 	"github.com/forkcloser/godolint/internal/rules"
 )
 
-// AllRules returns all 65 implemented hadolint DL#### rules (pure Go).
+// AllRules returns every implemented hadolint DL#### rule (pure Go).
 // Shellcheck integration (validates RUN instruction shell scripts via external binary)
 // is opt-in via WithShellcheck() and adds SC#### violations.
 func AllRules() []rule.Rule {
