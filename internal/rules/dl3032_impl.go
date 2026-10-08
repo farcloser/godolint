@@ -16,6 +16,9 @@ func DL3032() rule.Rule {
 	)
 }
 
+// checkDL3032 passes a RUN with no yum install, or one whose first yum
+// install comes before its first clean: a clean before the install leaves
+// the cache the install filled.
 func checkDL3032(instruction syntax.Instruction) bool {
 	run, ok := instruction.(*syntax.Run)
 	if !ok {
@@ -27,26 +30,11 @@ func checkDL3032(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	hasYumInstall := false
-	hasYumClean := false
-
-	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs(yumCommand, []string{installArg}, cmd) {
-			hasYumInstall = true
-		}
-
-		if isYumClean(cmd) {
-			hasYumClean = true
-		}
-	}
-
-	// If no yum install, pass
-	if !hasYumInstall {
+	if firstCommand(parsed.PresentCommands, isYumInstall) < 0 {
 		return true
 	}
 
-	// If has yum install, must have clean
-	return hasYumClean
+	return cleanFollowsInstall(parsed.PresentCommands, isYumInstall, isYumClean)
 }
 
 func isYumClean(cmd shell.Command) bool {
@@ -56,9 +44,5 @@ func isYumClean(cmd shell.Command) bool {
 	}
 
 	// rm -rf /var/cache/yum/*
-	if shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/yum/*"}, cmd) {
-		return true
-	}
-
-	return false
+	return shell.CmdHasArgs("rm", []string{recursiveForceFlag, "/var/cache/yum/*"}, cmd)
 }

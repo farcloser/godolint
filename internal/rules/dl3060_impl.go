@@ -16,15 +16,11 @@ func DL3060() rule.Rule {
 	)
 }
 
+// checkDL3060 passes a RUN with no yarn install, one whose yarn cache is a
+// mount, or one whose first yarn install comes before its first cache clean.
 func checkDL3060(instruction syntax.Instruction) bool {
 	run, ok := instruction.(*syntax.Run)
 	if !ok {
-		return true
-	}
-
-	// Check if cache/tmpfs mount is present for yarn cache
-	if hasCacheOrTmpfsMount(run.Flags, ".cache/yarn") ||
-		hasCacheOrTmpfsMount(run.Flags, "/root/.cache/yarn") {
 		return true
 	}
 
@@ -33,24 +29,22 @@ func checkDL3060(instruction syntax.Instruction) bool {
 		return true
 	}
 
-	hasYarnInstall := false
-	hasYarnCacheClean := false
-
-	for _, cmd := range parsed.PresentCommands {
-		if shell.CmdHasArgs("yarn", []string{installArg}, cmd) {
-			hasYarnInstall = true
-		}
-
-		if shell.CmdHasArgs("yarn", []string{"cache", cleanArg}, cmd) {
-			hasYarnCacheClean = true
-		}
-	}
-
-	// If no yarn install, pass
-	if !hasYarnInstall {
+	if firstCommand(parsed.PresentCommands, isYarnInstall) < 0 {
 		return true
 	}
 
-	// If has yarn install, must have cache clean
-	return hasYarnCacheClean
+	if hasCacheOrTmpfsMount(run.Flags, ".cache/yarn") ||
+		hasCacheOrTmpfsMount(run.Flags, "/root/.cache/yarn") {
+		return true
+	}
+
+	return cleanFollowsInstall(parsed.PresentCommands, isYarnInstall, isYarnCacheClean)
+}
+
+func isYarnInstall(cmd shell.Command) bool {
+	return shell.CmdHasArgs("yarn", []string{installArg}, cmd)
+}
+
+func isYarnCacheClean(cmd shell.Command) bool {
+	return shell.CmdHasArgs("yarn", []string{"cache", cleanArg}, cmd)
 }
