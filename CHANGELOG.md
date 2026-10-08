@@ -7,6 +7,12 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-08
+
+### Changed
+
+- Built on mycophonic/primordium v0.12.0.
+
 ### Fixed
 
 - Seventeen rule messages (DL1001, DL3001, DL3004, DL3007, DL3008, DL3013,
