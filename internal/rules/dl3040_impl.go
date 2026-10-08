@@ -51,9 +51,12 @@ func checkDL3040(instruction syntax.Instruction) bool {
 	return true
 }
 
-// isDnfInstallCmd is a dnf or microdnf install.
+// isDnfInstallCmd is a dnf or microdnf command that installs or upgrades,
+// in any of the spellings dnf accepts.
 func isDnfInstallCmd(name string, cmd shell.Command) bool {
-	return shell.CmdHasArgs(name, []string{installArg}, cmd)
+	return shell.CmdHasArgs(name, []string{
+		installArg, "in", "upgrade", "up", "upgrade-minimal", "up-min", "reinstall", "rei",
+	}, cmd)
 }
 
 // isDnfCleanCmd is `<name> clean all`, or an rm of dnf's cache.
