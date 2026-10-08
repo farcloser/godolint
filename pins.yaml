@@ -1,0 +1,15 @@
+# The hadolint source godolint is generated from, pinned by tag and digest
+# (book/tooling.md, "Pinned artifacts beyond aqua"). `just generate` reads the
+# entry back with `limen pins get hadolint url|sha256`, fetches the tarball
+# into build/ and regenerates internal/rules from it; `just lint` regenerates
+# and fails on a diff, so the committed rules and tests always match the pin.
+# Renovate proposes the bumps and `limen pins refresh` recomputes the digest.
+pins:
+  - name: hadolint
+    renovate: github-tags hadolint/hadolint
+    version: v2.14.0
+    url: https://github.com/hadolint/hadolint/archive/refs/tags/${version}.tar.gz
+    verify: download
+    digest:
+      version: v2.14.0
+      sha256: 002a411ac608696327d65aaa6e77c8fafe2561429ce56cca0ccb67c2956f8dd5
