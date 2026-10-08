@@ -9,38 +9,62 @@ import (
 	"github.com/forkcloser/godolint/internal/syntax"
 )
 
-// DL3041 checks for dnf/microdnf install without version pinning.
+// DL3041Rule checks that dnf and microdnf install pinned versions. Ported
+// from Hadolint.Rule.DL3041: a version written through a variable is pinned
+// when the variable is an ENV of the stage or an ARG, which the rule tracks.
+type DL3041Rule struct{}
+
+// DL3041 creates the rule for dnf version pinning.
 func DL3041() rule.Rule {
-	return rule.NewSimpleRule(
-		DL3041Meta.Code,
-		DL3041Meta.Severity,
-		DL3041Meta.Message,
-		checkDL3041,
-	)
+	return &DL3041Rule{}
 }
 
-func checkDL3041(instruction syntax.Instruction) bool {
-	run, ok := instruction.(*syntax.Run)
-	if !ok {
-		return true
-	}
+// Code returns the rule code.
+func (*DL3041Rule) Code() rule.Code {
+	return DL3041Meta.Code
+}
 
-	parsed, err := shell.ParseShell(run.Command)
-	if err != nil {
-		return true
-	}
+// Severity returns the rule severity.
+func (*DL3041Rule) Severity() rule.Severity {
+	return DL3041Meta.Severity
+}
 
-	// Check all dnf/microdnf packages
-	packages := getDnfPackages(parsed)
-	for _, pkg := range packages {
-		if !isDnfPackageVersionFixed(pkg) {
+// Message returns the rule message.
+func (*DL3041Rule) Message() string {
+	return DL3041Meta.Message
+}
+
+// InitialState returns the initial state for this rule.
+func (*DL3041Rule) InitialState() rule.State {
+	return rule.EmptyState(newVersionVars())
+}
+
+// Check records ENV, ARG and FROM, and fails a RUN whose packages or
+// modules are not all pinned.
+func (*DL3041Rule) Check(line int, state rule.State, instruction syntax.Instruction) rule.State {
+	return checkPinnedVersions(DL3041Meta, line, state, instruction,
+		func(vars versionVars, parsed *shell.ParsedShell) bool {
+			return dnfPackagesPinned(vars, parsed) && dnfModulesPinned(parsed)
+		})
+}
+
+// Finalize performs no final check.
+func (*DL3041Rule) Finalize(state rule.State) rule.State {
+	return state
+}
+
+func dnfPackagesPinned(vars versionVars, parsed *shell.ParsedShell) bool {
+	for _, pkg := range getDnfPackages(parsed) {
+		if !isDnfPackageVersionFixed(vars, pkg) {
 			return false
 		}
 	}
 
-	// Check all dnf/microdnf modules
-	modules := getDnfModules(parsed)
-	for _, mod := range modules {
+	return true
+}
+
+func dnfModulesPinned(parsed *shell.ParsedShell) bool {
+	for _, mod := range getDnfModules(parsed) {
 		if !isDnfModuleVersionFixed(mod) {
 			return false
 		}
@@ -49,16 +73,16 @@ func checkDL3041(instruction syntax.Instruction) bool {
 	return true
 }
 
+// getDnfPackages is every package a dnf install names; module and group
+// commands are not package installs.
 func getDnfPackages(parsed *shell.ParsedShell) []string {
 	var packages []string
 
 	for _, cmd := range parsed.PresentCommands {
-		// Skip module commands
-		if isDnfModuleCmd(cmd) {
+		if isDnfModuleCmd(cmd) || isDnfGroupCmd(cmd) {
 			continue
 		}
 
-		// Get packages from install filter
 		packages = append(packages, dnfInstallFilter(cmd)...)
 	}
 
@@ -69,41 +93,36 @@ func getDnfModules(parsed *shell.ParsedShell) []string {
 	var modules []string
 
 	for _, cmd := range parsed.PresentCommands {
-		// Only module commands
 		if !isDnfModuleCmd(cmd) {
 			continue
 		}
 
-		// Get modules from install filter
 		modules = append(modules, dnfInstallFilter(cmd)...)
 	}
 
 	return modules
 }
 
-func isDnfModuleCmd(cmd shell.Command) bool {
-	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
-		return false
-	}
+func isDnfCmd(cmd shell.Command) bool {
+	return cmd.Name == dnfCommand || cmd.Name == microdnfCommand
+}
 
-	return shell.CmdHasArgs(cmd.Name, []string{moduleArg}, cmd)
+func isDnfModuleCmd(cmd shell.Command) bool {
+	return isDnfCmd(cmd) && shell.CmdHasArgs(cmd.Name, []string{moduleArg}, cmd)
+}
+
+func isDnfGroupCmd(cmd shell.Command) bool {
+	return isDnfCmd(cmd) && shell.CmdHasArgs(cmd.Name, []string{"group"}, cmd)
 }
 
 func dnfInstallFilter(cmd shell.Command) []string {
-	if cmd.Name != dnfCommand && cmd.Name != microdnfCommand {
+	if !isDnfCmd(cmd) || !shell.CmdHasArgs(cmd.Name, []string{installArg}, cmd) {
 		return nil
 	}
-
-	// Must be install command
-	if !shell.CmdHasArgs(cmd.Name, []string{installArg}, cmd) {
-		return nil
-	}
-
-	args := shell.GetArgsNoFlags(cmd)
 
 	var packages []string
 
-	for _, arg := range args {
+	for _, arg := range shell.GetArgsNoFlags(cmd) {
 		if arg != installArg && arg != moduleArg {
 			packages = append(packages, arg)
 		}
@@ -112,22 +131,25 @@ func dnfInstallFilter(cmd shell.Command) []string {
 	return packages
 }
 
-func isDnfPackageVersionFixed(pkg string) bool {
-	// .rpm files always have version
-	if strings.HasSuffix(pkg, ".rpm") {
-		return true
-	}
-
-	// Must have at least one dash
+// isDnfPackageVersionFixed is hadolint's packageVersionFixed: a name with no
+// dash has no version; an .rpm file has one; a name with a variable is pinned
+// when the variable is defined; otherwise what follows the first dash must
+// look like a version.
+func isDnfPackageVersionFixed(vars versionVars, pkg string) bool {
 	parts := strings.Split(pkg, "-")
 	if len(parts) <= 1 {
 		return false
 	}
 
-	// Check if parts after first dash look like version
-	versionParts := parts[1:]
+	if strings.HasSuffix(pkg, ".rpm") {
+		return true
+	}
 
-	return isDnfVersionLike(versionParts)
+	if strings.Contains(pkg, "$") {
+		return vars.defines(pkg)
+	}
+
+	return isDnfVersionLike(parts[1:])
 }
 
 func isDnfVersionLike(parts []string) bool {
@@ -135,22 +157,19 @@ func isDnfVersionLike(parts []string) bool {
 		return false
 	}
 
-	allValid := true
 	hasDigitStart := false
 
 	for _, part := range parts {
 		if !isDnfValidVersionPart(part) {
-			allValid = false
-
-			break
+			return false
 		}
 
-		if part != "" && unicode.IsDigit(rune(part[0])) {
+		if unicode.IsDigit(rune(part[0])) {
 			hasDigitStart = true
 		}
 	}
 
-	return allValid && hasDigitStart
+	return hasDigitStart
 }
 
 func isDnfValidVersionPart(part string) bool {
