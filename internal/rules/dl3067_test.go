@@ -1,0 +1,82 @@
+package rules_test
+
+import (
+	"testing"
+
+	"github.com/forkcloser/godolint/internal/rule"
+	"github.com/forkcloser/godolint/internal/rules"
+	"github.com/forkcloser/godolint/internal/testutils"
+)
+
+// Auto-generated tests for DL3067 ported from hadolint test suite.
+// Source: hadolint/test/Hadolint/Rule/DL3067Spec.hs
+//
+// To regenerate: go generate ./internal/rules
+
+func TestDL3067(t *testing.T) {
+	t.Parallel()
+
+	allRules := []rule.Rule{
+		rules.DL3067(),
+	}
+
+	t.Run(
+		"does not warn when copying a directory from another stage",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY --from=build /app /`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3067")
+		},
+	)
+
+	t.Run(
+		"does not warn when copying root from another stage into a subdirectory",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY --from=build / /app`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3067")
+		},
+	)
+
+	t.Run(
+		"does not warn when copying root without --from",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY / /`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3067")
+		},
+	)
+
+	t.Run(
+		"warns when copying quoted root paths from another stage to root",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY --from=build "/" "/"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3067")
+		},
+	)
+
+	t.Run(
+		"warns when copying the root filesystem from another stage to root",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `COPY --from=build / /`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3067")
+		},
+	)
+}
