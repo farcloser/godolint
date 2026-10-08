@@ -7,7 +7,7 @@
 pins:
   - name: hadolint
     renovate: github-tags hadolint/hadolint
-    version: v2.14.0
+    version: v2.15.1
     url: https://github.com/hadolint/hadolint/archive/refs/tags/${version}.tar.gz
     verify: download
     digest:
