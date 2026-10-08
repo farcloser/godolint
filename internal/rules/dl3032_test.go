@@ -21,6 +21,30 @@ func TestDL3032(t *testing.T) {
 	}
 
 	t.Run(
+		"not ok with clean before install",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN yum install -y mariadb-10.4 && yum clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3032")
+		},
+	)
+
+	t.Run(
+		"not ok with clean before install (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN yum clean all && yum install -y`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3032")
+		},
+	)
+
+	t.Run(
 		"not ok with no clean all",
 		func(t *testing.T) {
 			t.Parallel()

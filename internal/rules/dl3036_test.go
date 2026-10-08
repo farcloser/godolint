@@ -21,6 +21,18 @@ func TestDL3036(t *testing.T) {
 	}
 
 	t.Run(
+		"not ok with clean before install",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN zypper clean && zypper install -y mariadb=10.4`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3036")
+		},
+	)
+
+	t.Run(
 		"not ok without zypper clean",
 		func(t *testing.T) {
 			t.Parallel()

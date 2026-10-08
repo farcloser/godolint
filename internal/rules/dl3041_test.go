@@ -93,6 +93,54 @@ func TestDL3041(t *testing.T) {
 	)
 
 	t.Run(
+		"ok with dnf group install",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN dnf -y group install "Development Tools"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install (2)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN dnf -y --setopt=group_package_types="mandatory" group install "Development Tools"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install (3)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN dnf group install -y "Development Tools" && dnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
+		"ok with dnf group install (4)",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN microdnf group install -y "Development Tools" && microdnf clean all`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3041")
+		},
+	)
+
+	t.Run(
 		"ok with dnf version pinning",
 		func(t *testing.T) {
 			t.Parallel()

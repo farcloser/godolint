@@ -21,6 +21,18 @@ func TestDL3013(t *testing.T) {
 	}
 
 	t.Run(
+		"pip install --root-user-action argument is not a package",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN pip install --no-cache-dir --root-user-action ignore poetry==1.8.5`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3013")
+		},
+	)
+
+	t.Run(
 		"pip install constraints file - long version argument",
 		func(t *testing.T) {
 			t.Parallel()
@@ -53,6 +65,18 @@ func TestDL3013(t *testing.T) {
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertNoViolation(t, violations, "DL3013")
+		},
+	)
+
+	t.Run(
+		"pip install flag=value still checks the package",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN pip install --root-user-action=ignore mypkg`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3013")
 		},
 	)
 
@@ -353,6 +377,30 @@ func TestDL3013(t *testing.T) {
 			violations := testutils.LintDockerfile(dockerfile, allRules)
 
 			testutils.AssertNoViolation(t, violations, "DL3013")
+		},
+	)
+
+	t.Run(
+		"pipx install --python argument is not a package",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN pipx install --python "$(which python)" "poetry==1.8.5"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3013")
+		},
+	)
+
+	t.Run(
+		"pipx version not pinned",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN pipx install black`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertContainsViolation(t, violations, "DL3013")
 		},
 	)
 }
