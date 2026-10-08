@@ -72,6 +72,7 @@ func AllRules() []rule.Rule {
 		rules.DL3061(),
 		rules.DL3062(),
 		rules.DL3063(),
+		rules.DL3064(),
 		// DL4xxx - Deprecated instructions
 		rules.DL4000(),
 		rules.DL4001(),
