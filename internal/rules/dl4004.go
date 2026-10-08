@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL4004Meta = rule.Meta{
 	Code:     "DL4004",
 	Severity: rule.Error,
-	Message:  "Multiple `ENTRYPOINT` instructions found. If you list more than one `ENTRYPOINT` then       only the last `ENTRYPOINT` will take effect",
+	Message:  "Multiple `ENTRYPOINT` instructions found. If you list more than one `ENTRYPOINT` then only the last `ENTRYPOINT` will take effect",
 }

@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3047Meta = rule.Meta{
 	Code:     "DL3047",
 	Severity: rule.Info,
-	Message:  "Avoid use of wget without progress bar. Use `wget --progress=dot:giga <url>`.       Or consider using `-q` or `-nv` (shorthands for `--quiet` or `--no-verbose`).",
+	Message:  "Avoid use of wget without progress bar. Use `wget --progress=dot:giga <url>`. Or consider using `-q` or `-nv` (shorthands for `--quiet` or `--no-verbose`).",
 }

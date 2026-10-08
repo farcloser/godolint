@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3018Meta = rule.Meta{
 	Code:     "DL3018",
 	Severity: rule.Warning,
-	Message:  "Pin versions in apk add. Instead of `apk add <package>`       use `apk add <package>=<version>`",
+	Message:  "Pin versions in apk add. Instead of `apk add <package>` use `apk add <package>=<version>`",
 }

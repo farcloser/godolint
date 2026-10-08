@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3001Meta = rule.Meta{
 	Code:     "DL3001",
 	Severity: rule.Info,
-	Message:  "For some bash commands it makes no sense running them in a Docker container like `ssh`,       `vim`, `shutdown`, `service`, `ps`, `free`, `top`, `kill`, `mount`, `ifconfig`",
+	Message:  "For some bash commands it makes no sense running them in a Docker container like `ssh`, `vim`, `shutdown`, `service`, `ps`, `free`, `top`, `kill`, `mount`, `ifconfig`",
 }

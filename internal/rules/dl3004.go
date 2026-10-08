@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3004Meta = rule.Meta{
 	Code:     "DL3004",
 	Severity: rule.Error,
-	Message:  "Do not use sudo as it leads to unpredictable behavior. Use a tool like       gosu to enforce root",
+	Message:  "Do not use sudo as it leads to unpredictable behavior. Use a tool like gosu to enforce root",
 }
