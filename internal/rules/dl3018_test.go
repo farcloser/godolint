@@ -90,6 +90,22 @@ libbz2=1.0.6-r5`
 	)
 
 	t.Run(
+		"apk add version pinned with fuzzy versions",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dockerfile := `RUN apk add --no-cache \
+  "flex>=2.6.1-r1" \
+  "libffi~3.2.1" \
+  "python3<3.6.12-r2" \
+  "libbz2=~1.0.6-r4"`
+			violations := testutils.LintDockerfile(dockerfile, allRules)
+
+			testutils.AssertNoViolation(t, violations, "DL3018")
+		},
+	)
+
+	t.Run(
 		"apk add version pinning single",
 		func(t *testing.T) {
 			t.Parallel()
