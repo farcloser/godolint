@@ -64,7 +64,7 @@ func (r *DL3026Rule) Check(line int, state rule.State, instruction syntax.Instru
 	}
 
 	// Special case: scratch is always allowed
-	if imageName == "scratch" {
+	if imageName == scratchImage {
 		return state.ReplaceData(currentState)
 	}
 

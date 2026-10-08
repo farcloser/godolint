@@ -66,7 +66,7 @@ func (*DL3006Rule) Check(line int, state rule.State, instruction syntax.Instruct
 
 	// Check if image needs explicit tag
 	// Scratch image - OK
-	if from.Image.Image == "scratch" {
+	if from.Image.Image == scratchImage {
 		return state
 	}
 

@@ -20,6 +20,9 @@ const (
 	moduleArg  = "module"
 	allArg     = "all"
 
+	// The empty image, which is also the stage name that would shadow it.
+	scratchImage = "scratch"
+
 	// The flags of the `rm` that the cache-cleaning rules expect in the same
 	// RUN as the install.
 	recursiveForceFlag = "-rf"
