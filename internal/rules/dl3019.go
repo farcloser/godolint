@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3019Meta = rule.Meta{
 	Code:     "DL3019",
 	Severity: rule.Info,
-	Message:  "Use the `--no-cache` switch to avoid the need to use `--update` and       remove `/var/cache/apk/*` when done installing packages",
+	Message:  "Use the `--no-cache` switch to avoid the need to use `--update` and remove `/var/cache/apk/*` when done installing packages",
 }

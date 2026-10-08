@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3042Meta = rule.Meta{
 	Code:     "DL3042",
 	Severity: rule.Warning,
-	Message:  "Avoid use of cache directory with pip.               Use `pip install --no-cache-dir <package>`",
+	Message:  "Avoid use of cache directory with pip. Use `pip install --no-cache-dir <package>`",
 }

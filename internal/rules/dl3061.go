@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3061Meta = rule.Meta{
 	Code:     "DL3061",
 	Severity: rule.Error,
-	Message:  "Invalid instruction order. Dockerfile must begin with `FROM`,               `ARG` or comment.",
+	Message:  "Invalid instruction order. Dockerfile must begin with `FROM`, `ARG` or comment.",
 }

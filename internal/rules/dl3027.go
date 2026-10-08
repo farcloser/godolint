@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3027Meta = rule.Meta{
 	Code:     "DL3027",
 	Severity: rule.Warning,
-	Message:  "Do not use apt as it is meant to be an end-user tool, use apt-get               or apt-cache instead",
+	Message:  "Do not use apt as it is meant to be an end-user tool, use apt-get or apt-cache instead",
 }

@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3007Meta = rule.Meta{
 	Code:     "DL3007",
 	Severity: rule.Warning,
-	Message:  "Using latest is prone to errors if the image will ever update. Pin the version explicitly       to a release tag",
+	Message:  "Using latest is prone to errors if the image will ever update. Pin the version explicitly to a release tag",
 }

@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3013Meta = rule.Meta{
 	Code:     "DL3013",
 	Severity: rule.Warning,
-	Message:  "Pin versions in pip. Instead of `pip install <package>` use `pip install       <package>==<version>` or `pip install --requirement <requirements file>`",
+	Message:  "Pin versions in pip. Instead of `pip install <package>` use `pip install <package>==<version>` or `pip install --requirement <requirements file>`",
 }

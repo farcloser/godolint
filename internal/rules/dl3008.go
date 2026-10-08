@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3008Meta = rule.Meta{
 	Code:     "DL3008",
 	Severity: rule.Warning,
-	Message:  "Pin versions in apt get install. Instead of `apt-get install <package>` use `apt-get       install <package>=<version>`",
+	Message:  "Pin versions in apt get install. Instead of `apt-get install <package>` use `apt-get install <package>=<version>`",
 }

@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL4006Meta = rule.Meta{
 	Code:     "DL4006",
 	Severity: rule.Warning,
-	Message:  "Set the SHELL option -o pipefail before RUN with a pipe in it. If you are using       /bin/sh in an alpine image or if your shell is symlinked to busybox then consider       explicitly setting your SHELL to /bin/ash, or disable this check",
+	Message:  "Set the SHELL option -o pipefail before RUN with a pipe in it. If you are using /bin/sh in an alpine image or if your shell is symlinked to busybox then consider explicitly setting your SHELL to /bin/ash, or disable this check",
 }

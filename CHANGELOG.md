@@ -7,6 +7,16 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Seventeen rule messages (DL1001, DL3001, DL3004, DL3007, DL3008, DL3013,
+  DL3016, DL3018, DL3019, DL3027, DL3028, DL3042, DL3047, DL3061, DL4003,
+  DL4004, DL4006) carried a run of 7 to 15 spaces where hadolint's has one:
+  the generator kept the indentation inside hadolint's Haskell string gaps,
+  which the Haskell compiler deletes. The messages now read as hadolint
+  emits them, and the generator collapses the gap. Reported by The Designer
+  from the site's hero sample.
+
 ## [0.2.0] - 2026-10-05
 
 ### Changed

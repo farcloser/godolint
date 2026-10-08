@@ -31,6 +31,8 @@ var (
 	codePattern     = regexp.MustCompile(`code\s*=\s*"(DL\d+)"`)
 	severityPattern = regexp.MustCompile(`severity\s*=\s*(DL\w+)`)
 	messagePattern  = regexp.MustCompile(`message\s*=\s*\n?\s*"([^"]*(?:\\\s*\\[^"]*)*)"`)
+	// stringGapPattern is a Haskell string gap inside a message literal.
+	stringGapPattern = regexp.MustCompile(`\\\s+\\`)
 )
 
 func main() {
@@ -179,8 +181,11 @@ func parseRuleFile(path string) (RuleMetadata, error) {
 		return rule, fmt.Errorf("%w: could not find message", ErrRuleGeneration)
 	}
 
-	msg := match[1]
-	msg = strings.ReplaceAll(msg, "\\\n", "")
+	// A Haskell string gap (a backslash, whitespace including the line
+	// break, a backslash) is deleted whole by the compiler, indentation
+	// included; the message hadolint emits has one space where the source
+	// breaks its line.
+	msg := stringGapPattern.ReplaceAllString(match[1], "")
 	msg = strings.ReplaceAll(msg, "\\", "")
 	msg = strings.TrimSpace(msg)
 	rule.Message = msg

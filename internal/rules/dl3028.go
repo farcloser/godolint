@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3028Meta = rule.Meta{
 	Code:     "DL3028",
 	Severity: rule.Warning,
-	Message:  "Pin versions in gem install. Instead of `gem install <gem>` use `gem       install <gem>:<version>`",
+	Message:  "Pin versions in gem install. Instead of `gem install <gem>` use `gem install <gem>:<version>`",
 }

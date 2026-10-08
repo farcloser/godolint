@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL3016Meta = rule.Meta{
 	Code:     "DL3016",
 	Severity: rule.Warning,
-	Message:  "Pin versions in npm. Instead of `npm install <package>` use `npm install       <package>@<version>`",
+	Message:  "Pin versions in npm. Instead of `npm install <package>` use `npm install <package>@<version>`",
 }

@@ -10,5 +10,5 @@ import "github.com/forkcloser/godolint/internal/rule"
 var DL4003Meta = rule.Meta{
 	Code:     "DL4003",
 	Severity: rule.Warning,
-	Message:  "Multiple `CMD` instructions found. If you list more than one `CMD` then only the last       `CMD` will take effect",
+	Message:  "Multiple `CMD` instructions found. If you list more than one `CMD` then only the last `CMD` will take effect",
 }
