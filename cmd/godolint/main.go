@@ -123,7 +123,7 @@ func lintFiles(processor *process.Processor, paths []string) ([]rule.CheckFailur
 
 		slog.Debug("parsed Dockerfile", "file", dockerfilePath, "instructions", len(instructions))
 
-		failures := processor.Run(instructions)
+		failures := process.WithoutIgnored(processor.Run(instructions))
 		for i := range failures {
 			failures[i].File = dockerfilePath
 		}

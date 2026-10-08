@@ -127,7 +127,7 @@ func (l *Linter) Lint(ctx context.Context, dockerfile []byte) (*Result, error) {
 
 	// Run rules
 	processor := process.NewProcessor(l.rules)
-	failures := processor.Run(instructions)
+	failures := process.WithoutIgnored(processor.Run(instructions))
 
 	// Convert to SDK violations
 	violations := make([]Violation, len(failures))
@@ -170,7 +170,7 @@ func convertSeverity(s rule.Severity) Severity {
 	case rule.Style:
 		return SeverityStyle
 	case rule.Ignore:
-		// Unreachable in practice: the processor filters Ignore-severity
+		// Unreachable in practice: Lint drops Ignore-severity
 		// failures before they reach the SDK conversion.
 		return SeverityInfo
 	default:

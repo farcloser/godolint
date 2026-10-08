@@ -57,10 +57,6 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 		allFailures = append(allFailures, state.Failures...)
 	}
 
-	// Filter out failures with Ignore severity (like hadolint's DLIgnoreC filter)
-	// Ported from Hadolint/Lint.hs:88 - severity /= DLIgnoreC
-	allFailures = filterIgnoreSeverity(allFailures)
-
 	// Filter out ignored failures based on inline pragmas
 	if !p.disableIgnorePragmas {
 		directives := pragma.Parse(instructions)
@@ -70,9 +66,10 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 	return allFailures
 }
 
-// filterIgnoreSeverity removes failures with Ignore severity.
-// Matches hadolint's behavior where DLIgnoreC severity rules are filtered out.
-func filterIgnoreSeverity(failures []rule.CheckFailure) []rule.CheckFailure {
+// WithoutIgnored drops the failures of Ignore severity, as hadolint's Lint
+// does after Process has run: a rule such as DL3057 reports them, a test
+// sees them, and a linter's output does not.
+func WithoutIgnored(failures []rule.CheckFailure) []rule.CheckFailure {
 	filtered := []rule.CheckFailure{}
 
 	for _, failure := range failures {
