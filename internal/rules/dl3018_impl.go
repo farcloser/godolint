@@ -102,7 +102,7 @@ func apkAddPackages(cmd shell.Command) []string {
 
 func isApkVersionFixed(pkg string) bool {
 	// Package is version-fixed if it has:
-	// 1. = (version pin like package=1.2.3)
+	// 1. a version constraint: = pins it, ~ > < bound it, as apk reads them
 	// 2. .apk suffix (package file)
-	return strings.Contains(pkg, "=") || strings.HasSuffix(pkg, ".apk")
+	return strings.ContainsAny(pkg, "=~><") || strings.HasSuffix(pkg, ".apk")
 }
