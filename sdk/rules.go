@@ -65,6 +65,7 @@ func AllRules() []rule.Rule {
 		rules.DL3053(),
 		rules.DL3054(),
 		rules.DL3055(),
+		rules.DL3056(),
 		rules.DL3057(),
 		rules.DL3058(),
 		rules.DL3059(),
