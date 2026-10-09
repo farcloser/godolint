@@ -37,7 +37,7 @@ All notable changes are recorded here. The format follows
   hadolint's simplify does, so rules can tell which variable a word uses.
 - A failure of a rule whose severity is Ignore (DL3057) is reported by the
   rule and dropped by the linter and the command, where hadolint drops it.
-- Built on mycophonic/primordium v0.12.0.
+- Built on mycophonic/primordium v0.13.0.
 
 ### Fixed
 
