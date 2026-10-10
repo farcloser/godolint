@@ -331,8 +331,12 @@ type Parser interface {
 godolint includes full shellcheck integration for validating shell commands in RUN instructions:
 
 - **Stateful tracking** - Tracks ENV, ARG, and SHELL instructions across the Dockerfile
-- **Multi-stage support** - Correctly resets state on FROM instructions
-- **Smart skipping** - Automatically skips non-POSIX shells (PowerShell, cmd)
+- **Multi-stage support** - A `FROM` starts from the defaults, or from the stage it names
+  (`FROM base` after `FROM debian AS base` keeps base's `SHELL`, `ENV` and `ARG`)
+- **Shell pragma** - `# hadolint shell=powershell` sets the shell for the stage, or for
+  every stage when written before the first instruction
+- **Smart skipping** - Automatically skips non-POSIX shells (PowerShell, cmd) and the exec
+  form (`RUN ["cmd", "arg"]`), which no shell runs
 - **Complete context** - Constructs scripts with proper shebang and environment exports
 
 For external scripts validation, godolint does shell out to shellcheck.

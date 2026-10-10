@@ -268,6 +268,7 @@ func convertRun(node *parser.Node) (*syntax.Run, error) {
 	return &syntax.Run{
 		Command: command,
 		Flags:   node.Flags,
+		IsJSON:  node.Attributes != nil && node.Attributes["json"],
 	}, nil
 }
 

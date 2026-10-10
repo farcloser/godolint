@@ -39,6 +39,7 @@ func (*From) Name() string {
 type Run struct {
 	Command string   // The shell command to execute
 	Flags   []string // RUN instruction flags (e.g., --mount)
+	IsJSON  bool     // true if using JSON/exec form, false if shell form
 }
 
 // Name returns the instruction name.

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/forkcloser/godolint/internal/pragma"
 	"github.com/forkcloser/godolint/internal/rule"
 	"github.com/forkcloser/godolint/internal/syntax"
 )
@@ -312,11 +313,24 @@ type ShellcheckRule struct {
 	checker Shellchecker
 }
 
-// shellState tracks shell options across instructions.
-// Ported from Acc in Hadolint.Rule.Shellcheck.
+// shellState is the shell in force, per stage. Ported from Acc in
+// Hadolint.Rule.Shellcheck.
 type shellState struct {
-	opts        Opts
+	// opts is the current stage's shell and variables.
+	opts Opts
+	// defaultOpts is what a stage starts from: the defaults, or what a shell
+	// pragma before the first instruction set for every stage.
 	defaultOpts Opts
+	// stageIdx counts the FROMs seen.
+	stageIdx int
+	// stageOpts is each stage's final opts, by index, for a later FROM that
+	// names it.
+	stageOpts map[int]Opts
+	// stages is each stage's alias, by index.
+	stages map[int]string
+	// started is false before any instruction has touched the state:
+	// hadolint's Empty. A shell pragma seen then is global.
+	started bool
 }
 
 // NewShellcheckRule creates a new shellcheck rule.
@@ -349,6 +363,10 @@ func (*ShellcheckRule) InitialState() rule.State {
 	return rule.EmptyState(shellState{
 		opts:        defaultOpts,
 		defaultOpts: defaultOpts,
+		stageIdx:    0,
+		stageOpts:   map[int]Opts{0: defaultOpts},
+		stages:      map[int]string{},
+		started:     false,
 	})
 }
 
@@ -361,65 +379,39 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 
 	switch instr := instruction.(type) {
 	case *syntax.From:
-		// New stage - reset to default options
-		return state.ReplaceData(shellState{
-			opts:        shState.defaultOpts,
-			defaultOpts: shState.defaultOpts,
-		})
+		return state.ReplaceData(shState.newStage(instr.Image))
 
 	case *syntax.Arg:
-		// Add ARG to environment variables
-		newOpts := shState.opts
-		if newOpts.EnvVars == nil {
-			newOpts.EnvVars = make(map[string]string)
-		}
-		// Copy existing vars
-		envCopy := make(map[string]string)
-		maps.Copy(envCopy, shState.opts.EnvVars)
-
-		envCopy[instr.ArgName] = "1"
-		newOpts.EnvVars = envCopy
-
-		return state.ReplaceData(shellState{
-			opts:        newOpts,
-			defaultOpts: shState.defaultOpts,
-		})
+		return state.ReplaceData(shState.addVars([]string{instr.ArgName}))
 
 	case *syntax.Env:
-		// Add ENV variables
-		newOpts := shState.opts
-		if newOpts.EnvVars == nil {
-			newOpts.EnvVars = make(map[string]string)
-		}
-		// Copy existing vars
-		envCopy := make(map[string]string)
-		maps.Copy(envCopy, shState.opts.EnvVars)
-
+		names := make([]string, 0, len(instr.Pairs))
 		for _, pair := range instr.Pairs {
-			envCopy[pair.Key] = "1"
+			names = append(names, pair.Key)
 		}
 
-		newOpts.EnvVars = envCopy
-
-		return state.ReplaceData(shellState{
-			opts:        newOpts,
-			defaultOpts: shState.defaultOpts,
-		})
+		return state.ReplaceData(shState.addVars(names))
 
 	case *syntax.Shell:
-		// Update shell command
-		if len(instr.Arguments) > 0 {
-			shellCmd := strings.Join(instr.Arguments, " ")
-			newOpts := shState.opts
-			newOpts.ShellName = shellCmd
-
-			return state.ReplaceData(shellState{
-				opts:        newOpts,
-				defaultOpts: shState.defaultOpts,
-			})
+		if len(instr.Arguments) == 0 {
+			return state
 		}
 
+		return state.ReplaceData(shState.setShell(strings.Join(instr.Arguments, " ")))
+
+	case *syntax.Comment:
+		if name, ok := pragma.ParseShell(instr.Text); ok {
+			return state.ReplaceData(shState.shellPragma(name))
+		}
+
+		return state
+
 	case *syntax.Run:
+		// The exec form runs no shell: nothing for shellcheck to read.
+		if instr.IsJSON {
+			return state
+		}
+
 		// Run shellcheck on the command
 		violations, err := r.checker.Check(instr.Command, shState.opts)
 		if err != nil {
@@ -449,6 +441,103 @@ func (r *ShellcheckRule) Check(line int, state rule.State, instruction syntax.In
 // Finalize performs final checks after processing all instructions.
 func (*ShellcheckRule) Finalize(state rule.State) rule.State {
 	return state // No finalization needed
+}
+
+// newStage opens the stage a FROM starts: from the stage the image names,
+// when it is an earlier stage's alias (the first such stage, as hadolint
+// takes it), else from the defaults. Ported from newStage.
+func (s shellState) newStage(image syntax.BaseImage) shellState {
+	next := s
+
+	if s.started {
+		next.stageIdx = s.stageIdx + 1
+	}
+
+	next.started = true
+	next.opts = s.defaultOpts
+
+	if idx, ok := s.stageNamed(image.Image); ok {
+		next.opts = s.stageOpts[idx]
+	}
+
+	next.stageOpts = cloneMap(s.stageOpts)
+	next.stageOpts[next.stageIdx] = next.opts
+	next.stages = cloneMap(s.stages)
+
+	if image.Alias != nil {
+		next.stages[next.stageIdx] = *image.Alias
+	}
+
+	return next
+}
+
+// stageNamed is the lowest stage index whose alias is the name.
+func (s shellState) stageNamed(name string) (int, bool) {
+	found, ok := -1, false
+
+	for idx, alias := range s.stages {
+		if alias == name && (!ok || idx < found) {
+			found, ok = idx, true
+		}
+	}
+
+	return found, ok
+}
+
+// addVars adds ARG and ENV names to the current stage's variables. hadolint
+// resets the shell to the default here as well; that is a drift in its
+// addVars, and a SHELL stays in force across an ENV in this port.
+func (s shellState) addVars(names []string) shellState {
+	opts := s.opts
+	opts.EnvVars = cloneMap(s.opts.EnvVars)
+
+	for _, name := range names {
+		opts.EnvVars[name] = "1"
+	}
+
+	return s.withOpts(opts, false)
+}
+
+// setShell is a SHELL instruction: the current stage's shell.
+func (s shellState) setShell(name string) shellState {
+	opts := s.opts
+	opts.ShellName = name
+
+	return s.withOpts(opts, false)
+}
+
+// shellPragma is "# hadolint shell=": the current stage's shell, and every
+// stage's when nothing has started a stage yet.
+func (s shellState) shellPragma(name string) shellState {
+	opts := s.opts
+	opts.ShellName = name
+
+	return s.withOpts(opts, !s.started)
+}
+
+// withOpts records new opts for the current stage, and as the default for
+// the stages to come when asked.
+func (s shellState) withOpts(opts Opts, asDefault bool) shellState {
+	next := s
+	next.started = true
+	next.opts = opts
+	next.stageOpts = cloneMap(s.stageOpts)
+	next.stageOpts[s.stageIdx] = opts
+
+	if asDefault {
+		next.defaultOpts = opts
+	}
+
+	return next
+}
+
+// cloneMap copies a map, a nil one included, so a state never shares a map
+// with the state it came from.
+func cloneMap[K comparable, V any](src map[K]V) map[K]V {
+	dst := make(map[K]V, len(src))
+	maps.Copy(dst, src)
+
+	return dst
 }
 
 // NoopShellchecker is a no-op implementation for when shellcheck is not available.
