@@ -19,8 +19,8 @@ require (
 	github.com/containerd/typeurl/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/forkcloser/dot v1.2.0 // indirect
-	github.com/forkcloser/go-graphviz v0.5.0 // indirect
+	github.com/forkcloser/dot v1.2.1 // indirect
+	github.com/forkcloser/go-graphviz v0.5.1 // indirect
 	github.com/forkcloser/godolint v0.3.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
