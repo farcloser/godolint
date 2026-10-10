@@ -22,7 +22,8 @@ func NewProcessor(rules []rule.Rule) *Processor {
 	}
 }
 
-// WithDisableIgnorePragmas configures whether to disable inline ignore pragma processing.
+// WithDisableIgnorePragmas configures whether the ignore pragmas (line, stage
+// and global) are read at all.
 func (p *Processor) WithDisableIgnorePragmas(disable bool) *Processor {
 	p.disableIgnorePragmas = disable
 
@@ -57,7 +58,7 @@ func (p *Processor) Run(instructions []syntax.InstructionPos) []rule.CheckFailur
 		allFailures = append(allFailures, state.Failures...)
 	}
 
-	// Filter out ignored failures based on inline pragmas
+	// Drop what a line, stage or global ignore pragma silences.
 	if !p.disableIgnorePragmas {
 		directives := pragma.Parse(instructions)
 		allFailures = filterIgnored(allFailures, directives)
@@ -82,7 +83,7 @@ func WithoutIgnored(failures []rule.CheckFailure) []rule.CheckFailure {
 }
 
 // filterIgnored removes failures that are suppressed by ignore pragmas.
-func filterIgnored(failures []rule.CheckFailure, directives pragma.IgnoreDirectives) []rule.CheckFailure {
+func filterIgnored(failures []rule.CheckFailure, directives pragma.Directives) []rule.CheckFailure {
 	filtered := []rule.CheckFailure{}
 
 	for _, failure := range failures {

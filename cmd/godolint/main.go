@@ -33,7 +33,7 @@ type CLI struct {
 	// so the one flag with more tag keys than help stands alone.
 	LogLevel string `default:"info" enum:"debug,info,warn,error" env:"LOG_LEVEL" help:"Log verbosity (stderr)."`
 
-	DisableIgnorePragma bool     `help:"Disable inline ignore pragmas (# hadolint ignore=DLxxxx)."`
+	DisableIgnorePragma bool     `help:"Disable the ignore pragmas (# hadolint ignore=DLxxxx, stage ignore=, global ignore=)."`
 	WithoutShellcheck   bool     `help:"Disable shellcheck integration for RUN instruction validation."`
 	Ignore              []string `help:"Rule code to ignore (repeatable: --ignore DL3006 --ignore SC2050)."                                                placeholder:"CODE"`
 	ShellcheckRcfile    string   `help:"Shellcheckrc forwarded to shellcheck (--rcfile) when validating RUN instructions (requires shellcheck >= 0.10.0)." placeholder:"FILE"`

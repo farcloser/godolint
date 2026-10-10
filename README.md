@@ -71,6 +71,28 @@ godolint --shellcheck-rcfile .shellcheckrc Dockerfile
 godolint --log-level debug Dockerfile
 ```
 
+### Ignore pragmas
+
+A Dockerfile silences rules with hadolint's pragmas, in a comment:
+
+```dockerfile
+# hadolint global ignore=DL3008
+FROM debian:bookworm
+# hadolint ignore=DL3006,DL3007
+FROM ubuntu
+# hadolint stage ignore=DL3002
+FROM alpine
+USER root
+```
+
+`ignore` covers the next line, `stage ignore`, written above a `FROM`, the
+stage that `FROM` starts, `global ignore` the whole file. Spaces around the `=` and the
+commas, and a `# comment` after the list, are fine. A list with a name that is
+not a rule code (`ignore=crazy,DL3002`) is not a pragma at all, as in hadolint.
+`--disable-ignore-pragma` turns the three off. DL1001 reports every `ignore`
+pragma (and only that kind) at the `ignore` severity, which the CLI and the SDK
+never print.
+
 ### SDK Usage
 
 ```go
@@ -445,7 +467,6 @@ with `go install github.com/forkcloser/godolint/cmd/godolint@vX.Y.Z`.
 ### Short-term
 - [ ] Implement remaining hadolint rules
 - [ ] Add CLI flags (verbosity, rule selection, output format)
-- [ ] Pragma support (`# godolint ignore=DL3007`)
 - [ ] Configuration file support (YAML/TOML)
 
 ### Medium-term
@@ -463,7 +484,6 @@ with `go install github.com/forkcloser/godolint/cmd/godolint@vX.Y.Z`.
 ## Limitations
 
 ### Current
-- **No pragma/inline ignore directives** - Coming soon
 - **CLI limited** - JSON output only, minimal flags (SDK has full flexibility)
 - **No configuration file support** - Use SDK for programmatic configuration
 
@@ -476,7 +496,7 @@ with `go install github.com/forkcloser/godolint/cmd/godolint@vX.Y.Z`.
 
 Contributions welcome! Current priorities:
 - Implementing remaining hadolint rules
-- Adding CLI flags and pragma support
+- Adding CLI flags
 - Alternative output formats (SARIF, GitHub Actions annotations)
 - Performance optimization
 - Documentation and examples
