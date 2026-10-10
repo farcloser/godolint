@@ -2,8 +2,7 @@
 package rules
 
 import (
-	"regexp"
-
+	"github.com/forkcloser/godolint/internal/pragma"
 	"github.com/forkcloser/godolint/internal/rule"
 	"github.com/forkcloser/godolint/internal/syntax"
 )
@@ -18,20 +17,16 @@ func DL1001() rule.Rule {
 	)
 }
 
+// checkDL1001 fails a line ignore pragma, and only that one: a stage or
+// global pragma, a shell pragma, or an ignore list hadolint would not read
+// is a plain comment here, as upstream.
 func checkDL1001(instruction syntax.Instruction) bool {
 	comment, ok := instruction.(*syntax.Comment)
 	if !ok {
 		return true // Not a comment, pass
 	}
 
-	// Check if comment contains ignore pragma
-	return !isIgnorePragma(comment.Text)
-}
+	_, isPragma := pragma.ParseIgnore(comment.Text)
 
-// - hadolint ignore=DL3000,DL3001.
-func isIgnorePragma(text string) bool {
-	// Match hadolint ignore= followed by rule codes
-	pattern := regexp.MustCompile(`hadolint\s+ignore\s*=\s*DL\d{4}`)
-
-	return pattern.MatchString(text)
+	return !isPragma
 }

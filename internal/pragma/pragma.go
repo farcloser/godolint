@@ -1,131 +1,308 @@
-// Package pragma parses hadolint ignore pragmas from Dockerfile comments.
-// Ported from Hadolint/Pragma.hs
+// Package pragma reads hadolint's pragmas out of Dockerfile comments: the
+// ignore pragmas that silence rules for a line, a stage or the whole file,
+// with hadolint's grammar and scoping. Ported from Hadolint/Pragma.hs, and
+// the filtering half of Hadolint/Process.hs.
+//
+// A pragma is a comment of the form
+//
+//	# hadolint ignore=DL3006,DL3008        the next line
+//	# hadolint stage ignore=DL3006         the stage the FROM below it starts
+//	# hadolint global ignore=DL3006        the whole file
+//
+// with any amount of spaces or tabs around the keywords, the "=" and the
+// commas, and an optional "# comment" after the list. A rule name is a run
+// of the characters D, L, S, C and digits. A list with any other name in it
+// is not a pragma at all, and the whole comment is left alone — hadolint's
+// parser fails as a whole, rather than keeping the names it could read.
 package pragma
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/forkcloser/godolint/internal/rule"
 	"github.com/forkcloser/godolint/internal/syntax"
 )
 
-// IgnoreDirectives contains parsed ignore pragmas from a Dockerfile.
-type IgnoreDirectives struct {
-	// LineIgnores maps line numbers to sets of ignored rule codes
-	// Key is the line number where the ignore applies (comment line + 1)
-	LineIgnores map[int]map[rule.Code]bool
-	// GlobalIgnores contains rule codes ignored for the entire file
-	GlobalIgnores map[rule.Code]bool
+// codes is a set of rule codes.
+type codes map[rule.Code]struct{}
+
+// Directives is the ignore pragmas of one Dockerfile, keyed the way
+// hadolint's three folds key them: by the line a pragma applies to.
+type Directives struct {
+	// line holds a line pragma under the line it applies to (the comment's
+	// line + 1).
+	line map[int]codes
+	// stage holds a stage pragma under the line it applies to, and an empty
+	// set under every FROM's line that has no pragma already: the boundary
+	// that ends the previous stage's pragma.
+	stage map[int]codes
+	// global holds every global pragma's codes.
+	global codes
 }
 
-// pragmaRegex matches "hadolint ignore=DL3057,DL3018" or "hadolint global ignore=DL3057".
-var (
-	ignorePragmaRegex       = regexp.MustCompile(`^\s*hadolint\s+ignore\s*=\s*(.+)$`)
-	globalIgnorePragmaRegex = regexp.MustCompile(`^\s*hadolint\s+global\s+ignore\s*=\s*(.+)$`)
-)
-
-// Parse extracts ignore pragmas from Dockerfile instructions.
-// Ported from Hadolint.Pragma module.
-//
-//nolint:gocognit // a walk and a choice between two pragma kinds, one point over the threshold
-func Parse(instructions []syntax.InstructionPos) IgnoreDirectives {
-	directives := IgnoreDirectives{
-		LineIgnores:   make(map[int]map[rule.Code]bool),
-		GlobalIgnores: make(map[rule.Code]bool),
+// Parse reads the pragmas out of a Dockerfile's comments. Ported from the
+// ignored, stageIgnored and globalIgnored folds in Hadolint.Pragma.
+func Parse(instructions []syntax.InstructionPos) Directives {
+	directives := Directives{
+		line:   make(map[int]codes),
+		stage:  make(map[int]codes),
+		global: make(codes),
 	}
 
 	for _, instr := range instructions {
-		comment, ok := instr.Instruction.(*syntax.Comment)
-		if !ok {
-			continue
-		}
-
-		// Check for global ignore pragma
-		if codes := parseGlobalIgnorePragma(comment.Text); len(codes) > 0 {
-			for _, code := range codes {
-				directives.GlobalIgnores[code] = true
+		switch node := instr.Instruction.(type) {
+		case *syntax.Comment:
+			directives.readComment(instr.LineNumber, node.Text)
+		case *syntax.From:
+			if _, ok := directives.stage[instr.LineNumber]; !ok {
+				directives.stage[instr.LineNumber] = make(codes)
 			}
-
-			continue
-		}
-
-		// Check for line-specific ignore pragma
-		if codes := parseIgnorePragma(comment.Text); len(codes) > 0 {
-			// Applies to the next line (comment line + 1)
-			targetLine := instr.LineNumber + 1
-			if directives.LineIgnores[targetLine] == nil {
-				directives.LineIgnores[targetLine] = make(map[rule.Code]bool)
-			}
-
-			for _, code := range codes {
-				directives.LineIgnores[targetLine][code] = true
-			}
+		default:
+			// Any other instruction carries no pragma.
 		}
 	}
 
 	return directives
 }
 
-// parseIgnorePragma extracts rule codes from "hadolint ignore=DL3057,DL3018" format.
-func parseIgnorePragma(text string) []rule.Code {
-	matches := ignorePragmaRegex.FindStringSubmatch(text)
-	if len(matches) < 2 {
-		return nil
-	}
-
-	return parseRuleList(matches[1])
-}
-
-// parseGlobalIgnorePragma extracts rule codes from "hadolint global ignore=DL3057" format.
-func parseGlobalIgnorePragma(text string) []rule.Code {
-	matches := globalIgnorePragmaRegex.FindStringSubmatch(text)
-	if len(matches) < 2 {
-		return nil
-	}
-
-	return parseRuleList(matches[1])
-}
-
-// Supports inline comments: "DL3057,DL3018 # some comment".
-func parseRuleList(text string) []rule.Code {
-	// Strip inline comments (anything after #)
-	if idx := strings.Index(text, "#"); idx != -1 {
-		text = text[:idx]
-	}
-
-	parts := strings.Split(text, ",")
-
-	var codes []rule.Code
-
-	for _, part := range parts {
-		code := strings.TrimSpace(part)
-		if code == "" {
-			continue
-		}
-
-		// Validate format: DL followed by 4 digits (DL3057, SC1234, etc)
-		if len(code) >= 6 && (code[:2] == "DL" || code[:2] == "SC") {
-			codes = append(codes, rule.Code(code))
-		}
-	}
-
-	return codes
-}
-
-// ShouldIgnore returns true if the given failure should be filtered out.
-func (d *IgnoreDirectives) ShouldIgnore(failure rule.CheckFailure) bool {
-	// Check global ignores
-	if d.GlobalIgnores[failure.Code] {
+// ShouldIgnore reports whether a pragma silences the failure: a global
+// pragma for its code, a line pragma on its line, or the stage pragma in
+// force at its line. Ported from shouldKeep in Hadolint.Process.
+func (d *Directives) ShouldIgnore(failure rule.CheckFailure) bool {
+	if _, ok := d.global[failure.Code]; ok {
 		return true
 	}
 
-	// Check line-specific ignores
-	if lineIgnores, ok := d.LineIgnores[failure.Line]; ok {
-		if lineIgnores[failure.Code] {
-			return true
+	if _, ok := d.line[failure.Line][failure.Code]; ok {
+		return true
+	}
+
+	_, ok := d.stageAt(failure.Line)[failure.Code]
+
+	return ok
+}
+
+// stageAt is the stage pragma in force at a line: the entry with the
+// greatest key below the line (hadolint's `last (0 : keys below line)`),
+// until the next FROM, whose empty entry ends it. The pragma is keyed on the
+// line after it and the lookup wants a key strictly below, so that line
+// itself is not covered: written above a FROM, the FROM takes it and the
+// stage's instructions are; written mid-stage, the instruction right after
+// the pragma is not. That is hadolint's reach, kept.
+func (d *Directives) stageAt(line int) codes {
+	key := 0
+
+	for candidate := range d.stage {
+		if candidate < line && candidate > key {
+			key = candidate
 		}
 	}
 
-	return false
+	return d.stage[key]
+}
+
+// readComment records the pragma a comment at the given line holds, if any.
+// The three grammars are disjoint, so a comment is at most one of them.
+func (d *Directives) readComment(line int, text string) {
+	if names, ok := ParseGlobalIgnore(text); ok {
+		for _, code := range names {
+			d.global[code] = struct{}{}
+		}
+
+		return
+	}
+
+	if names, ok := ParseStageIgnore(text); ok {
+		d.stage[line+1] = toSet(names)
+
+		return
+	}
+
+	if names, ok := ParseIgnore(text); ok {
+		d.line[line+1] = toSet(names)
+	}
+}
+
+func toSet(names []rule.Code) codes {
+	set := make(codes, len(names))
+
+	for _, code := range names {
+		set[code] = struct{}{}
+	}
+
+	return set
+}
+
+// ParseIgnore reads a line ignore pragma, "hadolint ignore=DL3006,DL3008".
+// Ported from parseIgnorePragma.
+func ParseIgnore(text string) ([]rule.Code, bool) {
+	scan := scanner{text: text}
+
+	if !scan.pragma() {
+		return nil, false
+	}
+
+	return scan.ignoreList()
+}
+
+// ParseStageIgnore reads a stage ignore pragma, "hadolint stage
+// ignore=DL3006". Ported from parseStageIgnorePragma.
+func ParseStageIgnore(text string) ([]rule.Code, bool) {
+	scan := scanner{text: text}
+
+	if !scan.pragma() || !scan.keyword("stage") {
+		return nil, false
+	}
+
+	return scan.ignoreList()
+}
+
+// ParseGlobalIgnore reads a global ignore pragma, "hadolint global
+// ignore=DL3006". Ported from parseGlobalIgnorePragma.
+func ParseGlobalIgnore(text string) ([]rule.Code, bool) {
+	scan := scanner{text: text}
+
+	if !scan.pragma() || !scan.keyword("global") {
+		return nil, false
+	}
+
+	return scan.ignoreList()
+}
+
+// scanner walks a comment's text with hadolint's pragma grammar. Every
+// method consumes what it matched and reports whether it did.
+type scanner struct {
+	text string
+	pos  int
+}
+
+// isSpace is hadolint's `space`: a space or a tab, never a newline.
+func isSpace(c byte) bool {
+	return c == ' ' || c == '\t'
+}
+
+// isRuleChar is the alphabet of a rule name.
+func isRuleChar(c byte) bool {
+	return c == 'D' || c == 'L' || c == 'S' || c == 'C' || (c >= '0' && c <= '9')
+}
+
+// spaces skips spaces and returns how many there were.
+func (s *scanner) spaces() int {
+	start := s.pos
+
+	for s.pos < len(s.text) && isSpace(s.text[s.pos]) {
+		s.pos++
+	}
+
+	return s.pos - start
+}
+
+// literal consumes the exact string.
+func (s *scanner) literal(word string) bool {
+	if !strings.HasPrefix(s.text[s.pos:], word) {
+		return false
+	}
+
+	s.pos += len(word)
+
+	return true
+}
+
+// pragma is hadolintPragma: spaces, "hadolint", at least one space.
+func (s *scanner) pragma() bool {
+	s.spaces()
+
+	return s.literal("hadolint") && s.spaces() > 0
+}
+
+// keyword is the "stage" and "global" productions: the word, then at least
+// one space.
+func (s *scanner) keyword(word string) bool {
+	return s.literal(word) && s.spaces() > 0
+}
+
+// ignoreList is "ignore", "=", the rule list, and nothing else but an
+// inline comment before the end of the text.
+func (s *scanner) ignoreList() ([]rule.Code, bool) {
+	if !s.literal("ignore") {
+		return nil, false
+	}
+
+	s.spaces()
+
+	if !s.literal("=") {
+		return nil, false
+	}
+
+	s.spaces()
+
+	names, ok := s.ruleList()
+	if !ok || s.pos != len(s.text) {
+		return nil, false
+	}
+
+	return names, true
+}
+
+// ruleList is one or more rule names separated by commas, spaces allowed
+// around the commas. Each name may be followed by an inline comment, which
+// runs to the end of the text.
+func (s *scanner) ruleList() ([]rule.Code, bool) {
+	var names []rule.Code
+
+	for {
+		name, ok := s.ruleName()
+		if !ok {
+			return nil, false
+		}
+
+		names = append(names, name)
+
+		// A separator: spaces, a comma, spaces. Nothing after the last name
+		// but what ruleName's inline comment already took.
+		mark := s.pos
+
+		s.spaces()
+
+		if !s.literal(",") {
+			s.pos = mark
+
+			return names, true
+		}
+
+		s.spaces()
+	}
+}
+
+// ruleName is a non-empty run of rule characters, then an optional inline
+// comment.
+func (s *scanner) ruleName() (rule.Code, bool) {
+	start := s.pos
+
+	for s.pos < len(s.text) && isRuleChar(s.text[s.pos]) {
+		s.pos++
+	}
+
+	if s.pos == start {
+		return "", false
+	}
+
+	name := rule.Code(s.text[start:s.pos])
+
+	s.inlineComment()
+
+	return name, true
+}
+
+// inlineComment is spaces and, if a "#" follows, the rest of the line.
+func (s *scanner) inlineComment() {
+	s.spaces()
+
+	if s.pos < len(s.text) && s.text[s.pos] == '#' {
+		if end := strings.IndexByte(s.text[s.pos:], '\n'); end >= 0 {
+			s.pos += end
+		} else {
+			s.pos = len(s.text)
+		}
+	}
 }
